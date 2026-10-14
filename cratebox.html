@@ -423,6 +423,9 @@ document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)
 document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
 // phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
 const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(screen.width, screen.height) <= 500;
+// phones and tablets: Safari kills a tab that uses too much memory, so keep audio in 16 bit,
+// decode one track at a time and use bigger audio buffers
+const LOWMEM = IOS || PHONE || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
 document.documentElement.classList.toggle("phone", PHONE);
 if (PHONE) document.documentElement.dataset.tab = "mix";
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
@@ -489,7 +492,9 @@ class DeckPlayer extends AudioWorkletProcessor {
   flush() { this.gK[0] = this.gK[1] = this.Nw; this.ph = 0; this.fresh = true; }
   msg(d) {
     switch (d.t) {
+      case "unload": this.L = this.R = null; this.len = 0; this.playing = false; this.amp = 0; break;
       case "load": this.L = d.L; this.R = d.R; this.len = d.L.length; this.pos = 0; this.target = 0;
+        this.sc = d.L instanceof Int16Array ? 1 / 32768 : 1;       // 16-bit PCM on low-memory devices
         this.playing = false; this.loopOn = false; this.amp = 0; this.vel = 0; this.ended = false;
         if (d.mt != null) this.mt = d.mt; if (d.spin) this.spinA = 9 / d.spin; this.coast = false; this.flush(); break;
       case "play": this.playing = d.v; if (d.v) this.ended = false; break;
@@ -565,6 +570,7 @@ class DeckPlayer extends AudioWorkletProcessor {
     const follow = 1 / (0.012 * sr);     // scratch: catch up with the hand in about 12 ms
     const ampStep = 1 / (0.005 * sr);    // 5 ms fades on start/stop: no clicks
     const useMT = this.mt && !this.scratching && !this.coast;
+    const sc = this.sc || 1;
     const spinStep = this.spinA / sr;
     const gS = this.gS, gK = this.gK, gF = this.gF, win = this.win, Nw = this.Nw, H = this.H, ramp = this.ramp;
     for (let i = 0; i < N; i++) {
@@ -596,12 +602,12 @@ class DeckPlayer extends AudioWorkletProcessor {
             }
             gK[g] = k + 1;
           }
-          oL[i] = l * amp; oR[i] = r * amp;
+          oL[i] = l * amp * sc; oR[i] = r * amp * sc;
           if (++this.ph >= H) this.ph = 0;
         } else {
           const i0 = pos | 0, f = pos - i0;
-          oL[i] = (L[i0] + (L[i0 + 1] - L[i0]) * f) * amp;
-          oR[i] = (R[i0] + (R[i0 + 1] - R[i0]) * f) * amp;
+          oL[i] = (L[i0] + (L[i0 + 1] - L[i0]) * f) * amp * sc;
+          oR[i] = (R[i0] + (R[i0 + 1] - R[i0]) * f) * amp * sc;
         }
       } else if (useMT && !this.fresh) this.flush();
       pos += v;
@@ -1248,6 +1254,29 @@ try { const v = parseFloat(localStorage.getItem("cb.spin")); if (v > 0) spinSecs
 // bump when the analyser changes so cached results get redone (hand-edited grids are kept)
 const ANALYSIS_VER = 3;          // 2: new beat tracker, 3: phrases
 const analysisCurrent = (t) => t.bpm != null && t.key != null && Array.isArray(t.phrases) && t.ver === ANALYSIS_VER;
+// One big decode at a time (deck loads and the background analysis), and a crash guard: the track
+// being decoded is written down first, so if the browser dies (out of memory) we skip it next time
+// instead of crashing again in a loop.
+let heavyChain = Promise.resolve(), deckLoads = 0;
+function heavy(fn) { const p = heavyChain.then(fn, fn); heavyChain = p.catch(() => {}); return p; }
+const badTracks = new Set((() => { try { return JSON.parse(localStorage.getItem("cb.bad") || "[]"); } catch (e) { return []; } })());
+function saveBad() { try { localStorage.setItem("cb.bad", JSON.stringify([...badTracks].slice(-200))); } catch (e) {} }
+function markInflight(t) { try { localStorage.setItem("cb.inflight", JSON.stringify({ id: t.id, title: t.title })); } catch (e) {} }
+function clearInflight() { try { localStorage.removeItem("cb.inflight"); } catch (e) {} }
+function checkLastCrash() {
+  let f = null;
+  try { f = JSON.parse(localStorage.getItem("cb.inflight") || "null"); } catch (e) {}
+  clearInflight();
+  if (!f) return "";
+  badTracks.add(f.id); saveBad();
+  return `Last time Cratebox stopped while reading "${f.title}" (probably too big for this device's memory). It won't be analysed automatically; load it onto a deck to try again.`;
+}
+// 16-bit copy of one channel: half the memory of the decoded float audio
+function toInt16(ch) {
+  const n = ch.length, out = new Int16Array(n);
+  for (let i = 0; i < n; i++) { const v = ch[i] * 32767; out[i] = v > 32767 ? 32767 : v < -32768 ? -32768 : v; }
+  return out;
+}
 const analyzeWaiters = new Map();
 
 function makeWorker(src) {
@@ -1296,7 +1325,7 @@ function biquad(type, freq, Q = 0.7071) {
 function chain(...nodes) { for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]); return nodes; }
 
 async function initAudio(ctxOverride) {
-  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: "interactive" }));
+  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: LOWMEM ? "playback" : "interactive" }));
   const url = URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" }));
   await ctx.audioWorklet.addModule(url);
   A.master = ctx.createGain();
@@ -1592,22 +1621,36 @@ class Deck {
     this.track = track;
     refreshDeckUI(this.i);
     status(`Loading ${track.title} into deck ${this.i + 1}...`, 0);
+    this.post({ t: "unload" });            // free the previous track before decoding the next one
+    this.ana = null; this.mono = null;
     try {
-      const file = await track.getFile();
-      const buf = await A.ctx.decodeAudioData(await file.arrayBuffer());
-      const { mono, fs } = monoFor(buf);
-      const L = buf.getChannelData(0).slice();
-      const R = (buf.numberOfChannels > 1 ? buf.getChannelData(1) : buf.getChannelData(0)).slice();
-      this.sr = buf.sampleRate;
-      this.duration = buf.duration;
+      deckLoads++;
+      // decode, copy out what we need, and drop the decoded buffer before anything else runs
+      const dec = await heavy(async () => {
+        markInflight(track);
+        try {
+          const file = await track.getFile();
+          let buf = await A.ctx.decodeAudioData(await file.arrayBuffer());
+          const m = monoFor(buf), w = LOWMEM ? null : monoFor(buf, 22050);
+          const c0 = buf.getChannelData(0), c1 = buf.numberOfChannels > 1 ? buf.getChannelData(1) : c0;
+          const L = LOWMEM ? toInt16(c0) : c0.slice(), R = c1 === c0 ? (LOWMEM ? L.slice() : L.slice()) : LOWMEM ? toInt16(c1) : c1.slice();
+          const out = { mono: m.mono, fs: m.fs, w, L, R, sr: buf.sampleRate, duration: buf.duration };
+          buf = null;
+          return out;
+        } finally { clearInflight(); }
+      });
+      if (this.track !== track) return;
+      const { mono, fs, w, L, R } = dec;
+      const buf = { duration: dec.duration };
+      this.sr = dec.sr;
+      this.duration = dec.duration;
       this.post({ t: "load", L, R, mt: this.mt, spin: spinSecs }, [L.buffer, R.buffer]);
       this.pos = 0; this.posT = A.ctx.currentTime; this.speed = 0;
       this.loop = { on: false, a: null, b: null };
       this.previewing = false;
       const cached = analysisCurrent(track) && track.bpm > 0;
-      const w = monoFor(buf, 22050);
       this.mono = mono.slice(); this.monoFs = fs;          // kept to redo the phrases after grid edits
-      const ana = await analyzeMono(mono, fs, { waveOnly: cached, xw: w.mono, fsw: w.fs,
+      const ana = await analyzeMono(mono, fs, { waveOnly: cached, xw: w ? w.mono : null, fsw: w ? w.fs : 0,
         grid: track.gridManual ? { bpm: track.bpm, firstBeat: track.firstBeat } : null });
       if (this.track !== track) return;
       ana.duration = buf.duration;
@@ -1627,13 +1670,14 @@ class Deck {
       this.loading = false;
       status(`Deck ${this.i + 1}: ${track.title} · ${ana.bpm.toFixed(2)} BPM`);
       renderList();
+      if (badTracks.delete(track.id)) saveBad();
     } catch (err) {
       this.loading = false;
       this.track = null;
       this.ana = null;
       this.duration = 0;
       status(`Couldn't load that file: ${err.message || err}`, 8000);
-    }
+    } finally { deckLoads--; }
     refreshDeckUI(this.i);
   }
 
@@ -2020,16 +2064,31 @@ async function saveAnalysis(t) {
 async function runAnalysisQueue() {
   if (lib.running) return;
   lib.running = true;
-  const off = new OfflineAudioContext(1, 1, 44100);
+  // low-memory devices decode straight to 22 kHz for analysis (a quarter of the memory)
+  const off = new OfflineAudioContext(1, 1, LOWMEM ? 22050 : 44100);
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   let done = 0;
   while (lib.queue.length) {
+    // deck loads go first; on phones, don't analyse while music is playing (keeps playback smooth)
+    while (deckLoads > 0 || (LOWMEM && decks.some((d) => d.playing))) {
+      $("#progress").textContent = deckLoads > 0 ? "Analysis waiting…" : "Analysis paused while playing";
+      await sleep(1000);
+    }
     const t = lib.queue.shift();
-    if (analysisCurrent(t)) continue;
+    if (analysisCurrent(t) || badTracks.has(t.id)) { if (badTracks.has(t.id) && t.bpm == null) t.bpm = 0; continue; }
     $("#progress").textContent = `Analyzing ${done + 1} of ${done + lib.queue.length + 1}: ${t.title}`;
     try {
-      const file = await t.getFile();
-      const buf = await off.decodeAudioData(await file.arrayBuffer());
-      const { mono, fs } = monoFor(buf);
+      const dec = await heavy(async () => {
+        markInflight(t);
+        try {
+          const file = await t.getFile();
+          let buf = await off.decodeAudioData(await file.arrayBuffer());
+          const m = monoFor(buf), duration = buf.duration;
+          buf = null;
+          return { ...m, duration };
+        } finally { clearInflight(); }
+      });
+      const { mono, fs } = dec, buf = { duration: dec.duration };
       const r = await analyzeMono(mono, fs, { noWave: true, grid: t.gridManual ? { bpm: t.bpm, firstBeat: t.firstBeat } : null });
       if (!t.gridManual) { t.bpm = r.bpm; t.firstBeat = r.firstBeat; }
       t.duration = buf.duration; t.key = r.key; t.phrases = r.phrases || []; t.ver = ANALYSIS_VER;
@@ -2550,7 +2609,8 @@ function imageFor(store, i, g, W, H) {
 }
 const overviewBase = [null, null];
 function fitCanvas(cv) {
-  const dpr = window.devicePixelRatio || 1;
+  // phones: 2x is plenty for waveforms, and 3x makes Safari push 2.25x the pixels every frame
+  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3);
   const w = Math.round(cv.clientWidth * dpr), hh = Math.round(cv.clientHeight * dpr);
   if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; }
   return [w, hh, dpr];
@@ -2571,7 +2631,7 @@ function drawOverviewBase(i) {
   }
   g.putImageData(im, 0, 0);
   // phrase strip along the bottom
-  const dpr = window.devicePixelRatio || 1, sh = Math.round(5 * dpr);
+  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3), sh = Math.round(5 * dpr);
   for (const p of phraseSpans(d)) {
     const x0 = Math.round((p.start / d.duration) * W), x1 = Math.round((p.end / d.duration) * W);
     g.fillStyle = PHRASE_COLORS[p.label] || "#888";
@@ -3212,8 +3272,9 @@ $("#startBtn").addEventListener("click", async () => {
   }
   $("#start").remove();
   await openDB();
+  const crashMsg = checkLastCrash();
   restoreFolder();
-  restoreImported();
+  restoreImported().then(() => { if (crashMsg) status(crashMsg, 12000); });
   initMIDI();
   listOutputs();
   navigator.mediaDevices && navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener("devicechange", listOutputs);
