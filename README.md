@@ -1,0 +1,136 @@
+# Cratebox
+
+A lightweight two-deck DJ app that runs in Chrome, built around the Pioneer DDJ-FLX4.
+
+## Start it (Windows)
+
+1. Plug in the FLX4.
+2. Double-click **Start Cratebox.bat**. Chrome opens Cratebox. Keep the black window open while you play.
+3. Click **Start**. When Chrome asks about MIDI devices, allow it (including "control and reprogram", which keeps the FLX4's lights awake).
+4. Click **Add music folder** and pick the folder you DJ from. Nothing is copied or uploaded; tracks are read in place, and the folder is remembered next time.
+
+Mac/Linux: run `python3 start_cratebox.py`.
+
+It has to run through the launcher (a tiny local web server) rather than by double-clicking the HTML: Chrome only allows MIDI controllers, folder access and the audio engine on `http://localhost`. The launcher always uses port 8611, so your library, BPMs and cue points persist.
+
+## Sound
+
+Wire it like rekordbox: speakers on the FLX4's rear MASTER outputs, headphones in the front jack.
+
+- **Output**: the DDJ-FLX4 is picked automatically once Chrome shows device names (choose "Show device names" if they're hidden). Your choice is remembered.
+- The **ch pill** next to it shows how many output channels Chrome sees on that device. The FLX4 has 4: 1–2 are master, 3–4 are the headphone jack.
+- **Headphones**:
+  - **Auto** (default): uses the FLX4 jack whenever the output has 4 channels.
+  - **FLX4 jack (channels 3–4)**: the rekordbox setup.
+  - **Another device**: cue mix on a second sound output (for example your laptop's headphone jack), master stays on the FLX4.
+  - **Split**: mono master left, mono cue right, for a single output and a splitter cable.
+- **Test cue** beeps three times in the headphone mix only. If you also hear it from the speakers, cue isn't separated yet.
+- The **CUE/MST** knob (and the FLX4's CUE/MASTER knob) blends cue and master in the headphones. HEADPHONES LEVEL and MASTER LEVEL on the FLX4 are analog and always work.
+
+### Fixing headphone cueing (pill says "2 ch")
+
+Chrome can only reach the headphone jack if Windows presents the FLX4 as a 4-channel device:
+
+1. Windows Settings → System → Sound → **More sound settings** → **Playback** tab.
+2. Select the **DDJ-FLX4** device → **Configure**. If **Quadraphonic** is listed, pick it → Next → Finish.
+3. Close the Cratebox tab and start it again. The pill should now say **4 ch**, and Auto switches to the FLX4 jack. Press **Test cue**.
+
+If Configure only offers Stereo, Windows is exposing the FLX4 as a 2-channel device. The FLX4 is class compliant, so it also works without Pioneer's driver: try with the driver uninstalled (Windows' built-in USB audio driver), or reinstalled, and check Configure again. If neither gives you 4 channels, use **Another device** and plug your headphones into the laptop.
+
+## FLX4 mapping
+
+| Control | What it does |
+|---|---|
+| PLAY/PAUSE | Play / pause. SHIFT: play from the cue point |
+| CUE | CDJ-style: playing → back to the cue point; stopped → set cue (snapped to the beat with Q on); on the cue → preview while held. SHIFT: back to the start |
+| BEAT SYNC | Match tempo and beat phase to the other deck; stays locked while on. Long press: sync on. SHIFT: tempo range ±6/10/16%/WIDE |
+| Jog top (touched) | Scratch / move the track by hand. Fling it backwards and let go for a backspin; **Backspin** in the library bar sets how long it spins |
+| Jog side | Nudge (pitch bend) while playing, fine search while stopped |
+| SHIFT + jog | Fast search |
+| TEMPO fader | ±range; top is slower, like a CDJ |
+| LOOP IN / OUT / RELOOP-EXIT | Manual loops. Hold IN for half a second for a 4-beat loop. SHIFT+IN halves, SHIFT+OUT doubles |
+| CUE/LOOP CALL ◀ ▶ | In a loop: halve/double it. Otherwise: jump to the previous/next hot cue. SHIFT: jump a bar back/forward |
+| Pads, HOT CUE mode | Set or recall hot cues A–H; SHIFT+pad deletes |
+| Pads, BEAT LOOP mode (SHIFT + BEAT JUMP) | 1/4, 1/2, 1, 2, 4, 8, 16, 32-beat loops |
+| Pads, BEAT JUMP mode | Jump −1/+1, −2/+2, −4/+4, −8/+8 beats |
+| Channel faders, crossfader, TRIM, HI/MID/LOW (full kill), CFX filter | Mixer |
+| Headphone CUE buttons | Send a channel to the headphones |
+| BROWSE knob / LOAD 1 / LOAD 2 | Scroll the library and load the selected track |
+| SHIFT + BROWSE | Waveform zoom |
+| SHIFT + press BROWSE | Expand the library over the jogs and mixer (or click **Expand library**) |
+
+LEDs follow the software: PLAY and CUE blink like a CDJ, pads light for set hot cues and the active loop size, loop/sync/cue buttons light when on, and the channel level meters show each deck's level.
+
+Not mapped yet: Beat FX, sampler, Pad FX, key shift, and the SMART CFX/keyboard modes.
+
+## Waveforms
+
+- **RGB** (default): colour shows what's playing, rekordbox-style. Red is lows (kicks, sub), green is mids, blue is highs (hats, cymbals); mixes blend (a kick with a click goes orange-white). The lighter core is the average level, the outer edge the peaks. Detail is 300 points per second, drawn pixel by pixel.
+- **3-band** (Settings): the older blue/orange/white style.
+- Scroll the mouse wheel over a waveform to zoom (or SHIFT + BROWSE on the FLX4).
+- The waveforms follow tempo: speed a track up and its waveform squeezes together, so two synced decks show their beats at the same spacing.
+
+## Phrases
+
+Each track is split into phrases on bar lines and named: **Intro**, **Build**, **Drop**, **Groove** (drums in, not the peak), **Breakdown**, **Outro**. They show as a coloured strip under the track overview and along the top of the scrolling waveform, and the deck shows where you are, e.g. `DROP 13/16` = bar 13 of a 16-bar drop. Handy for landing your next drop on the 1 of the other track's.
+
+It works from loudness, the low end, the highs and whether a kick is in, so it's reliable for the big changes (drums in or out, drops) and rougher on subtle ones (Groove vs Drop). Phrases follow the beat grid: fix the grid and they're redone automatically.
+
+## Master tempo
+
+The **MT** button on each deck (on by default, remembered) is keylock: moving the tempo fader or syncing changes the speed but keeps the key, like MASTER TEMPO on a CDJ. Turn it off for vinyl behaviour, where faster also means higher.
+
+It works by rebuilding the sound from short overlapping slices (WSOLA, the same family of technique as SoundTouch). Within ±8% it's clean; past ±16% you'll hear some smearing on vocals and long pads. Scratching always plays the raw record, then keylock picks up again when you let go.
+
+## Keys
+
+Every track gets a key in Camelot notation (8A = A minor, 8B = C major). Tracks mix smoothly with the same code, one number either side with the same letter, or the same number with the other letter. While a deck is playing, the library highlights the keys that fit it, and typing a code like `8a` into search filters by key. With MT off, pitching a track changes its key, and the deck shows both (`9A (8A)`).
+
+Key detection is built for electronic music (natural minor). The usual mistake is swapping a key with its relative major or minor (7A vs 7B), which still mixes fine.
+
+## Beat grid
+
+Analysis looks at the whole track: it finds the tempo to a fraction of a BPM (no more rounding 127.95 to 128 and drifting), puts the beat lines on the kicks and snares rather than the off-beat hats or bass, and guesses which beat is bar 1. Tracks analysed by the old version get redone automatically in the background.
+
+To fix a grid, click **GRID** on the deck:
+- Type a BPM and press Enter, or use **−.01 / +.01** (Shift: 0.1), **÷2 / ×2**, or **TAP** along with the beat. The beat under the playhead stays put.
+- **◀ / ▶** slide the whole grid 5 ms (Shift: 1 ms).
+- Pause on a kick, then **BEAT HERE** snaps the nearest beat line to it, or **BAR 1 HERE** makes it the first beat of a bar.
+- **RESET** goes back to the analysis.
+
+Edits are saved with the track, re-analysis never overwrites them, and the library shows hand-edited BPMs in yellow.
+
+## Library and analysis
+
+- New tracks are analyzed in the background: BPM, beat grid, key and a 3-band waveform (blue = lows, orange = mids, white = highs). Results are cached.
+- **BPM range** (default 88–175) decides whether half/double-time tracks read as, say, 140 or 70. Change it and every track is re-folded instantly.
+- Titles and artists come from MP3 ID3 tags, otherwise from "Artist - Title" file names.
+- Drag a row onto a deck, double-click it, press LOAD, or use Shift+← / Shift+→. Drop any audio file from Explorer straight onto a deck too.
+- Hot cues and cue points are saved per track.
+
+## iPhone and iPad
+
+Cratebox runs on iOS by touch. **The FLX4 can't control it there**: every iOS browser (Chrome included, outside the EU) is Safari underneath, and Safari has no Web MIDI. For the FLX4 on iOS, use rekordbox's own app.
+
+What works: both decks, mixer, sync, loops, hot cues (hold a pad to delete one), master tempo, keys, phrases, grid editing. Sound goes to whatever the phone or iPad is plugged into; for headphone cueing use **Split** (master in one ear, cue in the other) with a splitter cable.
+
+**Getting it onto the phone.** iOS only allows the audio engine on a secure (https) site, so Cratebox needs hosting once. The free, stable way is GitHub Pages:
+
+1. Make a free GitHub account, then a new **public** repository called `cratebox`.
+2. **Add file → Upload files**: `cratebox.html`, `index.html`, `sw.js`, `manifest.webmanifest`, `icon-180.png`, `icon-512.png`. Commit.
+3. **Settings → Pages**: Source **Deploy from a branch**, branch **main**, folder **/ (root)**, Save. After a minute it's live at `https://YOUR-NAME.github.io/cratebox/`.
+4. Open that in Safari on the iPhone/iPad → **Share → Add to Home Screen**. Launch it from the icon: full screen, and it works offline after the first visit.
+
+Only the app goes on GitHub, never your music.
+
+**Your music on iOS.** Tap **Add music** and pick tracks in the Files app (iCloud Drive, On My iPhone, a USB drive...). They're copied into Cratebox's own storage on the device, so the library is still there next time; **Remove** deletes the selected one. Keep it on the Home Screen: Safari may clear storage for sites you haven't opened in a while, but not for Home Screen apps. Long tracks use a lot of memory; older phones may struggle with two 8-minute tracks loaded.
+
+## Limits
+
+- No key shift, no recording, no playlists or rekordbox library import yet.
+- Audio files must be something Chrome can decode: MP3, WAV, FLAC, AAC/M4A, OGG/Opus. Not AIFF.
+- Beat grids assume a steady tempo. Live-drummed tracks will drift.
+
+## Tests
+
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, and `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes). Both need `pip install playwright` and `playwright install chromium`.
