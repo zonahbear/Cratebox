@@ -83,6 +83,19 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel label:first-child { margin-top: 0; }
 .setpanel small { color: var(--muted); margin-left: 4px; }
 .setpanel .hsel { max-width: none; width: 100%; }
+.setpanel { width: 330px; }
+.ctlpanel { display: grid; gap: 4px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
+.ctlnote { margin: 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
+.ctlrow { display: flex; gap: 6px; flex-wrap: wrap; }
+#learnBar { position: fixed; top: 0; left: 0; right: 0; z-index: 70; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 14px;
+  background: #2a2410; border-bottom: 2px solid var(--loop); color: var(--fg); font-size: 13px; }
+#learnBar[hidden] { display: none; }
+#learnBar b { font-family: var(--f-disp); letter-spacing: .1em; color: var(--loop); }
+#learnBar #learnText { flex: 1; min-width: 240px; }
+#learnBar .learnlib { display: flex; gap: 6px; align-items: center; color: var(--muted); flex-wrap: wrap; }
+html.learning [data-learn] { outline: 1px dashed color-mix(in srgb, var(--loop) 70%, transparent); outline-offset: 2px; cursor: crosshair; }
+html.learning .learn-target { outline: 3px solid var(--loop) !important; }
+html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .overview { width: 100%; height: 44px; display: block; background: #050608; border-radius: 3px; cursor: pointer; }
 .dbody { display: grid; gap: 10px; align-items: start; }
 .deck[data-i="0"] .dbody { grid-template-columns: 48px 150px 1fr; grid-template-areas: "pitch jog ctrl"; }
@@ -378,6 +391,16 @@ button, select, .pad, .sq { touch-action: manipulation; }
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
+          <div id="ctlPanel" class="ctlpanel deskonly">
+            <label for="ctlIn">Controller</label>
+            <select class="hsel" id="ctlIn"></select>
+            <label for="ctlProfile">Mapping</label>
+            <select class="hsel" id="ctlProfile"></select>
+            <p id="ctlNote" class="ctlnote"></p>
+            <div class="ctlrow"><button class="hbtn" id="ctlLearn">Learn…</button><button class="hbtn" id="ctlClear">Clear learned</button>
+              <button class="hbtn" id="ctlExport">Export</button><button class="hbtn" id="ctlImport">Import</button>
+              <input type="file" id="ctlImportFile" accept=".json,application/json" hidden></div>
+          </div>
           <label for="spinSel">Backspin <small>spin time after a fling</small></label>
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
@@ -393,14 +416,19 @@ button, select, .pad, .sq { touch-action: manipulation; }
 </div>
 <div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><span>Cratebox is laid out for landscape on a phone: both decks and the mixer on one screen.</span></div>
 <div id="toast"></div>
+<div id="learnBar" hidden><b>LEARN</b><span id="learnText"></span>
+  <span class="learnlib">Library: <button class="hbtn" data-learn="browse">Browse knob</button><button class="hbtn" data-learn="browsePress">Browse press</button>
+  <button class="hbtn" data-learn="load" data-deck="0">Load 1</button><button class="hbtn" data-learn="load" data-deck="1">Load 2</button>
+  <button class="hbtn" data-learn="jogSide" data-deck="0">Jog side 1</button><button class="hbtn" data-learn="jogSide" data-deck="1">Jog side 2</button></span>
+  <button class="hbtn" id="learnDone">Done</button></div>
 <div id="resume" hidden><button>Tap to resume audio</button></div>
 <div class="sheet" id="setSheet" hidden><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="setBody"></div></div></div>
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
     <h1>CRATEBOX</h1>
-    <p>Two decks, a mixer and your music folder, mapped to the Pioneer DDJ-FLX4.</p>
-    <p id="startMidi">Plug in the FLX4 first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
+    <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
+    <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
     <button id="startBtn">Start</button>
   </div>
@@ -418,7 +446,7 @@ const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform 
 const CAN_PICK_FOLDER = !!window.showDirectoryPicker;
 const CAN_ROUTE = typeof AudioContext !== "undefined" && "setSinkId" in AudioContext.prototype;
 const HAS_MIDI = !!navigator.requestMIDIAccess;
-const EMPTY_DECK_HINT = HAS_MIDI ? "Drop a file here, or press LOAD on the FLX4" : "Pick a track below and tap Load";
+const EMPTY_DECK_HINT = HAS_MIDI ? "Drop a file here, or press LOAD on your controller" : "Pick a track below and tap Load";
 document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)").matches || IOS);
 document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
 // phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
@@ -2780,8 +2808,124 @@ function drawMeter(cv, level) {
 // =====================================================================================
 //  FLX4 MIDI: input map from Pioneer's message list (as used by Mixxx), LEDs, keep-alive
 // =====================================================================================
-const MIDI = { access: null, inputs: [], outputs: [], sysex: false, ledCache: new Map(), msb: new Map(), keep: null, log: [], name: "" };
-const isFLX4 = (p) => /FLX4|DDJ/i.test(p.name || "");
+// =====================================================================================
+//  Controllers: Pioneer DJ / AlphaTheta profiles, a table-driven MIDI engine, MIDI learn
+// =====================================================================================
+// A mapping entry is [status, data1, action, deck, lsb]: status/data1 of the message (note-offs
+// are treated as their note-on), the Cratebox action, the deck (0/1, -1 = global) and, for 14-bit
+// controls, the data1 of the LSB message (0 if none).
+// Actions: play playCue cue start sync syncOn range touch jogTop jogSide jogSearch tempo
+//   loopIn loopOut reloop reloopStop loopHalf loopDouble callPrev callNext jump:N pfl quant keylock
+//   mode:M hot:I hotClear:I loop:SIZE load fader trim hi mid low cfx xfader headMix master
+//   browse browsePress browseShift browseUp browseDown zoom unsupported:WHAT
+
+// generated by tools/mixxx2cratebox.py from Mixxx's controller mappings (mixxx.org)
+const MIXXX_MAPS = {"ddj-400":[[182,64,"browse",-1,0],[150,65,"browsePress",-1,0],[150,70,"load",0,0],[150,71,"load",1,0],[144,11,"play",0,0],[145,11,"play",1,0],[144,12,"cue",0,0],[145,12,"cue",1,0],[176,34,"jogTop",0,0],[176,35,"jogTop",0,0],[176,41,"jogSearch",0,0],[144,54,"touch",0,0],[144,103,"touch",0,0],[176,33,"jogSide",0,0],[177,34,"jogTop",1,0],[177,35,"jogTop",1,0],[177,41,"jogSearch",1,0],[145,54,"touch",1,0],[145,103,"touch",1,0],[177,33,"jogSide",1,0],[176,0,"tempo",0,32],[177,0,"tempo",1,32],[144,88,"sync",0,0],[144,92,"syncOn",0,0],[144,96,"range",0,0],[145,88,"sync",1,0],[145,92,"syncOn",1,0],[145,96,"range",1,0],[144,16,"loopIn",0,0],[145,16,"loopIn",1,0],[144,17,"loopOut",0,0],[145,17,"loopOut",1,0],[144,77,"reloop",0,0],[145,77,"reloop",1,0],[144,80,"reloopStop",0,0],[145,80,"reloopStop",1,0],[144,81,"callPrev",0,0],[144,62,"jump:-4",0,0],[145,81,"callPrev",1,0],[145,62,"jump:-4",1,0],[144,83,"callNext",0,0],[144,61,"jump:4",0,0],[145,83,"callNext",1,0],[145,61,"jump:4",1,0],[182,31,"xfader",-1,63],[176,19,"fader",0,51],[177,19,"fader",1,51],[144,104,"quant",0,0],[145,104,"quant",1,0],[176,4,"trim",0,36],[177,4,"trim",1,36],[176,7,"hi",0,39],[176,11,"mid",0,43],[176,15,"low",0,47],[177,7,"hi",1,39],[177,11,"mid",1,43],[177,15,"low",1,47],[144,84,"pfl",0,0],[145,84,"pfl",1,0],[182,23,"cfx",0,55],[182,24,"cfx",1,56],[151,0,"hot:0",0,0],[152,0,"hotClear:0",0,0],[153,0,"hot:0",1,0],[154,0,"hotClear:0",1,0],[151,1,"hot:1",0,0],[152,1,"hotClear:1",0,0],[153,1,"hot:1",1,0],[154,1,"hotClear:1",1,0],[151,2,"hot:2",0,0],[152,2,"hotClear:2",0,0],[153,2,"hot:2",1,0],[154,2,"hotClear:2",1,0],[151,3,"hot:3",0,0],[152,3,"hotClear:3",0,0],[153,3,"hot:3",1,0],[154,3,"hotClear:3",1,0],[151,4,"hot:4",0,0],[152,4,"hotClear:4",0,0],[153,4,"hot:4",1,0],[154,4,"hotClear:4",1,0],[151,5,"hot:5",0,0],[152,5,"hotClear:5",0,0],[153,5,"hot:5",1,0],[154,5,"hotClear:5",1,0],[151,6,"hot:6",0,0],[152,6,"hotClear:6",0,0],[153,6,"hot:6",1,0],[154,6,"hotClear:6",1,0],[151,7,"hot:7",0,0],[152,7,"hotClear:7",0,0],[153,7,"hot:7",1,0],[154,7,"hotClear:7",1,0],[151,96,"loop:0.25",0,0],[153,96,"loop:0.25",1,0],[151,97,"loop:0.5",0,0],[153,97,"loop:0.5",1,0],[151,98,"loop:1",0,0],[153,98,"loop:1",1,0],[151,99,"loop:2",0,0],[153,99,"loop:2",1,0],[151,100,"loop:4",0,0],[153,100,"loop:4",1,0],[151,101,"loop:8",0,0],[153,101,"loop:8",1,0],[151,102,"loop:16",0,0],[153,102,"loop:16",1,0],[151,103,"loop:32",0,0],[153,103,"loop:32",1,0],[151,32,"jump:-1",0,0],[153,32,"jump:-1",1,0],[151,33,"jump:1",0,0],[153,33,"jump:1",1,0],[151,34,"jump:-2",0,0],[153,34,"jump:-2",1,0],[151,35,"jump:2",0,0],[153,35,"jump:2",1,0],[151,36,"jump:-4",0,0],[153,36,"jump:-4",1,0],[151,37,"jump:4",0,0],[153,37,"jump:4",1,0],[151,38,"jump:-8",0,0],[153,38,"jump:-8",1,0],[151,39,"jump:8",0,0],[153,39,"jump:8",1,0]],"ddj-200":[[182,31,"xfader",-1,63],[150,99,"headMix",-1,0],[144,84,"pfl",0,0],[145,84,"pfl",1,0],[144,88,"sync",0,0],[145,88,"sync",1,0],[177,41,"jogSearch",1,0],[176,41,"jogSearch",0,0],[145,54,"touch",1,0],[144,54,"touch",0,0],[176,15,"low",0,0],[176,11,"mid",0,0],[176,7,"hi",0,0],[182,23,"cfx",0,0],[177,15,"low",1,0],[177,11,"mid",1,0],[177,7,"hi",1,0],[182,24,"cfx",1,0],[176,19,"fader",0,51],[177,19,"fader",1,51],[144,11,"play",0,0],[145,11,"play",1,0],[144,12,"cue",0,0],[145,12,"cue",1,0],[144,72,"start",0,0],[145,72,"start",1,0],[176,0,"tempo",0,32],[177,0,"tempo",1,32],[177,33,"jogSide",1,0],[176,33,"jogSide",0,0],[177,34,"jogTop",1,0],[176,34,"jogTop",0,0]],"ddj-sb":[[144,104,"pfl",0,0],[145,104,"pfl",1,0],[144,103,"touch",0,0],[145,103,"touch",1,0],[144,92,"quant",0,0],[145,92,"quant",1,0],[144,88,"sync",0,0],[145,88,"sync",1,0],[144,84,"pfl",0,0],[151,91,"loop:2",0,0],[151,90,"loop:1",0,0],[145,84,"pfl",1,0],[152,91,"loop:2",1,0],[152,90,"loop:1",1,0],[151,89,"loop:0.5",0,0],[152,89,"loop:0.5",1,0],[151,88,"loop:0.25",0,0],[152,88,"loop:0.25",1,0],[151,83,"loop:2",0,0],[152,83,"loop:2",1,0],[151,82,"loop:1",0,0],[152,82,"loop:1",1,0],[151,81,"loop:0.5",0,0],[152,81,"loop:0.5",1,0],[151,80,"loop:0.25",0,0],[152,80,"loop:0.25",1,0],[151,75,"hotClear:3",0,0],[152,75,"hotClear:3",1,0],[151,74,"hotClear:2",0,0],[152,74,"hotClear:2",1,0],[151,73,"hotClear:1",0,0],[152,73,"hotClear:1",1,0],[151,72,"hotClear:0",0,0],[150,71,"load",1,0],[152,72,"hotClear:0",1,0],[150,70,"load",0,0],[182,100,"browse",-1,0],[151,67,"hot:3",0,0],[152,67,"hot:3",1,0],[151,66,"hot:2",0,0],[150,65,"browsePress",-1,0],[152,66,"hot:2",1,0],[151,65,"hot:1",0,0],[152,65,"hot:1",1,0],[151,64,"hot:0",0,0],[152,64,"hot:0",1,0],[144,54,"touch",0,0],[145,54,"touch",1,0],[144,53,"touch",0,0],[145,53,"touch",1,0],[151,43,"loopDouble",0,0],[152,43,"loopDouble",1,0],[151,41,"jump:4",0,0],[152,41,"jump:4",1,0],[151,40,"jump:-4",0,0],[152,40,"jump:-4",1,0],[151,35,"loopHalf",0,0],[152,35,"loopHalf",1,0],[151,34,"reloop",0,0],[182,64,"browse",-1,0],[152,34,"reloop",1,0],[151,33,"loopOut",0,0],[144,26,"keylock",0,0],[152,33,"loopOut",1,0],[151,32,"loopIn",0,0],[145,26,"keylock",1,0],[152,32,"loopIn",1,0],[151,26,"loop:1",0,0],[151,25,"loop:0.5",0,0],[152,26,"loop:1",1,0],[152,25,"loop:0.5",1,0],[151,24,"loop:0.25",0,0],[152,24,"loop:0.25",1,0],[151,19,"loop:2",0,0],[144,12,"cue",0,0],[152,19,"loop:2",1,0],[151,18,"loop:1",0,0],[145,12,"cue",1,0],[144,11,"play",0,0],[152,18,"loop:1",1,0],[151,17,"loop:0.5",0,0],[145,11,"play",1,0],[152,17,"loop:0.5",1,0],[151,16,"loop:0.25",0,0],[152,16,"loop:0.25",1,0],[176,38,"jogSearch",0,0],[177,38,"jogSearch",1,0],[151,11,"hotClear:3",0,0],[152,11,"hotClear:3",1,0],[151,10,"hotClear:2",0,0],[176,35,"jogTop",0,0],[152,10,"hotClear:2",1,0],[151,9,"hotClear:1",0,0],[177,35,"jogTop",1,0],[176,34,"jogTop",0,0],[152,9,"hotClear:1",1,0],[151,8,"hotClear:0",0,0],[177,34,"jogTop",1,0],[176,33,"jogSide",0,0],[152,8,"hotClear:0",1,0],[177,33,"jogSide",1,0],[176,31,"jogSearch",0,0],[177,31,"jogSearch",1,0],[151,3,"hot:3",0,0],[152,3,"hot:3",1,0],[151,2,"hot:2",0,0],[152,2,"hot:2",1,0],[151,1,"hot:1",0,0],[152,1,"hot:1",1,0],[151,0,"hot:0",0,0],[182,31,"xfader",-1,63],[152,0,"hot:0",1,0],[176,19,"fader",0,51],[182,24,"cfx",1,56],[177,19,"fader",1,51],[182,23,"cfx",0,55],[176,15,"low",0,47],[177,15,"low",1,47],[176,11,"mid",0,43],[177,11,"mid",1,43],[176,7,"hi",0,39],[177,7,"hi",1,39],[176,0,"tempo",0,32],[182,5,"headMix",-1,37],[177,0,"tempo",1,32]],"ddj-sb2":[[144,11,"play",0,0],[145,11,"play",1,0],[146,11,"play",0,0],[147,11,"play",1,0],[144,71,"play",0,0],[145,71,"play",1,0],[146,71,"play",0,0],[147,71,"play",1,0],[144,12,"cue",0,0],[145,12,"cue",1,0],[146,12,"cue",0,0],[147,12,"cue",1,0],[144,72,"cue",0,0],[145,72,"cue",1,0],[146,72,"cue",0,0],[147,72,"cue",1,0],[176,34,"jogTop",0,0],[177,34,"jogTop",1,0],[178,34,"jogTop",0,0],[179,34,"jogTop",1,0],[176,35,"jogTop",0,0],[177,35,"jogTop",1,0],[178,35,"jogTop",0,0],[179,35,"jogTop",1,0],[176,31,"jogSearch",0,0],[177,31,"jogSearch",1,0],[178,31,"jogSearch",0,0],[179,31,"jogSearch",1,0],[144,54,"touch",0,0],[145,54,"touch",1,0],[146,54,"touch",0,0],[147,54,"touch",1,0],[144,53,"touch",0,0],[145,53,"touch",1,0],[146,53,"touch",0,0],[147,53,"touch",1,0],[144,103,"touch",0,0],[145,103,"touch",1,0],[146,103,"touch",0,0],[147,103,"touch",1,0],[176,33,"jogSide",0,0],[177,33,"jogSide",1,0],[178,33,"jogSide",0,0],[179,33,"jogSide",1,0],[176,38,"jogSearch",0,0],[177,38,"jogSearch",1,0],[178,38,"jogSearch",0,0],[179,38,"jogSearch",1,0],[176,0,"tempo",0,32],[177,0,"tempo",1,32],[178,0,"tempo",0,32],[179,0,"tempo",1,32],[176,5,"tempo",0,37],[177,5,"tempo",1,37],[178,5,"tempo",0,37],[179,5,"tempo",1,37],[144,26,"keylock",0,0],[145,26,"keylock",1,0],[146,26,"keylock",0,0],[147,26,"keylock",1,0],[182,31,"xfader",-1,63],[176,19,"fader",0,51],[177,19,"fader",1,51],[178,19,"fader",0,51],[179,19,"fader",1,51],[176,4,"trim",0,36],[177,4,"trim",1,36],[178,4,"trim",0,36],[179,4,"trim",1,36],[176,7,"hi",0,39],[177,7,"hi",1,39],[178,7,"hi",0,39],[179,7,"hi",1,39],[176,11,"mid",0,43],[177,11,"mid",1,43],[178,11,"mid",0,43],[179,11,"mid",1,43],[176,15,"low",0,47],[177,15,"low",1,47],[178,15,"low",0,47],[179,15,"low",1,47],[182,23,"cfx",0,55],[182,24,"cfx",1,56],[182,25,"cfx",0,57],[182,26,"cfx",1,58],[144,84,"pfl",0,0],[145,84,"pfl",1,0],[146,84,"pfl",0,0],[147,84,"pfl",1,0],[182,5,"headMix",-1,37],[182,64,"browse",-1,0],[182,100,"browse",-1,0],[150,70,"load",0,0],[150,72,"load",0,0],[150,71,"load",1,0],[150,73,"load",1,0],[151,0,"hot:0",0,0],[152,0,"hot:0",1,0],[153,0,"hot:0",0,0],[154,0,"hot:0",1,0],[151,8,"hotClear:0",0,0],[152,8,"hotClear:0",1,0],[153,8,"hotClear:0",0,0],[154,8,"hotClear:0",1,0],[151,16,"loop:0.25",0,0],[152,16,"loop:0.25",1,0],[153,16,"loop:0.25",0,0],[154,16,"loop:0.25",1,0],[151,24,"loop:0.25",0,0],[152,24,"loop:0.25",1,0],[153,24,"loop:0.25",0,0],[154,24,"loop:0.25",1,0],[151,32,"loopIn",0,0],[152,32,"loopIn",1,0],[153,32,"loopIn",0,0],[154,32,"loopIn",1,0],[151,40,"jump:-4",0,0],[152,40,"jump:-4",1,0],[153,40,"jump:-4",0,0],[154,40,"jump:-4",1,0],[151,64,"hot:0",0,0],[152,64,"hot:0",1,0],[153,64,"hot:0",0,0],[154,64,"hot:0",1,0],[151,72,"hotClear:0",0,0],[152,72,"hotClear:0",1,0],[153,72,"hotClear:0",0,0],[154,72,"hotClear:0",1,0],[151,80,"loop:0.25",0,0],[152,80,"loop:0.25",1,0],[153,80,"loop:0.25",0,0],[154,80,"loop:0.25",1,0],[151,88,"loop:0.25",0,0],[152,88,"loop:0.25",1,0],[153,88,"loop:0.25",0,0],[154,88,"loop:0.25",1,0],[151,1,"hot:1",0,0],[152,1,"hot:1",1,0],[153,1,"hot:1",0,0],[154,1,"hot:1",1,0],[151,9,"hotClear:1",0,0],[152,9,"hotClear:1",1,0],[153,9,"hotClear:1",0,0],[154,9,"hotClear:1",1,0],[151,17,"loopHalf",0,0],[152,17,"loopHalf",1,0],[153,17,"loopHalf",0,0],[154,17,"loopHalf",1,0],[151,25,"loopHalf",0,0],[152,25,"loopHalf",1,0],[153,25,"loopHalf",0,0],[154,25,"loopHalf",1,0],[151,33,"loopOut",0,0],[152,33,"loopOut",1,0],[153,33,"loopOut",0,0],[154,33,"loopOut",1,0],[151,41,"jump:4",0,0],[152,41,"jump:4",1,0],[153,41,"jump:4",0,0],[154,41,"jump:4",1,0],[151,65,"hot:1",0,0],[152,65,"hot:1",1,0],[153,65,"hot:1",0,0],[154,65,"hot:1",1,0],[151,73,"hotClear:1",0,0],[152,73,"hotClear:1",1,0],[153,73,"hotClear:1",0,0],[154,73,"hotClear:1",1,0],[151,81,"loop:0.5",0,0],[152,81,"loop:0.5",1,0],[153,81,"loop:0.5",0,0],[154,81,"loop:0.5",1,0],[151,89,"loop:0.5",0,0],[152,89,"loop:0.5",1,0],[153,89,"loop:0.5",0,0],[154,89,"loop:0.5",1,0],[151,2,"hot:2",0,0],[152,2,"hot:2",1,0],[153,2,"hot:2",0,0],[154,2,"hot:2",1,0],[151,10,"hotClear:2",0,0],[152,10,"hotClear:2",1,0],[153,10,"hotClear:2",0,0],[154,10,"hotClear:2",1,0],[151,18,"loopDouble",0,0],[152,18,"loopDouble",1,0],[153,18,"loopDouble",0,0],[154,18,"loopDouble",1,0],[151,26,"loopDouble",0,0],[152,26,"loopDouble",1,0],[153,26,"loopDouble",0,0],[154,26,"loopDouble",1,0],[151,34,"reloop",0,0],[152,34,"reloop",1,0],[153,34,"reloop",0,0],[154,34,"reloop",1,0],[151,66,"hot:2",0,0],[152,66,"hot:2",1,0],[153,66,"hot:2",0,0],[154,66,"hot:2",1,0],[151,74,"hotClear:2",0,0],[152,74,"hotClear:2",1,0],[153,74,"hotClear:2",0,0],[154,74,"hotClear:2",1,0],[151,82,"loop:1",0,0],[152,82,"loop:1",1,0],[153,82,"loop:1",0,0],[154,82,"loop:1",1,0],[151,90,"loop:1",0,0],[152,90,"loop:1",1,0],[153,90,"loop:1",0,0],[154,90,"loop:1",1,0],[151,3,"hot:3",0,0],[152,3,"hot:3",1,0],[153,3,"hot:3",0,0],[154,3,"hot:3",1,0],[151,11,"hotClear:3",0,0],[152,11,"hotClear:3",1,0],[153,11,"hotClear:3",0,0],[154,11,"hotClear:3",1,0],[151,19,"reloop",0,0],[152,19,"reloop",1,0],[153,19,"reloop",0,0],[154,19,"reloop",1,0],[151,27,"reloop",0,0],[152,27,"reloop",1,0],[153,27,"reloop",0,0],[154,27,"reloop",1,0],[151,35,"loopHalf",0,0],[152,35,"loopHalf",1,0],[153,35,"loopHalf",0,0],[154,35,"loopHalf",1,0],[151,43,"loopDouble",0,0],[152,43,"loopDouble",1,0],[153,43,"loopDouble",0,0],[154,43,"loopDouble",1,0],[151,67,"hot:3",0,0],[152,67,"hot:3",1,0],[153,67,"hot:3",0,0],[154,67,"hot:3",1,0],[151,75,"hotClear:3",0,0],[152,75,"hotClear:3",1,0],[153,75,"hotClear:3",0,0],[154,75,"hotClear:3",1,0],[151,83,"loop:2",0,0],[152,83,"loop:2",1,0],[153,83,"loop:2",0,0],[154,83,"loop:2",1,0],[151,91,"loop:2",0,0],[152,91,"loop:2",1,0],[153,91,"loop:2",0,0],[154,91,"loop:2",1,0]],"ddj-sb3":[[144,11,"play",0,0],[145,11,"play",1,0],[146,11,"play",0,0],[147,11,"play",1,0],[144,71,"play",0,0],[145,71,"play",1,0],[146,71,"play",0,0],[147,71,"play",1,0],[144,12,"cue",0,0],[145,12,"cue",1,0],[146,12,"cue",0,0],[147,12,"cue",1,0],[144,72,"cue",0,0],[145,72,"cue",1,0],[146,72,"cue",0,0],[147,72,"cue",1,0],[176,34,"jogTop",0,0],[177,34,"jogTop",1,0],[178,34,"jogTop",0,0],[179,34,"jogTop",1,0],[176,35,"jogTop",0,0],[177,35,"jogTop",1,0],[178,35,"jogTop",0,0],[179,35,"jogTop",1,0],[176,31,"jogSearch",0,0],[177,31,"jogSearch",1,0],[178,31,"jogSearch",0,0],[179,31,"jogSearch",1,0],[144,54,"touch",0,0],[145,54,"touch",1,0],[146,54,"touch",0,0],[147,54,"touch",1,0],[144,53,"touch",0,0],[145,53,"touch",1,0],[146,53,"touch",0,0],[147,53,"touch",1,0],[144,103,"touch",0,0],[145,103,"touch",1,0],[146,103,"touch",0,0],[147,103,"touch",1,0],[176,33,"jogSide",0,0],[177,33,"jogSide",1,0],[178,33,"jogSide",0,0],[179,33,"jogSide",1,0],[176,38,"jogSearch",0,0],[177,38,"jogSearch",1,0],[178,38,"jogSearch",0,0],[179,38,"jogSearch",1,0],[176,0,"tempo",0,32],[177,0,"tempo",1,32],[178,0,"tempo",0,32],[179,0,"tempo",1,32],[176,5,"tempo",0,37],[177,5,"tempo",1,37],[178,5,"tempo",0,37],[179,5,"tempo",1,37],[144,26,"keylock",0,0],[145,26,"keylock",1,0],[146,26,"keylock",0,0],[147,26,"keylock",1,0],[176,19,"fader",0,51],[177,19,"fader",1,51],[178,19,"fader",0,51],[179,19,"fader",1,51],[176,4,"trim",0,36],[177,4,"trim",1,36],[178,4,"trim",0,36],[179,4,"trim",1,36],[182,23,"cfx",0,55],[182,24,"cfx",1,56],[182,25,"cfx",0,57],[182,26,"cfx",1,58],[182,64,"browse",-1,0],[182,100,"browse",-1,0],[150,70,"load",0,0],[150,72,"load",0,0],[150,71,"load",1,0],[150,73,"load",1,0],[176,7,"hi",0,39],[177,7,"hi",1,39],[178,7,"hi",0,39],[179,7,"hi",1,39],[176,11,"mid",0,43],[177,11,"mid",1,43],[178,11,"mid",0,43],[179,11,"mid",1,43],[176,15,"low",0,47],[177,15,"low",1,47],[178,15,"low",0,47],[179,15,"low",1,47],[144,84,"pfl",0,0],[145,84,"pfl",1,0],[146,84,"pfl",0,0],[147,84,"pfl",1,0],[144,80,"reloop",0,0],[145,80,"reloop",1,0],[146,80,"reloop",0,0],[147,80,"reloop",1,0],[144,18,"loopHalf",0,0],[145,18,"loopHalf",1,0],[146,18,"loopHalf",0,0],[147,18,"loopHalf",1,0],[144,97,"loopIn",0,0],[145,97,"loopIn",1,0],[146,97,"loopIn",0,0],[147,97,"loopIn",1,0],[144,19,"loopDouble",0,0],[145,19,"loopDouble",1,0],[146,19,"loopDouble",0,0],[147,19,"loopDouble",1,0],[144,98,"loopOut",0,0],[145,98,"loopOut",1,0],[146,98,"loopOut",0,0],[147,98,"loopOut",1,0],[182,31,"xfader",-1,63],[151,72,"jump:-4",0,0],[152,72,"jump:-4",1,0],[153,72,"jump:-4",0,0],[154,72,"jump:-4",1,0],[151,73,"jump:-8",0,0],[152,73,"jump:-8",1,0],[153,73,"jump:-8",0,0],[154,73,"jump:-8",1,0],[151,66,"jump:-4",0,0],[152,66,"jump:-4",1,0],[153,66,"jump:-4",0,0],[154,66,"jump:-4",1,0],[151,74,"jump:-16",0,0],[152,74,"jump:-16",1,0],[153,74,"jump:-16",0,0],[154,74,"jump:-16",1,0],[151,67,"jump:4",0,0],[152,67,"jump:4",1,0],[153,67,"jump:4",0,0],[154,67,"jump:4",1,0],[151,75,"jump:-32",0,0],[152,75,"jump:-32",1,0],[153,75,"jump:-32",0,0],[154,75,"jump:-32",1,0],[151,68,"start",0,0],[152,68,"start",1,0],[153,68,"start",0,0],[154,68,"start",1,0],[151,76,"jump:4",0,0],[152,76,"jump:4",1,0],[153,76,"jump:4",0,0],[154,76,"jump:4",1,0],[151,77,"jump:8",0,0],[152,77,"jump:8",1,0],[153,77,"jump:8",0,0],[154,77,"jump:8",1,0],[151,78,"jump:16",0,0],[152,78,"jump:16",1,0],[153,78,"jump:16",0,0],[154,78,"jump:16",1,0],[151,79,"jump:32",0,0],[152,79,"jump:32",1,0],[153,79,"jump:32",0,0],[154,79,"jump:32",1,0],[151,0,"hot:0",0,0],[152,0,"hot:0",1,0],[153,0,"hot:0",0,0],[154,0,"hot:0",1,0],[151,8,"hotClear:0",0,0],[152,8,"hotClear:0",1,0],[153,8,"hotClear:0",0,0],[154,8,"hotClear:0",1,0],[151,1,"hot:1",0,0],[152,1,"hot:1",1,0],[153,1,"hot:1",0,0],[154,1,"hot:1",1,0],[151,9,"hotClear:1",0,0],[152,9,"hotClear:1",1,0],[153,9,"hotClear:1",0,0],[154,9,"hotClear:1",1,0],[151,2,"hot:2",0,0],[152,2,"hot:2",1,0],[153,2,"hot:2",0,0],[154,2,"hot:2",1,0],[151,10,"hotClear:2",0,0],[152,10,"hotClear:2",1,0],[153,10,"hotClear:2",0,0],[154,10,"hotClear:2",1,0],[151,3,"hot:3",0,0],[152,3,"hot:3",1,0],[153,3,"hot:3",0,0],[154,3,"hot:3",1,0],[151,11,"hotClear:3",0,0],[152,11,"hotClear:3",1,0],[153,11,"hotClear:3",0,0],[154,11,"hotClear:3",1,0],[151,4,"hot:4",0,0],[152,4,"hot:4",1,0],[153,4,"hot:4",0,0],[154,4,"hot:4",1,0],[151,12,"hotClear:4",0,0],[152,12,"hotClear:4",1,0],[153,12,"hotClear:4",0,0],[154,12,"hotClear:4",1,0],[151,5,"hot:5",0,0],[152,5,"hot:5",1,0],[153,5,"hot:5",0,0],[154,5,"hot:5",1,0],[151,13,"hotClear:5",0,0],[152,13,"hotClear:5",1,0],[153,13,"hotClear:5",0,0],[154,13,"hotClear:5",1,0],[151,6,"hot:6",0,0],[152,6,"hot:6",1,0],[153,6,"hot:6",0,0],[154,6,"hot:6",1,0],[151,14,"hotClear:6",0,0],[152,14,"hotClear:6",1,0],[153,14,"hotClear:6",0,0],[154,14,"hotClear:6",1,0],[151,7,"hot:7",0,0],[152,7,"hot:7",1,0],[153,7,"hot:7",0,0],[154,7,"hot:7",1,0],[151,15,"hotClear:7",0,0],[152,15,"hotClear:7",1,0],[153,15,"hotClear:7",0,0],[154,15,"hotClear:7",1,0],[144,27,"mode:hotcue",0,0],[144,105,"mode:beatjump",0,0],[145,27,"mode:hotcue",1,0],[145,105,"mode:beatjump",1,0],[146,27,"mode:hotcue",0,0],[146,105,"mode:beatjump",0,0],[147,27,"mode:hotcue",1,0],[147,105,"mode:beatjump",1,0],[151,80,"loop:0.25",0,0],[152,80,"loop:0.25",1,0],[153,80,"loop:0.25",0,0],[154,80,"loop:0.25",1,0],[151,81,"loop:0.5",0,0],[152,81,"loop:0.5",1,0],[153,81,"loop:0.5",0,0],[154,81,"loop:0.5",1,0],[151,82,"loop:1",0,0],[152,82,"loop:1",1,0],[153,82,"loop:1",0,0],[154,82,"loop:1",1,0],[151,83,"loop:2",0,0],[152,83,"loop:2",1,0],[153,83,"loop:2",0,0],[154,83,"loop:2",1,0],[151,84,"loop:4",0,0],[152,84,"loop:4",1,0],[153,84,"loop:4",0,0],[154,84,"loop:4",1,0],[151,85,"loop:8",0,0],[152,85,"loop:8",1,0],[153,85,"loop:8",0,0],[154,85,"loop:8",1,0],[151,86,"loop:16",0,0],[152,86,"loop:16",1,0],[153,86,"loop:16",0,0],[154,86,"loop:16",1,0],[151,87,"loop:32",0,0],[152,87,"loop:32",1,0],[153,87,"loop:32",0,0],[154,87,"loop:32",1,0]],"ddj-sx":[[182,31,"xfader",-1,63],[182,64,"browse",-1,0],[150,65,"browsePress",-1,0],[176,19,"fader",0,51],[182,23,"cfx",0,55],[176,15,"low",0,47],[176,11,"mid",0,43],[176,7,"hi",0,39],[176,4,"trim",0,36],[150,70,"load",0,0],[144,84,"pfl",0,0],[144,11,"play",0,0],[144,71,"playCue",0,0],[144,12,"cue",0,0],[144,72,"start",0,0],[176,0,"tempo",0,32],[144,53,"touch",0,0],[144,54,"touch",0,0],[144,103,"touch",0,0],[176,35,"jogTop",0,0],[176,34,"jogTop",0,0],[176,31,"jogSearch",0,0],[176,33,"jogSide",0,0],[176,38,"jogSearch",0,0],[144,26,"keylock",0,0],[144,80,"reloop",0,0],[144,18,"loopHalf",0,0],[144,19,"loopDouble",0,0],[144,98,"jump:4",0,0],[144,97,"jump:-4",0,0],[144,16,"loopIn",0,0],[144,76,"loopIn",0,0],[144,17,"loopOut",0,0],[144,77,"reloop",0,0],[144,92,"quant",0,0],[144,88,"sync",0,0],[151,0,"hot:0",0,0],[151,1,"hot:1",0,0],[151,2,"hot:2",0,0],[151,3,"hot:3",0,0],[151,4,"hot:4",0,0],[151,5,"hot:5",0,0],[151,6,"hot:6",0,0],[151,7,"hot:7",0,0],[151,8,"hotClear:0",0,0],[151,9,"hotClear:1",0,0],[151,10,"hotClear:2",0,0],[151,11,"hotClear:3",0,0],[151,12,"hotClear:4",0,0],[151,13,"hotClear:5",0,0],[151,14,"hotClear:6",0,0],[151,15,"hotClear:7",0,0],[151,16,"loop:0.25",0,0],[151,17,"loop:0.5",0,0],[151,18,"loop:1",0,0],[151,19,"loop:2",0,0],[151,20,"loop:4",0,0],[151,21,"loop:8",0,0],[151,22,"loop:16",0,0],[151,23,"loop:32",0,0],[151,80,"loop:0.25",0,0],[151,81,"loop:0.5",0,0],[151,82,"loop:1",0,0],[151,83,"loop:2",0,0],[151,84,"loop:4",0,0],[151,85,"loop:8",0,0],[151,86,"loop:16",0,0],[151,87,"loop:32",0,0],[144,27,"mode:hotcue",0,0],[144,107,"mode:beatloop",0,0],[177,19,"fader",1,51],[182,24,"cfx",1,56],[177,15,"low",1,47],[177,11,"mid",1,43],[177,7,"hi",1,39],[177,4,"trim",1,36],[150,71,"load",1,0],[145,84,"pfl",1,0],[145,11,"play",1,0],[145,71,"playCue",1,0],[145,12,"cue",1,0],[145,72,"start",1,0],[177,0,"tempo",1,32],[145,53,"touch",1,0],[145,54,"touch",1,0],[145,103,"touch",1,0],[177,35,"jogTop",1,0],[177,34,"jogTop",1,0],[177,31,"jogSearch",1,0],[177,33,"jogSide",1,0],[177,38,"jogSearch",1,0],[145,26,"keylock",1,0],[145,80,"reloop",1,0],[145,18,"loopHalf",1,0],[145,19,"loopDouble",1,0],[145,98,"jump:4",1,0],[145,97,"jump:-4",1,0],[145,16,"loopIn",1,0],[145,76,"loopIn",1,0],[145,17,"loopOut",1,0],[145,77,"reloop",1,0],[145,92,"quant",1,0],[145,88,"sync",1,0],[152,0,"hot:0",1,0],[152,1,"hot:1",1,0],[152,2,"hot:2",1,0],[152,3,"hot:3",1,0],[152,4,"hot:4",1,0],[152,5,"hot:5",1,0],[152,6,"hot:6",1,0],[152,7,"hot:7",1,0],[152,8,"hotClear:0",1,0],[152,9,"hotClear:1",1,0],[152,10,"hotClear:2",1,0],[152,11,"hotClear:3",1,0],[152,12,"hotClear:4",1,0],[152,13,"hotClear:5",1,0],[152,14,"hotClear:6",1,0],[152,15,"hotClear:7",1,0],[152,16,"loop:0.25",1,0],[152,17,"loop:0.5",1,0],[152,18,"loop:1",1,0],[152,19,"loop:2",1,0],[152,20,"loop:4",1,0],[152,21,"loop:8",1,0],[152,22,"loop:16",1,0],[152,23,"loop:32",1,0],[152,80,"loop:0.25",1,0],[152,81,"loop:0.5",1,0],[152,82,"loop:1",1,0],[152,83,"loop:2",1,0],[152,84,"loop:4",1,0],[152,85,"loop:8",1,0],[152,86,"loop:16",1,0],[152,87,"loop:32",1,0],[145,27,"mode:hotcue",1,0],[145,107,"mode:beatloop",1,0],[178,19,"fader",0,51],[182,25,"cfx",0,57],[178,15,"low",0,47],[178,11,"mid",0,43],[178,7,"hi",0,39],[178,4,"trim",0,36],[150,72,"load",0,0],[146,84,"pfl",0,0],[146,11,"play",0,0],[146,71,"playCue",0,0],[146,12,"cue",0,0],[146,72,"start",0,0],[178,0,"tempo",0,32],[146,53,"touch",0,0],[146,54,"touch",0,0],[146,103,"touch",0,0],[178,35,"jogTop",0,0],[178,34,"jogTop",0,0],[178,31,"jogSearch",0,0],[178,33,"jogSide",0,0],[178,38,"jogSearch",0,0],[146,26,"keylock",0,0],[146,80,"reloop",0,0],[146,18,"loopHalf",0,0],[146,19,"loopDouble",0,0],[146,98,"jump:4",0,0],[146,97,"jump:-4",0,0],[146,16,"loopIn",0,0],[146,76,"loopIn",0,0],[146,17,"loopOut",0,0],[146,77,"reloop",0,0],[146,92,"quant",0,0],[146,88,"sync",0,0],[153,0,"hot:0",0,0],[153,1,"hot:1",0,0],[153,2,"hot:2",0,0],[153,3,"hot:3",0,0],[153,4,"hot:4",0,0],[153,5,"hot:5",0,0],[153,6,"hot:6",0,0],[153,7,"hot:7",0,0],[153,8,"hotClear:0",0,0],[153,9,"hotClear:1",0,0],[153,10,"hotClear:2",0,0],[153,11,"hotClear:3",0,0],[153,12,"hotClear:4",0,0],[153,13,"hotClear:5",0,0],[153,14,"hotClear:6",0,0],[153,15,"hotClear:7",0,0],[153,16,"loop:0.25",0,0],[153,17,"loop:0.5",0,0],[153,18,"loop:1",0,0],[153,19,"loop:2",0,0],[153,20,"loop:4",0,0],[153,21,"loop:8",0,0],[153,22,"loop:16",0,0],[153,23,"loop:32",0,0],[153,80,"loop:0.25",0,0],[153,81,"loop:0.5",0,0],[153,82,"loop:1",0,0],[153,83,"loop:2",0,0],[153,84,"loop:4",0,0],[153,85,"loop:8",0,0],[153,86,"loop:16",0,0],[153,87,"loop:32",0,0],[146,27,"mode:hotcue",0,0],[146,107,"mode:beatloop",0,0],[179,19,"fader",1,51],[182,26,"cfx",1,58],[179,15,"low",1,47],[179,11,"mid",1,43],[179,7,"hi",1,39],[179,4,"trim",1,36],[150,73,"load",1,0],[147,84,"pfl",1,0],[147,11,"play",1,0],[147,71,"playCue",1,0],[147,12,"cue",1,0],[147,72,"start",1,0],[179,0,"tempo",1,32],[147,53,"touch",1,0],[147,54,"touch",1,0],[147,103,"touch",1,0],[179,35,"jogTop",1,0],[179,34,"jogTop",1,0],[179,31,"jogSearch",1,0],[179,33,"jogSide",1,0],[179,38,"jogSearch",1,0],[147,26,"keylock",1,0],[147,80,"reloop",1,0],[147,18,"loopHalf",1,0],[147,19,"loopDouble",1,0],[147,98,"jump:4",1,0],[147,97,"jump:-4",1,0],[147,16,"loopIn",1,0],[147,76,"loopIn",1,0],[147,17,"loopOut",1,0],[147,77,"reloop",1,0],[147,92,"quant",1,0],[147,88,"sync",1,0],[154,0,"hot:0",1,0],[154,1,"hot:1",1,0],[154,2,"hot:2",1,0],[154,3,"hot:3",1,0],[154,4,"hot:4",1,0],[154,5,"hot:5",1,0],[154,6,"hot:6",1,0],[154,7,"hot:7",1,0],[154,8,"hotClear:0",1,0],[154,9,"hotClear:1",1,0],[154,10,"hotClear:2",1,0],[154,11,"hotClear:3",1,0],[154,12,"hotClear:4",1,0],[154,13,"hotClear:5",1,0],[154,14,"hotClear:6",1,0],[154,15,"hotClear:7",1,0],[154,16,"loop:0.25",1,0],[154,17,"loop:0.5",1,0],[154,18,"loop:1",1,0],[154,19,"loop:2",1,0],[154,20,"loop:4",1,0],[154,21,"loop:8",1,0],[154,22,"loop:16",1,0],[154,23,"loop:32",1,0],[154,80,"loop:0.25",1,0],[154,81,"loop:0.5",1,0],[154,82,"loop:1",1,0],[154,83,"loop:2",1,0],[154,84,"loop:4",1,0],[154,85,"loop:8",1,0],[154,86,"loop:16",1,0],[154,87,"loop:32",1,0],[147,27,"mode:hotcue",1,0],[147,107,"mode:beatloop",1,0]],"ddj-sx2":[[151,0,"hot:0",0,0],[152,0,"hot:0",1,0],[153,0,"hot:0",0,0],[154,0,"hot:0",1,0],[176,0,"tempo",0,0],[177,0,"tempo",1,0],[178,0,"tempo",0,0],[179,0,"tempo",1,0],[151,1,"hot:1",0,0],[152,1,"hot:1",1,0],[153,1,"hot:1",0,0],[154,1,"hot:1",1,0],[151,2,"hot:2",0,0],[152,2,"hot:2",1,0],[153,2,"hot:2",0,0],[154,2,"hot:2",1,0],[151,3,"hot:3",0,0],[152,3,"hot:3",1,0],[153,3,"hot:3",0,0],[154,3,"hot:3",1,0],[151,4,"hot:4",0,0],[152,4,"hot:4",1,0],[153,4,"hot:4",0,0],[154,4,"hot:4",1,0],[176,4,"trim",0,0],[177,4,"trim",1,0],[178,4,"trim",0,0],[179,4,"trim",1,0],[151,5,"hot:5",0,0],[152,5,"hot:5",1,0],[153,5,"hot:5",0,0],[154,5,"hot:5",1,0],[151,6,"hot:6",0,0],[152,6,"hot:6",1,0],[153,6,"hot:6",0,0],[154,6,"hot:6",1,0],[151,7,"hot:7",0,0],[152,7,"hot:7",1,0],[153,7,"hot:7",0,0],[154,7,"hot:7",1,0],[176,7,"hi",0,0],[177,7,"hi",1,0],[178,7,"hi",0,0],[179,7,"hi",1,0],[151,8,"hotClear:0",0,0],[152,8,"hotClear:0",1,0],[153,8,"hotClear:0",0,0],[154,8,"hotClear:0",1,0],[151,9,"hotClear:1",0,0],[152,9,"hotClear:1",1,0],[153,9,"hotClear:1",0,0],[154,9,"hotClear:1",1,0],[151,10,"hotClear:2",0,0],[152,10,"hotClear:2",1,0],[153,10,"hotClear:2",0,0],[154,10,"hotClear:2",1,0],[144,11,"play",0,0],[145,11,"play",1,0],[146,11,"play",0,0],[147,11,"play",1,0],[151,11,"hotClear:3",0,0],[152,11,"hotClear:3",1,0],[153,11,"hotClear:3",0,0],[154,11,"hotClear:3",1,0],[176,11,"mid",0,0],[177,11,"mid",1,0],[178,11,"mid",0,0],[179,11,"mid",1,0],[144,12,"cue",0,0],[145,12,"cue",1,0],[146,12,"cue",0,0],[147,12,"cue",1,0],[151,12,"hotClear:4",0,0],[152,12,"hotClear:4",1,0],[153,12,"hotClear:4",0,0],[154,12,"hotClear:4",1,0],[151,13,"hotClear:5",0,0],[152,13,"hotClear:5",1,0],[153,13,"hotClear:5",0,0],[154,13,"hotClear:5",1,0],[151,14,"hotClear:6",0,0],[152,14,"hotClear:6",1,0],[153,14,"hotClear:6",0,0],[154,14,"hotClear:6",1,0],[151,15,"hotClear:7",0,0],[152,15,"hotClear:7",1,0],[153,15,"hotClear:7",0,0],[154,15,"hotClear:7",1,0],[176,15,"low",0,0],[177,15,"low",1,0],[178,15,"low",0,0],[179,15,"low",1,0],[144,16,"loopIn",0,0],[145,16,"loopIn",1,0],[146,16,"loopIn",0,0],[147,16,"loopIn",1,0],[144,17,"loopOut",0,0],[145,17,"loopOut",1,0],[146,17,"loopOut",0,0],[147,17,"loopOut",1,0],[144,18,"loopHalf",0,0],[145,18,"loopHalf",1,0],[146,18,"loopHalf",0,0],[147,18,"loopHalf",1,0],[144,19,"loopDouble",0,0],[145,19,"loopDouble",1,0],[146,19,"loopDouble",0,0],[147,19,"loopDouble",1,0],[176,19,"fader",0,0],[177,19,"fader",1,0],[178,19,"fader",0,0],[179,19,"fader",1,0],[182,23,"cfx",0,0],[182,24,"cfx",1,0],[182,25,"cfx",0,0],[144,26,"keylock",0,0],[145,26,"keylock",1,0],[146,26,"keylock",0,0],[147,26,"keylock",1,0],[182,26,"cfx",1,0],[144,27,"mode:hotcue",0,0],[145,27,"mode:hotcue",1,0],[146,27,"mode:hotcue",0,0],[147,27,"mode:hotcue",1,0],[182,31,"xfader",-1,0],[176,33,"jogSide",0,0],[177,33,"jogSide",1,0],[178,33,"jogSide",0,0],[179,33,"jogSide",1,0],[176,34,"jogTop",0,0],[177,34,"jogTop",1,0],[178,34,"jogTop",0,0],[179,34,"jogTop",1,0],[176,35,"jogSearch",0,0],[177,35,"jogSearch",1,0],[178,35,"jogSearch",0,0],[179,35,"jogSearch",1,0],[176,38,"jogSearch",0,0],[177,38,"jogSearch",1,0],[178,38,"jogSearch",0,0],[179,38,"jogSearch",1,0],[144,53,"touch",0,0],[145,53,"touch",1,0],[146,53,"touch",0,0],[147,53,"touch",1,0],[144,54,"touch",0,0],[145,54,"touch",1,0],[146,54,"touch",0,0],[147,54,"touch",1,0],[182,64,"browse",-1,0],[150,65,"browsePress",-1,0],[150,70,"load",0,0],[144,71,"playCue",0,0],[145,71,"playCue",1,0],[146,71,"playCue",0,0],[147,71,"playCue",1,0],[150,71,"load",1,0],[144,72,"start",0,0],[145,72,"start",1,0],[146,72,"start",0,0],[147,72,"start",1,0],[150,72,"load",0,0],[150,73,"load",1,0],[144,77,"reloop",0,0],[145,77,"reloop",1,0],[146,77,"reloop",0,0],[147,77,"reloop",1,0],[144,80,"reloop",0,0],[145,80,"reloop",1,0],[146,80,"reloop",0,0],[147,80,"reloop",1,0],[144,82,"start",0,0],[145,82,"start",1,0],[146,82,"start",0,0],[147,82,"start",1,0],[144,84,"pfl",0,0],[145,84,"pfl",1,0],[146,84,"pfl",0,0],[147,84,"pfl",1,0],[144,96,"range",0,0],[145,96,"range",1,0],[146,96,"range",0,0],[147,96,"range",1,0],[144,97,"jump:-4",0,0],[145,97,"jump:-4",1,0],[146,97,"jump:-4",0,0],[147,97,"jump:-4",1,0],[144,98,"jump:4",0,0],[145,98,"jump:4",1,0],[146,98,"jump:4",0,0],[147,98,"jump:4",1,0],[144,102,"play",0,0],[145,102,"play",1,0],[146,102,"play",0,0],[147,102,"play",1,0],[144,106,"quant",0,0],[145,106,"quant",1,0],[146,106,"quant",0,0],[147,106,"quant",1,0]],"cdj-2000":[[144,51,"load",0,0],[144,1,"cue",0,0],[144,40,"hot:0",0,0],[144,24,"hot:0",0,0],[144,41,"hot:1",0,0],[144,25,"hot:1",0,0],[144,42,"hot:2",0,0],[144,26,"hot:2",0,0],[144,43,"hot:2",0,0],[144,28,"hot:3",0,0],[176,48,"jogSide",0,0],[144,17,"keylock",0,0],[144,11,"loopDouble",0,0],[144,12,"loopHalf",0,0],[144,6,"loopIn",0,0],[144,7,"loopOut",0,0],[144,0,"play",0,0],[176,29,"tempo",0,0],[144,8,"reloop",0,0],[176,16,"jogTop",0,0],[144,32,"touch",0,0],[144,4,"browseDown",-1,0],[144,5,"browseUp",-1,0],[176,79,"browse",-1,0],[145,51,"load",1,0],[145,1,"cue",1,0],[145,40,"hot:0",1,0],[145,24,"hot:0",1,0],[145,41,"hot:1",1,0],[145,25,"hot:1",1,0],[145,42,"hot:2",1,0],[145,26,"hot:2",1,0],[145,43,"hot:2",1,0],[145,28,"hot:3",1,0],[177,48,"jogSide",1,0],[145,17,"keylock",1,0],[145,11,"loopDouble",1,0],[145,12,"loopHalf",1,0],[145,6,"loopIn",1,0],[145,7,"loopOut",1,0],[145,0,"play",1,0],[177,29,"tempo",1,0],[145,8,"reloop",1,0],[177,16,"jogTop",1,0],[145,32,"touch",1,0],[145,4,"browseDown",-1,0],[145,5,"browseUp",-1,0],[177,79,"browse",-1,0]],"cdj-850":[[144,51,"load",0,0],[144,10,"sync",0,0],[144,1,"cue",0,0],[144,40,"hot:0",0,0],[144,24,"hot:0",0,0],[144,41,"hot:1",0,0],[144,25,"hot:1",0,0],[144,42,"hot:2",0,0],[144,26,"hot:2",0,0],[144,43,"hot:3",0,0],[144,28,"hot:3",0,0],[176,48,"jogSide",0,0],[144,17,"keylock",0,0],[144,11,"loopDouble",0,0],[144,12,"loopHalf",0,0],[144,6,"loopIn",0,0],[144,7,"loopOut",0,0],[144,0,"play",0,0],[176,30,"trim",0,0],[176,29,"tempo",0,0],[144,8,"reloop",0,0],[176,16,"jogTop",0,0],[144,32,"touch",0,0],[144,4,"browseDown",-1,0],[144,5,"browseUp",-1,0],[176,79,"browse",-1,0],[145,51,"load",1,0],[145,10,"sync",1,0],[145,1,"cue",1,0],[145,40,"hot:0",1,0],[145,24,"hot:0",1,0],[145,41,"hot:1",1,0],[145,25,"hot:1",1,0],[145,42,"hot:2",1,0],[145,26,"hot:2",1,0],[145,43,"hot:3",1,0],[145,28,"hot:3",1,0],[177,48,"jogSide",1,0],[145,17,"keylock",1,0],[145,11,"loopDouble",1,0],[145,12,"loopHalf",1,0],[145,6,"loopIn",1,0],[145,7,"loopOut",1,0],[145,0,"play",1,0],[177,30,"trim",1,0],[177,29,"tempo",1,0],[145,8,"reloop",1,0],[177,16,"jogTop",1,0],[145,32,"touch",1,0],[145,4,"browseDown",-1,0],[145,5,"browseUp",-1,0],[177,79,"browse",-1,0]],"cdj-350":[[176,16,"jogSide",0,0],[128,22,"loopDouble",0,0],[128,23,"loopHalf",0,0],[144,0,"play",0,0],[144,1,"cue",0,0],[144,38,"sync",0,0],[144,5,"start",0,0],[144,6,"loopIn",0,0],[144,7,"loopOut",0,0],[176,29,"tempo",0,0],[144,8,"reloop",0,0],[128,0,"play",0,0],[128,1,"cue",0,0],[128,38,"sync",0,0],[144,51,"browsePress",-1,0],[144,16,"range",0,0],[144,17,"keylock",0,0],[128,6,"loopIn",0,0],[128,7,"loopOut",0,0],[128,8,"reloop",0,0],[176,79,"browse",-1,0],[144,22,"loopDouble",0,0],[144,23,"loopHalf",0,0],[176,48,"jogSide",0,0],[128,17,"keylock",0,0]],"xdj-rx":[[145,31,"sync",1,0],[144,5,"start",0,0],[144,31,"sync",0,0],[180,18,"fader",1,0],[177,16,"jogTop",1,0],[176,16,"jogTop",0,0],[145,0,"play",1,0],[144,0,"play",0,0],[180,6,"trim",1,0],[145,26,"hot:2",1,0],[144,26,"hot:2",0,0],[145,1,"cue",1,0],[144,1,"cue",0,0],[180,7,"hi",1,0],[145,27,"hot:3",1,0],[180,17,"fader",0,0],[144,27,"hot:3",0,0],[180,70,"pfl",0,0],[180,4,"low",0,0],[145,24,"hot:0",1,0],[144,24,"hot:0",0,0],[180,71,"pfl",1,0],[145,25,"hot:1",1,0],[144,25,"hot:1",0,0],[145,88,"jump:4",1,0],[144,88,"hot:3",0,0],[180,2,"hi",0,0],[177,29,"tempo",1,61],[176,29,"tempo",0,61],[180,3,"mid",0,0],[180,1,"trim",0,0],[145,8,"reloop",1,0],[144,8,"reloop",0,0],[176,79,"browse",-1,0],[177,48,"jogSide",1,0],[176,48,"jogSide",0,0],[145,86,"loop:2",1,0],[145,32,"touch",1,0],[144,86,"loop:2",0,0],[144,32,"touch",0,0],[145,99,"hotClear:0",1,0],[145,87,"jump:4",1,0],[144,87,"loop:4",0,0],[180,11,"xfader",-1,0],[180,8,"mid",1,0],[145,85,"loop:1",1,0],[144,85,"loop:1",0,0],[180,9,"low",1,0],[145,6,"loopIn",1,0],[145,16,"range",1,0],[144,6,"loopIn",0,0],[144,16,"range",0,0],[145,7,"loopOut",1,0],[145,17,"keylock",1,0],[144,7,"loopOut",0,0],[144,17,"keylock",0,0],[145,81,"load",1,0],[144,81,"load",0,0],[145,5,"start",1,0]]};
+
+// The rekordbox-era DDJ layout (DDJ-400, FLX2/4/6/10, 800, 1000...), written out from the FLX4,
+// which it was verified on. deckChs: the MIDI channels the decks use (4-deck units fold 3/4 onto 1/2).
+function ddjRekordboxMap(deckChs = [0, 1], padChs = [[0x97, 0x98], [0x99, 0x9a]]) {
+  const m = [];
+  deckChs.forEach((ch, k) => {
+    const d = k % 2, n = 0x90 + ch, c = 0xb0 + ch;
+    const notes = [[0x0b, "play"], [0x0e, "playCue"], [0x0c, "cue"], [0x48, "start"], [0x58, "sync"], [0x5c, "syncOn"],
+      [0x60, "range"], [0x36, "touch"], [0x67, "touch"], [0x10, "loopIn"], [0x11, "loopOut"], [0x4d, "reloop"],
+      [0x50, "reloopStop"], [0x4c, "loopHalf"], [0x4e, "loopDouble"], [0x51, "callPrev"], [0x53, "callNext"],
+      [0x3e, "jump:-4"], [0x3d, "jump:4"], [0x54, "pfl"], [0x68, "quant"], [0x3f, "ignore"],
+      [0x1b, "mode:hotcue"], [0x6d, "mode:beatloop"], [0x20, "mode:beatjump"], [0x1e, "mode:padfx"],
+      [0x6b, "mode:padfx2"], [0x22, "mode:sampler"], [0x69, "mode:keyboard"], [0x6f, "mode:keyshift"]];
+    for (const [no, a] of notes) m.push([n, no, a, d, 0]);
+    for (const [no, a] of [[0x22, "jogTop"], [0x23, "jogTop"], [0x21, "jogSide"], [0x29, "jogSearch"], [0x02, "ignore"]]) m.push([c, no, a, d, 0]);
+    for (const [no, a] of [[0x00, "tempo"], [0x13, "fader"], [0x04, "trim"], [0x07, "hi"], [0x0b, "mid"], [0x0f, "low"]]) m.push([c, no, a, d, no + 0x20]);
+  });
+  padChs.forEach(([pn, ps], k) => {
+    const d = k % 2;
+    for (let p = 0; p < 8; p++) {
+      m.push([pn, p, `hot:${p}`, d, 0], [ps, p, `hotClear:${p}`, d, 0]);
+      m.push([pn, 0x60 + p, `loop:${LOOP_SIZES[p]}`, d, 0], [ps, 0x60 + p, `loop:${LOOP_SIZES[p]}`, d, 0]);
+      m.push([pn, 0x20 + p, `jump:${JUMPS[p]}`, d, 0]);
+    }
+  });
+  m.push([0x96, 0x46, "load", 0, 0], [0x96, 0x47, "load", 1, 0], [0x96, 0x48, "load", 0, 0], [0x96, 0x49, "load", 1, 0],
+    [0x96, 0x41, "browsePress", -1, 0], [0x96, 0x42, "browseShift", -1, 0],
+    [0xb6, 0x40, "browse", -1, 0], [0xb6, 0x64, "zoom", -1, 0],
+    [0xb6, 0x1f, "xfader", -1, 0x3f], [0xb6, 0x17, "cfx", 0, 0x37], [0xb6, 0x18, "cfx", 1, 0x38], [0xb6, 0x0c, "headMix", -1, 0x2c]);
+  for (const st of [0x94, 0x95]) for (let no = 0; no < 128; no++) m.push([st, no, "unsupported:Beat FX", -1, 0]);
+  return m;
+}
+// Mixxx maps only cover channels 1-2 for some units: copy them onto 3-4 for four-deck hardware
+function withDecks34(map) {
+  const out = map.slice(), have = new Set(map.map((e) => e[0] * 256 + e[1]));
+  for (const e of map) {
+    const t = e[0] & 0xf0, ch = e[0] & 0x0f;
+    if ((t === 0x90 || t === 0xb0) && ch <= 1) {
+      const st = e[0] + 2;
+      if (!have.has(st * 256 + e[1])) out.push([st, e[1], e[2], e[3], e[4]]);
+    }
+  }
+  return out;
+}
+const FLX4_KEEPALIVE = [0xf0, 0x00, 0x40, 0x05, 0x00, 0x00, 0x04, 0x05, 0x00, 0x50, 0x02, 0xf7];
+// src: "tested" = checked on the hardware, "mixxx" = from Mixxx's community mapping for this exact
+// model, "family" = the shared Pioneer layout for that product line (likely right, not verified)
+const PROFILES = [
+  { id: "ddj-flx4", name: "Pioneer DDJ-FLX4", match: /FLX-?4/i, src: "tested", map: ddjRekordboxMap(), keepAlive: FLX4_KEEPALIVE, vu: true },
+  { id: "ddj-400", name: "Pioneer DDJ-400", match: /DDJ-?400/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-400"].concat(ddjRekordboxMap()), vu: true,
+    init: [0xf0, 0x00, 0x40, 0x05, 0x00, 0x00, 0x02, 0x06, 0x00, 0x03, 0x01, 0xf7] },
+  { id: "ddj-200", name: "Pioneer DDJ-200", match: /DDJ-?200/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-200"],
+    init: [0xf0, 0x00, 0x40, 0x05, 0x00, 0x00, 0x02, 0x0a, 0x00, 0x03, 0x01, 0xf7] },
+  { id: "ddj-sb3", name: "Pioneer DDJ-SB3", match: /DDJ-?SB3/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-sb3"], init: [0xf0, 0x00, 0x20, 0x7f, 0x03, 0x01, 0xf7] },
+  { id: "ddj-sb2", name: "Pioneer DDJ-SB2", match: /DDJ-?SB2/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-sb2"] },
+  { id: "ddj-sb", name: "Pioneer DDJ-SB", match: /DDJ-?SB\b/i, src: "mixxx", map: () => withDecks34(MIXXX_MAPS["ddj-sb"]) },
+  { id: "ddj-sx2", name: "Pioneer DDJ-SX2 / SX3", match: /DDJ-?SX[23]/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-sx2"] },
+  { id: "ddj-sx", name: "Pioneer DDJ-SX", match: /DDJ-?SX\b/i, src: "mixxx", map: () => MIXXX_MAPS["ddj-sx"] },
+  { id: "xdj-rx", name: "Pioneer XDJ-RX", match: /XDJ-?RX\b(?!2|3)/i, src: "mixxx", map: () => MIXXX_MAPS["xdj-rx"], leds: false },
+  { id: "cdj-2000", name: "Pioneer CDJ-2000 / NXS / NXS2 (MIDI mode)", match: /CDJ-?2000/i, src: "mixxx", map: () => withDecks34(MIXXX_MAPS["cdj-2000"]), leds: false },
+  { id: "cdj-850", name: "Pioneer CDJ-850 / 900 (MIDI mode)", match: /CDJ-?(850|900)/i, src: "mixxx", map: () => withDecks34(MIXXX_MAPS["cdj-850"]), leds: false },
+  { id: "cdj-350", name: "Pioneer CDJ-350 (MIDI mode)", match: /CDJ-?350/i, src: "mixxx", map: () => withDecks34(MIXXX_MAPS["cdj-350"]), leds: false },
+  // product-line fallbacks
+  { id: "ddj-rekordbox", name: "Pioneer DDJ / XDJ, rekordbox series (FLX2, FLX6, FLX10, 800, 1000, GRV6, RB, RR, RX, RZ...)", src: "family",
+    match: /DDJ|FLX|XDJ|OPUS|GRV|AlphaTheta/i, map: ddjRekordboxMap([0, 1, 2, 3], [[0x97, 0x98], [0x99, 0x9a], [0x9b, 0x9c], [0x9d, 0x9e]]) },
+  { id: "ddj-serato", name: "Pioneer DDJ, Serato series (SR, SR2, SZ, SZ2, REV1/5/7, 1000SRT, XP)", src: "family", match: /DDJ-?(SR|SZ|REV|XP|1000SRT)/i, map: () => MIXXX_MAPS["ddj-sx"] },
+  { id: "cdj", name: "Pioneer CDJ / XDJ player (MIDI mode)", src: "family", match: /CDJ|XDJ-?(1000|700)/i, map: () => withDecks34(MIXXX_MAPS["cdj-2000"]), leds: false },
+  { id: "learn", name: "Other controller (map it with MIDI learn)", src: "learn", match: /$^/, map: [] },
+];
+const SRC_NOTE = {
+  tested: "Mapping checked on the hardware.",
+  mixxx: "Mapping from Mixxx's community mapping for this model. Not tested here: if a control is wrong, fix it with Learn.",
+  family: "This model uses the shared Pioneer layout for its product line. The main controls should work; fix anything wrong with Learn.",
+  learn: "No built-in mapping: use Learn to assign controls.",
+};
+const PIONEERISH = /DDJ|FLX|CDJ|XDJ|DJM|OPUS|GRV|Pioneer|AlphaTheta/i;
+function profileFor(portName) {
+  // specific models first, then the product-line fallbacks (in list order)
+  return PROFILES.find((p) => p.src !== "family" && p.match.test(portName))
+    || PROFILES.filter((p) => p.src === "family").reverse().find((p) => p.match.test(portName))
+    || PROFILES.find((p) => p.id === "learn");
+}
+
+const MIDI = { access: null, inputs: [], outputs: [], sysex: false, ledCache: new Map(), msb: new Map(), keep: null, log: [], name: "",
+  profile: null, table: new Map(), lsbTable: new Map(), ledEntries: [], learned: [], learning: null };
+const midiKey = (st, d1) => (((st & 0xf0) === 0x80 ? 0x90 | (st & 0x0f) : st) << 8) | d1;
+function learnedKey(p) { return `cb.learn.${p.id}`; }
+function useProfile(p, portName) {
+  if (typeof p === "string") p = PROFILES.find((x) => x.id === p) || profileFor(p);
+  MIDI.profile = p;
+  let learned = [];
+  try { learned = JSON.parse(localStorage.getItem(learnedKey(p)) || "[]"); } catch (e) {}
+  MIDI.learned = learned;
+  const base = typeof p.map === "function" ? p.map() : p.map;
+  MIDI.table.clear(); MIDI.lsbTable.clear(); MIDI.msb.clear(); MIDI.ledCache.clear();
+  // learned entries win; earlier entries in a profile win over later ones
+  for (const e of learned.concat(base)) {
+    const k = midiKey(e[0], e[1]);
+    if (!MIDI.table.has(k)) MIDI.table.set(k, e);
+    if (e[4]) { const lk = midiKey(e[0], e[4]); if (!MIDI.lsbTable.has(lk)) MIDI.lsbTable.set(lk, e); }
+  }
+  MIDI.ledEntries = p.leds === false && !learned.length ? [] : [...MIDI.table.values()].filter((e) => (e[0] & 0xf0) === 0x90 && LED_ACTIONS.test(e[2]));
+  renderControllerPanel();
+  return p;
+}
 async function initMIDI() {
   if (!navigator.requestMIDIAccess) { setMidiPill(false, IOS ? "Touch mode" : "Web MIDI needs Chrome or Edge"); return; }
   try { MIDI.access = await navigator.requestMIDIAccess({ sysex: true }); MIDI.sysex = true; }
@@ -2794,25 +2938,28 @@ async function initMIDI() {
 }
 function bindMIDI() {
   for (const inp of MIDI.inputs) inp.onmidimessage = null;
-  MIDI.inputs = [...MIDI.access.inputs.values()].filter(isFLX4);
-  MIDI.outputs = [...MIDI.access.outputs.values()].filter(isFLX4);
-  if (!MIDI.inputs.length) {
-    const any = [...MIDI.access.inputs.values()];
-    setMidiPill(false, any.length ? `No FLX4 (found: ${any.map((p) => p.name).join(", ")})` : "No controller");
-    return;
-  }
-  for (const inp of MIDI.inputs) inp.onmidimessage = (e) => midiIn(e.data);
-  MIDI.name = MIDI.inputs[0].name;
-  setMidiPill(true, MIDI.name + (MIDI.sysex ? "" : " (lights may sleep)"));
-  MIDI.ledCache.clear();
+  const all = [...MIDI.access.inputs.values()];
+  // a chosen device, else the first Pioneer/AlphaTheta one, else any controller at all
+  const want = pref("cb.midiIn", "");
+  const inp = all.find((p) => p.name === want) || all.find((p) => PIONEERISH.test(p.name)) || all[0];
+  renderControllerPanel(all);
+  if (!inp) { setMidiPill(false, "No controller"); MIDI.inputs = []; MIDI.outputs = []; return; }
+  MIDI.inputs = [inp];
+  const base = inp.name.replace(/\s*(MIDI|IN|OUT|\d+)\s*$/gi, "");
+  MIDI.outputs = [...MIDI.access.outputs.values()].filter((o) => o.name === inp.name || (base && o.name.startsWith(base)));
+  inp.onmidimessage = (e) => midiIn(e.data);
+  MIDI.name = inp.name;
+  const forced = pref(`cb.profileFor.${inp.name}`, "");
+  const p = useProfile(PROFILES.find((x) => x.id === forced) || profileFor(inp.name), inp.name);
+  setMidiPill(true, MIDI.name + (MIDI.sysex || !p.keepAlive ? "" : " (lights may sleep)"));
   clearInterval(MIDI.keep);
-  if (MIDI.sysex) {
+  if (MIDI.sysex && p.init) midiSend(p.init);
+  if (MIDI.sysex && p.keepAlive) {
     // the FLX4 drops into demo-light mode unless the software checks in every so often
-    const ka = [0xf0, 0x00, 0x40, 0x05, 0x00, 0x00, 0x04, 0x05, 0x00, 0x50, 0x02, 0xf7];
-    MIDI.keep = setInterval(() => midiSend(ka), 200);
-    midiSend(ka);
+    MIDI.keep = setInterval(() => midiSend(p.keepAlive), 200);
+    midiSend(p.keepAlive);
   }
-  status(`${MIDI.name} connected`);
+  status(`${MIDI.name} connected · ${p.name}${p.src === "tested" ? "" : " (see Settings → Controller)"}`);
 }
 function setMidiPill(on, text) {
   const p = $("#midiPill");
@@ -2831,142 +2978,251 @@ function led(statusByte, note, on) {
   midiSend([statusByte, note, v]);
 }
 function relTicks(v) { return v - 64; }                 // jog wheels: centre 64, <64 backwards
-function relKnob(v) { return v < 64 ? v : v - 128; }    // browse knob: 1 = clockwise, 127 = anticlockwise
+function relKnob(v) { return v < 64 ? v : v - 128; }    // browse knobs: 1 = clockwise, 127 = anticlockwise
 
 function midiIn(data) {
   const [st, d1, d2 = 0] = data;
-  const type = st & 0xf0, ch = st & 0x0f;
-  if (type === 0x90 || type === 0x80) noteIn(ch, d1, type === 0x90 && d2 > 0);
-  else if (type === 0xb0) ccIn(ch, d1, d2);
+  const type = st & 0xf0;
+  if (type !== 0x90 && type !== 0x80 && type !== 0xb0) return;
+  if (MIDI.learning) return learnCapture(st, d1, d2);
+  const k = midiKey(st, d1);
+  const e = MIDI.table.get(k);
+  if (e) return runEntry(e, type, d2, false);
+  const l = MIDI.lsbTable.get(k);
+  if (l && type === 0xb0) return runEntry(l, type, d2, true);
 }
 
-const PAD_MODE_NOTES = { 0x1b: "hotcue", 0x6d: "beatloop", 0x20: "beatjump", 0x1e: "padfx", 0x6b: "padfx2", 0x22: "sampler", 0x69: "keyboard", 0x6f: "keyshift" };
-const syncHeld = [0, 0];
-function noteIn(ch, n, on) {
-  if (ch <= 1) {
-    const d = decks[ch];
-    switch (n) {
-      case 0x0b: if (on) d.togglePlay(); return;                       // PLAY/PAUSE
-      case 0x0e: if (on) { d.seek(d.cue); d.setPlaying(true); } return; // SHIFT+PLAY: play from cue
-      case 0x0c: on ? d.cueDown() : d.cueUp(); return;                   // CUE
-      case 0x48: if (on) { d.setPlaying(false); d.seek(0); } return;    // SHIFT+CUE: back to start
-      case 0x58: if (on) d.setSync(!d.sync); return;                     // BEAT SYNC
-      case 0x5c: if (on && !d.sync) d.setSync(true); return;             // long press: sync on
-      case 0x60: if (on) d.cycleRange(); return;                         // SHIFT+SYNC: tempo range
-      case 0x36: case 0x67: d.jogTouch(on); return;                      // jog top touched
-      case 0x10:                                                          // LOOP IN (hold for 4-beat loop)
-        if (on) { d.loopInDown = performance.now(); d.loopIn(); }
-        else if (d.loopInDown && performance.now() - d.loopInDown > 500) d.beatLoop(4);
-        return;
-      case 0x11: if (on) d.loopOut(); return;                            // LOOP OUT
-      case 0x4d: if (on) d.reloopExit(); return;                         // RELOOP/EXIT
-      case 0x50: if (on) { d.reloopExit(); if (d.loop.on) d.setPlaying(false); } return;
-      case 0x4c: if (on) d.loopScale(0.5); return;                       // SHIFT+IN: halve
-      case 0x4e: if (on) d.loopScale(2); return;                         // SHIFT+OUT: double
-      case 0x51: if (on) d.callCue(-1); return;                          // CUE/LOOP CALL left
-      case 0x53: if (on) d.callCue(1); return;                           // CUE/LOOP CALL right
-      case 0x3e: if (on) d.beatJump(-4); return;                         // SHIFT+CALL: jump a bar
-      case 0x3d: if (on) d.beatJump(4); return;
-      case 0x54: if (on) { M.pfl[ch] = !M.pfl[ch]; applyMixer(ch); refreshMixerUI(); } return;   // headphone CUE
-      case 0x68: if (on) { d.quant = !d.quant; refreshDeckUI(ch); } return;
-      case 0x3f: return;                                                  // SHIFT (the FLX4 sends shifted notes itself)
+const ABS_ACTIONS = new Set(["tempo", "fader", "trim", "hi", "mid", "low", "cfx", "xfader", "headMix", "master"]);
+const REL_ACTIONS = new Set(["jogTop", "jogSide", "jogSearch", "browse", "zoom"]);
+const LED_ACTIONS = /^(play|cue|sync|pfl|loopIn|loopOut|reloop|keylock|quant|mode:|hot:|loop:)/;
+const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump"]);
+function runEntry(e, type, v, isLsb) {
+  const [, , action, deck, lsb] = e;
+  const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = colon < 0 ? "" : action.slice(colon + 1);
+  const d = deck >= 0 ? decks[deck] : null;
+  if (type === 0xb0 && ABS_ACTIONS.has(name)) {
+    let val;
+    if (!lsb) val = v / 127;
+    else if (!isLsb) { MIDI.msb.set(e, v); val = v / 127; }       // apply the MSB straight away, refine on the LSB
+    else val = (((MIDI.msb.get(e) || 0) << 7) | v) / 16383;
+    return setAbs(name, deck, val);
+  }
+  if (REL_ACTIONS.has(name)) {
+    if (type !== 0xb0) return;
+    switch (name) {
+      case "jogTop": return d.jogTicks(relTicks(v), "scratch");
+      case "jogSide": return d.jogTicks(relTicks(v), "bend");
+      case "jogSearch": return d.jogTicks(relTicks(v), "search");
+      case "browse": return moveSel(relKnob(v));
+      case "zoom": zoomSecs = clamp(zoomSecs * (relKnob(v) > 0 ? 0.8 : 1.25), 2, 32); return;
     }
-    if (n in PAD_MODE_NOTES && on) {
-      const m = PAD_MODE_NOTES[n];
-      if (m === "hotcue" || m === "beatloop" || m === "beatjump") { d.padMode = m; refreshDeckUI(ch); }
-      else status(`Pad mode "${m}" isn't in Cratebox yet`);
-    }
-    return;
   }
-  if (ch === 6) {
-    if (!on) return;
-    if (n === 0x46) return loadSelected(0);                              // LOAD deck 1
-    if (n === 0x47) return loadSelected(1);                              // LOAD deck 2
-    if (n === 0x41) { $("#search").focus(); return; }                    // browse press
-    if (n === 0x42) return setBrowse(!document.body.classList.contains("browse"));   // SHIFT + browse press
-    return;
-  }
-  if (ch >= 7 && ch <= 10) {
-    // performance pads: 0x97/0x98 = deck 1 (normal/shift), 0x99/0x9A = deck 2
-    if (!on) return;
-    const deck = ch <= 8 ? 0 : 1, shift = ch === 8 || ch === 10, d = decks[deck];
-    const base = n & 0xf8, p = n & 0x07;
-    if (base === 0x00) shift ? d.clearHot(p) : d.hotcue(p);
-    else if (base === 0x60) d.beatLoop(LOOP_SIZES[p]);
-    else if (base === 0x20) d.beatJump(JUMPS[p]);
-    else status("That pad mode isn't in Cratebox yet");
-    return;
-  }
-  if (ch === 4 || ch === 5) { if (on) status("Beat FX aren't in Cratebox yet"); }
+  const on = type === 0x90 ? v > 0 : type === 0x80 ? false : v > 63;
+  pressAction(name, arg, d, deck, on);
 }
-
-function hiRes(ch, cc, v) {
-  // 14-bit controls: MSB on cc, LSB on cc + 0x20. Apply the MSB straight away, refine on LSB.
-  const isLsb = cc >= 0x20 && cc < 0x40 && cc !== 0x21 && cc !== 0x22 && cc !== 0x23 && cc !== 0x29;
-  const base = isLsb ? cc - 0x20 : cc, key = ch * 128 + base;
-  if (!isLsb) { MIDI.msb.set(key, v); return { base, val: v / 127 }; }
-  const msb = MIDI.msb.get(key) || 0;
-  return { base, val: ((msb << 7) | v) / 16383 };
+function setAbs(name, deck, val) {
+  switch (name) {
+    case "tempo": { // top = slower, bottom = faster, like a CDJ
+      const pitch = val * 2 - 1;
+      decks[deck].setPitch(pitch); setCtl(`pitch${deck}`, 0.5 - pitch / 2); return;
+    }
+    case "fader": M.fader[deck] = val; applyMixer(deck); setCtl(`fader${deck}`, val); return;
+    case "trim": case "hi": case "mid": case "low": case "cfx":
+      M[name][deck] = val; applyMixer(deck); setCtl(`${name}${deck}`, val); return;
+    case "xfader": M.xfader = val; applyMixer(0); applyMixer(1); setCtl("xfader", val); return;
+    case "headMix": M.headMix = val; applyMaster(); setCtl("headmix", val); return;
+    case "master": M.master = val; applyMaster(); setCtl("master", val); return;
+  }
+}
+function pressAction(name, arg, d, deck, on) {
+  switch (name) {
+    case "play": if (on) d.togglePlay(); return;
+    case "playCue": if (on) { d.seek(d.cue); d.setPlaying(true); } return;
+    case "cue": on ? d.cueDown() : d.cueUp(); return;
+    case "start": if (on) { d.setPlaying(false); d.seek(0); } return;
+    case "sync": if (on) d.setSync(!d.sync); return;
+    case "syncOn": if (on && !d.sync) d.setSync(true); return;
+    case "range": if (on) d.cycleRange(); return;
+    case "touch": d.jogTouch(on); return;
+    case "loopIn":                                               // hold for half a second: 4-beat loop
+      if (on) { d.loopInDown = performance.now(); d.loopIn(); }
+      else if (d.loopInDown && performance.now() - d.loopInDown > 500) d.beatLoop(4);
+      return;
+    case "loopOut": if (on) d.loopOut(); return;
+    case "reloop": if (on) d.reloopExit(); return;
+    case "reloopStop": if (on) { d.reloopExit(); if (d.loop.on) d.setPlaying(false); } return;
+    case "loopHalf": if (on) d.loopScale(0.5); return;
+    case "loopDouble": if (on) d.loopScale(2); return;
+    case "callPrev": if (on) d.callCue(-1); return;
+    case "callNext": if (on) d.callCue(1); return;
+    case "jump": if (on) d.beatJump(+arg); return;
+    case "pfl": if (on) { M.pfl[deck] = !M.pfl[deck]; applyMixer(deck); refreshMixerUI(); } return;
+    case "quant": if (on) { d.quant = !d.quant; refreshDeckUI(deck); } return;
+    case "keylock": if (on) d.setMT(!d.mt); return;
+    case "mode":
+      if (!on) return;
+      if (PAD_MODES_OK.has(arg)) { d.padMode = arg; refreshDeckUI(deck); }
+      else status(`Pad mode "${arg}" isn't in Cratebox yet`);
+      return;
+    case "hot": if (on) d.hotcue(+arg); return;
+    case "hotClear": if (on) d.clearHot(+arg); return;
+    case "loop": if (on) d.beatLoop(+arg); return;
+    case "load": if (on) loadSelected(deck); return;
+    case "browsePress": if (on) $("#search").focus(); return;
+    case "browseShift": if (on) setBrowse(!document.body.classList.contains("browse")); return;
+    case "browseUp": if (on) moveSel(-1); return;
+    case "browseDown": if (on) moveSel(1); return;
+    case "unsupported": if (on) status(`${arg} isn't in Cratebox yet`); return;
+  }
 }
 function setCtl(id, v) { if (widgets[id]) widgets[id].set(v); }
-function ccIn(ch, cc, v) {
-  if (ch <= 1) {
-    const d = decks[ch];
-    if (cc === 0x22) return d.jogTicks(relTicks(v), "scratch");       // platter top (touched)
-    if (cc === 0x23) return d.jogTicks(relTicks(v), "scratch");
-    if (cc === 0x21) return d.jogTicks(relTicks(v), "bend");          // platter side: nudge / cue search
-    if (cc === 0x29) return d.jogTicks(relTicks(v), "search");        // SHIFT + jog: fast search
-    if (cc === 0x02) return;
-    const { base, val } = hiRes(ch, cc, v);
-    switch (base) {
-      case 0x00: { // TEMPO: top = slower, bottom = faster, like a CDJ
-        const pitch = val * 2 - 1;
-        d.setPitch(pitch); setCtl(`pitch${ch}`, 0.5 - pitch / 2); return;
-      }
-      case 0x13: M.fader[ch] = val; applyMixer(ch); setCtl(`fader${ch}`, val); return;
-      case 0x04: M.trim[ch] = val; applyMixer(ch); setCtl(`trim${ch}`, val); return;
-      case 0x07: M.hi[ch] = val; applyMixer(ch); setCtl(`hi${ch}`, val); return;
-      case 0x0b: M.mid[ch] = val; applyMixer(ch); setCtl(`mid${ch}`, val); return;
-      case 0x0f: M.low[ch] = val; applyMixer(ch); setCtl(`low${ch}`, val); return;
-    }
-    return;
-  }
-  if (ch === 6) {
-    if (cc === 0x40) return moveSel(relKnob(v));                       // BROWSE knob
-    if (cc === 0x64) { zoomSecs = clamp(zoomSecs * (relKnob(v) > 0 ? 0.8 : 1.25), 2, 32); return; }
-    const { base, val } = hiRes(ch, cc, v);
-    switch (base) {
-      case 0x1f: M.xfader = val; applyMixer(0); applyMixer(1); setCtl("xfader", val); return;
-      case 0x17: M.cfx[0] = val; applyMixer(0); setCtl("cfx0", val); return;
-      case 0x18: M.cfx[1] = val; applyMixer(1); setCtl("cfx1", val); return;
-      case 0x0c: M.headMix = val; applyMaster(); setCtl("headmix", val); return;
-    }
-  }
-}
 
+// ---- LEDs: Pioneer hardware lights a button when it receives its own note back ----
 let blinkOn = false;
 function updateLeds() {
   if (!MIDI.outputs.length) return;
   blinkOn = performance.now() % 1000 < 500;
-  for (const i of [0, 1]) {
-    const d = decks[i], s = 0x90 + i;
-    const atCue = d.loaded && Math.abs(d.now() - d.cue) < 0.03;
-    led(s, 0x0b, d.playing ? true : d.loaded ? blinkOn : false);       // PLAY blinks when paused
-    led(s, 0x0c, d.loaded && (atCue || d.previewing) ? true : d.loaded && !d.playing ? blinkOn : false);
-    led(s, 0x58, d.sync);
-    led(s, 0x54, M.pfl[i]);
-    led(s, 0x10, d.loop.on || (d.loop.a != null && d.loop.b == null && blinkOn));
-    led(s, 0x11, d.loop.on);
-    led(s, 0x4d, d.loop.b != null);
-    for (const [note, m] of Object.entries(PAD_MODE_NOTES)) led(s, +note, d.padMode === m);
-    const ps = 0x97 + i * 2;
-    for (let p = 0; p < 8; p++) {
-      led(ps, 0x00 + p, d.padMode === "hotcue" && d.hot[p] != null);
-      led(ps, 0x60 + p, d.padMode === "beatloop" && d.loop.on && Math.abs(d.loopBeats() - LOOP_SIZES[p]) < 0.01);
-      led(ps, 0x20 + p, false);
+  for (const e of MIDI.ledEntries) {
+    const [st, no, action, deck] = e;
+    if (deck < 0) continue;
+    const d = decks[deck];
+    const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = action.slice(colon + 1);
+    let v;
+    switch (name) {
+      case "play": v = d.playing ? true : d.loaded ? blinkOn : false; break;            // PLAY blinks when paused
+      case "cue": { const atCue = d.loaded && Math.abs(d.now() - d.cue) < 0.03;
+        v = d.loaded && (atCue || d.previewing) ? true : d.loaded && !d.playing ? blinkOn : false; break; }
+      case "sync": v = d.sync; break;
+      case "pfl": v = M.pfl[deck]; break;
+      case "loopIn": v = d.loop.on || (d.loop.a != null && d.loop.b == null && blinkOn); break;
+      case "loopOut": v = d.loop.on; break;
+      case "reloop": v = d.loop.b != null; break;
+      case "keylock": v = d.mt; break;
+      case "quant": v = d.quant; break;
+      case "mode": v = d.padMode === arg; break;
+      case "hot": v = d.padMode === "hotcue" && d.hot[+arg] != null; break;
+      case "loop": v = d.padMode === "beatloop" && d.loop.on && Math.abs(d.loopBeats() - +arg) < 0.01; break;
+      default: continue;
     }
-    led(0xb0 + i, 0x02, Math.round(meterState[i] * 127));                // channel VU meter
+    led(st, no, v);
   }
+  if (MIDI.profile && MIDI.profile.vu) for (const i of [0, 1]) led(0xb0 + i, 0x02, Math.round(meterState[i] * 127));   // channel VU meters
+}
+
+// ---- MIDI learn: click a control on screen, then move or press it on the controller ----
+// learnable on-screen controls carry data-learn="action" and data-deck
+const LEARN_LABEL = { play: "Play", cue: "Cue", sync: "Sync", loopIn: "Loop in", loopOut: "Loop out", reloop: "Reloop/exit",
+  tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", fader: "Channel fader", trim: "Trim", hi: "EQ high",
+  mid: "EQ mid", low: "EQ low", cfx: "Filter (CFX)", xfader: "Crossfader", headMix: "Cue/master mix", master: "Master level",
+  browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)" };
+function startLearn() {
+  if (!MIDI.profile) useProfile("learn");
+  document.documentElement.classList.add("learning");
+  MIDI.learning = { target: null };
+  $("#learnBar").hidden = false;
+  learnHint("Click a control on screen, then move or press it on the controller.");
+}
+function stopLearn() {
+  document.documentElement.classList.remove("learning");
+  MIDI.learning = null;
+  $("#learnBar").hidden = true;
+  for (const el of document.querySelectorAll(".learn-target")) el.classList.remove("learn-target");
+  renderControllerPanel();
+}
+function learnHint(t) { $("#learnText").textContent = t; }
+function learnPick(el) {
+  for (const x of document.querySelectorAll(".learn-target")) x.classList.remove("learn-target");
+  el.classList.add("learn-target");
+  const action = el.dataset.learn, deck = el.dataset.deck == null ? -1 : +el.dataset.deck;
+  MIDI.learning.target = { action, deck, el, got: {} };
+  const who = (deck >= 0 ? `Deck ${deck + 1} ` : "") + (LEARN_LABEL[action] || (action.startsWith("hot:") ? `Pad ${+action.slice(4) + 1}` : action));
+  learnHint(action === "jog" ? `${who}: touch the top of the platter, then turn it.` : `${who}: now move or press it on the controller.`);
+}
+function learnCapture(st, d1, d2) {
+  const L = MIDI.learning, t = L && L.target;
+  if (!t) return;
+  const type = st & 0xf0, s = type === 0x80 ? 0x90 | (st & 0x0f) : st;
+  if (type === 0x80 || (type === 0x90 && d2 === 0)) return;       // releases
+  let entries = [];
+  if (t.action === "jog") {
+    if (type === 0x90) t.got.touch = [s, d1, "touch", t.deck, 0];
+    else t.got.turn = [s, d1, "jogTop", t.deck, 0];
+    if (!(t.got.touch && t.got.turn)) { learnHint(t.got.touch ? "Got the touch. Now turn the platter." : "Got the turn. Now touch the top of the platter."); return; }
+    entries = [t.got.touch, t.got.turn];
+  } else if (ABS_ACTIONS.has(t.action)) {
+    if (type !== 0xb0) return learnHint("That sent a button press. Move a knob or fader instead.");
+    // Pioneer-style 14-bit pairs: the fine part arrives on CC + 32
+    entries = [[s, d1, t.action, t.deck, d1 < 0x20 ? d1 + 0x20 : 0]];
+  } else if (t.action === "browse") {
+    if (type !== 0xb0) return learnHint("Turn the knob rather than pressing it.");
+    entries = [[s, d1, "browse", -1, 0]];
+  } else {
+    entries = [[s, d1, t.action, t.deck, 0]];
+  }
+  const p = MIDI.profile, keys = new Set(entries.map((e) => midiKey(e[0], e[1])));
+  const targets = new Set(entries.map((e) => `${e[2]}/${e[3]}`));
+  // one control does one thing: drop older learns on the same message or for the same on-screen control
+  MIDI.learned = MIDI.learned.filter((e) => !keys.has(midiKey(e[0], e[1])) && !targets.has(`${e[2]}/${e[3]}`));
+  MIDI.learned.push(...entries);
+  try { localStorage.setItem(learnedKey(p), JSON.stringify(MIDI.learned)); } catch (e) {}
+  const keep = MIDI.learning;
+  useProfile(p);
+  MIDI.learning = keep;
+  const hex = (b) => b.toString(16).toUpperCase().padStart(2, "0");
+  learnHint(`Mapped ${entries.map((e) => `${hex(e[0])} ${hex(e[1])}`).join(" + ")}. Click the next control, or Done.`);
+  t.el.classList.remove("learn-target"); t.el.classList.add("learned-flash");
+  setTimeout(() => t.el.classList.remove("learned-flash"), 700);
+  L.target = null;
+}
+document.addEventListener("pointerdown", (e) => {
+  if (!MIDI.learning) return;
+  const el = e.target.closest("[data-learn]");
+  if (!el) return;
+  e.preventDefault(); e.stopPropagation();
+  learnPick(el);
+}, true);
+document.addEventListener("click", (e) => { if (MIDI.learning && e.target.closest("[data-learn]")) { e.preventDefault(); e.stopPropagation(); } }, true);
+function clearLearned() {
+  const p = MIDI.profile;
+  if (!p) return;
+  try { localStorage.removeItem(learnedKey(p)); } catch (e) {}
+  useProfile(p);
+  status(`Cleared your learned controls for ${p.name}`);
+}
+function exportMapping() {
+  const p = MIDI.profile;
+  if (!p) return;
+  const data = { cratebox: 1, profile: p.id, device: MIDI.name, learned: MIDI.learned };
+  const a = h("a", { href: URL.createObjectURL(new Blob([JSON.stringify(data, null, 1)], { type: "application/json" })), download: `cratebox-${p.id}-mapping.json` });
+  document.body.append(a); a.click(); a.remove();
+}
+async function importMapping(file) {
+  try {
+    const data = JSON.parse(await file.text());
+    if (!Array.isArray(data.learned)) throw new Error("not a Cratebox mapping file");
+    const p = PROFILES.find((x) => x.id === data.profile) || MIDI.profile || PROFILES.find((x) => x.id === "learn");
+    localStorage.setItem(learnedKey(p), JSON.stringify(data.learned.filter((e) => Array.isArray(e) && e.length === 5)));
+    if (MIDI.name) setPref(`cb.profileFor.${MIDI.name}`, p.id);
+    useProfile(p);
+    status(`Imported ${data.learned.length} mapped controls for ${p.name}`);
+  } catch (e) { status(`Couldn't import that mapping: ${e.message}`, 8000); }
+}
+// settings panel section
+function renderControllerPanel(ports) {
+  const box = document.getElementById("ctlPanel");
+  if (!box) return;
+  const p = MIDI.profile;
+  const inSel = $("#ctlIn"), pSel = $("#ctlProfile");
+  if (!ports && !inSel.options.length) inSel.append(h("option", { value: "" }, "No controller connected"));
+  if (ports) {
+    inSel.innerHTML = "";
+    if (!ports.length) inSel.append(h("option", { value: "" }, "No MIDI devices"));
+    for (const port of ports) inSel.append(h("option", { value: port.name }, port.name));
+    inSel.value = MIDI.name || (ports[0] && ports[0].name) || "";
+  }
+  if (!pSel.options.length) for (const x of PROFILES) pSel.append(h("option", { value: x.id }, x.name));
+  if (p) pSel.value = p.id;
+  $("#ctlNote").textContent = p ? SRC_NOTE[p.src] + (MIDI.learned.length ? ` You've mapped ${MIDI.learned.length} control${MIDI.learned.length === 1 ? "" : "s"} yourself.` : "") : "";
 }
 
 // =====================================================================================
@@ -3090,6 +3346,35 @@ $("#cueTest").addEventListener("click", () => {
   status("Beeping in the headphone mix only. Hear it from the speakers too? Then cue isn't separated yet.", 8000);
 });
 
+// which on-screen control MIDI learn should assign when it's clicked
+function tagLearnables() {
+  const tag = (el, action, deck) => { if (!el) return; el.dataset.learn = action; if (deck != null) el.dataset.deck = deck; };
+  for (const i of [0, 1]) {
+    const u = ui[i];
+    tag(u.playBtn, "play", i); tag(u.cueBtn, "cue", i); tag(u.syncBtn, "sync", i);
+    tag(u.inBtn, "loopIn", i); tag(u.outBtn, "loopOut", i); tag(u.reloopBtn, "reloop", i);
+    tag(u.mtBtn, "keylock", i); tag(u.qtag, "quant", i); tag(u.jog, "jog", i); tag(u.pfl, "pfl", i);
+    u.pads.forEach((b, p) => tag(b, `hot:${p}`, i));
+    for (const k of ["fader", "trim", "hi", "mid", "low", "cfx"]) tag(widgets[`${k}${i}`] && widgets[`${k}${i}`].el, k, i);
+    tag(widgets[`pitch${i}`] && widgets[`pitch${i}`].el, "tempo", i);
+  }
+  tag(widgets.xfader && widgets.xfader.el, "xfader", -1);
+  tag(widgets.headmix && widgets.headmix.el, "headMix", -1);
+  tag(widgets.master && widgets.master.el, "master", -1);
+}
+$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; startLearn(); });
+$("#learnDone").addEventListener("click", stopLearn);
+$("#ctlClear").addEventListener("click", clearLearned);
+$("#ctlExport").addEventListener("click", exportMapping);
+$("#ctlImport").addEventListener("click", () => $("#ctlImportFile").click());
+$("#ctlImportFile").addEventListener("change", (e) => { if (e.target.files[0]) importMapping(e.target.files[0]); e.target.value = ""; });
+$("#ctlProfile").addEventListener("change", (e) => {
+  if (MIDI.name) setPref(`cb.profileFor.${MIDI.name}`, e.target.value);
+  const p = useProfile(e.target.value);
+  status(`Mapping: ${p.name}`);
+});
+$("#ctlIn").addEventListener("change", (e) => { setPref("cb.midiIn", e.target.value); if (MIDI.access) bindMIDI(); });
+
 // Phone layout: same controls, rearranged. Loops, beat jump and the grid editor move into a
 // per-deck sheet (⋯), output/headphone options into the settings sheet (⚙).
 function phoneize() {
@@ -3152,6 +3437,8 @@ const deckEls = [buildDeck(0), buildMixer(), buildDeck(1)];
 $("#decks").append(...deckEls);
 $("#masterSlot").append(knob("master", "Master", M.master, (v) => { M.master = v; applyMaster(); }, { size: 30 }));
 if (PHONE) phoneize();
+tagLearnables();
+useProfile("ddj-flx4");
 refreshDeckUI(0); refreshDeckUI(1); refreshMixerUI();
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
@@ -3282,7 +3569,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { decks, M, lib, midiIn, MIDI, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>
