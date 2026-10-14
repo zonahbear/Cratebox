@@ -50,8 +50,9 @@ header { min-width: 0; overflow: hidden; }
 .hbtn { height: 26px; padding: 0 10px; white-space: nowrap; background: var(--raise); border: 1px solid var(--line2); border-radius: 4px; font-size: 12px; }
 
 /* scrolling waveforms */
-#waves { display: grid; grid-template-rows: 74px 74px; gap: 2px; background: #000; border-bottom: 1px solid var(--line); }
-#waves canvas { width: 100%; height: 100%; display: block; }
+#waves { --lane: 74px; display: grid; grid-template-rows: var(--lane) var(--lane); gap: 2px; background: #000; border-bottom: 1px solid var(--line); overflow: hidden; }
+/* fixed heights: a canvas sized "100%" can grow every time it's redrawn on iOS Safari */
+#waves canvas { width: 100%; height: var(--lane); display: block; }
 
 /* decks + mixer */
 #decks { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr); gap: 8px; padding: 8px; background: var(--bg); }
@@ -178,36 +179,158 @@ body.browse #mixer, body.browse .dbody { display: none; }
 #start p { color: var(--muted); line-height: 1.5; margin: 6px 0; }
 #start button { margin-top: 14px; width: 100%; height: 44px; border-radius: 6px; border: 0; background: var(--d0); color: #031321; font-family: var(--f-disp); font-weight: 700; font-size: 18px; letter-spacing: .06em; }
 
+/* ---- phone (landscape-first, sized for iPhone 16 Pro Max: 956 x 440) ---- */
+.phoneonly { display: none !important; }
+html.phone .phoneonly { display: revert !important; }
+html.phone .ptabs.phoneonly { display: inline-flex !important; }
+html.phone .deskonly { display: none !important; }
+html.phone, html.phone body { height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+html.phone #app { min-width: 0; height: 100dvh; display: flex; flex-direction: column;
+  padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
+html.phone header { flex: 0 0 auto; height: 38px; padding: 0 2px; gap: 10px; background: transparent; border: 0; flex-wrap: nowrap; }
+html.phone header > :not(.logo):not(.ptabs):not(.spacer):not(#setOpen):not(#midiPill) { display: none; }
+html.phone .logo { font-size: 18px; }
+html.phone #midiPill { height: 24px; padding: 0 8px; font-size: 11px; }
+.ptabs { display: inline-flex; background: var(--raise); border: 1px solid var(--line2); border-radius: 9px; padding: 2px; gap: 2px; }
+.ptabs button { height: 28px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-family: var(--f-disp); font-weight: 600; font-size: 14px; letter-spacing: .08em; }
+.ptabs button.on { background: var(--line2); color: var(--fg); }
+.iconbtn { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-size: 17px; line-height: 1; }
+html.phone #waves { --lane: 46px; flex: 0 0 auto; border-radius: 8px; border: 0; }
+html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-template-columns: minmax(0, 1fr) 196px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+html.phone #library { flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+html.phone[data-tab="mix"] #library, html.phone[data-tab="lib"] #decks { display: none; }
+html.phone .ltool { height: 44px; flex-wrap: nowrap; gap: 8px; }
+html.phone .ltool > :not(#search):not(#addFolder):not(#removeBtn):not(#progress) { display: none; }
+html.phone #search { flex: 1; width: auto; height: 32px; font-size: 15px; border-radius: 8px; }
+html.phone .ltool .hbtn { height: 32px; border-radius: 8px; font-size: 14px; }
+/* deck cards */
+html.phone .deck { --jog: clamp(64px, calc(100dvh - 304px), 112px); padding: 6px 8px 8px; gap: 5px; border-radius: 10px; grid-template-rows: auto auto auto minmax(0, 1fr); align-content: stretch; }
+html.phone .dhead { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; }
+html.phone .dnum { font-size: 22px; }
+html.phone .dtitle b { font-size: 13px; }
+html.phone .dtitle span { font-size: 11px; }
+html.phone .dbpm b { font-size: 19px; }
+html.phone .dbpm span { font-size: 10px; }
+html.phone .dinfo { gap: 8px; font-size: 11px; flex-wrap: nowrap; overflow: hidden; height: 18px; }
+html.phone .dinfo > :not(.remain):not(.phrasetag):not(.keytag):not(.spacer):not(.mastertag) { display: none; }
+html.phone .dinfo .remain { font-size: 13px; }
+html.phone .phrasetag { font-size: 12px; }
+html.phone .keytag { font-size: 11px; padding: 0 5px; }
+html.phone .overview { height: 22px; border-radius: 4px; }
+html.phone .gridbar { display: none; }
+html.phone .dbody { min-height: 0; align-items: center; gap: 8px; }
+html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px max(var(--jog), 96px) minmax(0, 1fr); grid-template-areas: "pitch jog ctrl"; }
+html.phone .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) max(var(--jog), 96px) 24px; grid-template-areas: "ctrl jog pitch"; }
+html.phone .pitchwrap .slabel, html.phone .pitchwrap .tag { display: none; }
+html.phone .pitchwrap .vslider { height: calc(var(--jog) + 48px) !important; width: 24px; }
+html.phone .jogwrap { gap: 6px; }
+html.phone .jog { width: var(--jog); height: var(--jog); }
+html.phone .transport { gap: 8px; }
+html.phone .round { width: 44px; height: 44px; font-size: 12px; border-width: 2px; }
+html.phone .ctrl { gap: 5px; align-content: center; }
+html.phone .ctrl > .row { display: none; }
+.pbtns { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 4px; }
+.pbtns .sq, .pbtns .tag { height: 28px; padding: 0; font-size: 13px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.pbtns .tag { font-family: var(--f-disp); font-weight: 600; border: 1px solid var(--line2); }
+html.phone .modes button { height: 24px; font-size: 11px; border-radius: 6px; }
+html.phone .pads { gap: 4px; }
+html.phone .pad { height: clamp(28px, calc((100dvh - 320px) / 2), 40px); font-size: 13px; padding: 0; border-radius: 6px; }
+/* mixer: knobs in two columns, faders beside them, crossfader underneath */
+html.phone #mixer { border-radius: 10px; padding: 6px; gap: 2px 4px; grid-template-columns: auto auto 1fr auto auto; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-items: center; }
+html.phone #mixer .strip { display: grid; grid-template-columns: auto; gap: 0; }
+html.phone #mixer .strip .knob { gap: 0; }
+html.phone #mixer .strip .knob svg { width: 26px; height: 26px; }
+html.phone #mixer .strip .slabel { font-size: 8px; letter-spacing: .04em; }
+html.phone #mixer .strip[data-i="0"] { grid-column: 1; grid-row: 1; }
+html.phone #mixer .strip[data-i="1"] { grid-column: 5; grid-row: 1; }
+html.phone #mixer .faders { display: contents; }
+html.phone #mixer .faders > .fcol:first-child { grid-column: 2; grid-row: 1; }
+html.phone #mixer .faders > .fcol:last-child { grid-column: 4; grid-row: 1; }
+html.phone #mixer .faders > .fcol:nth-child(2) { display: none; }
+html.phone #mixer .mcenter { grid-column: 3; grid-row: 1; gap: 4px; }
+html.phone #mixer .mcenter .knob svg { width: 28px; height: 28px; }
+html.phone #mixer .mcenter .slabel { font-size: 8px; }
+html.phone #mixer .vslider { height: clamp(90px, calc(100dvh - 290px), 150px) !important; }
+html.phone #mixer .meter { height: clamp(70px, calc(100dvh - 320px), 120px) !important; width: 6px !important; }
+html.phone .mmeters { display: flex; gap: 3px; align-items: flex-end; }
+html.phone #mixer .cuebtn { width: 40px; height: 22px; font-size: 11px; border-radius: 5px; margin-top: 2px; }
+html.phone #mixer .xfade { grid-column: 1 / -1; grid-row: 2; width: 100%; }
+html.phone #mixer .fcol .slabel { display: none; }
+/* sheets (settings, deck extras) */
+.sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: #000a; }
+.sheet[hidden] { display: none; }
+.sheet .panel { width: min(860px, calc(100vw - 2 * max(12px, env(safe-area-inset-left)))); max-height: 86dvh; overflow: auto; background: var(--panel); border: 1px solid var(--line2); border-bottom: 0; border-radius: 14px 14px 0 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 10px; }
+.sheet h3 { margin: 0; font-family: var(--f-disp); font-size: 18px; letter-spacing: .06em; display: flex; align-items: center; }
+.sheet h3 .spacer { flex: 1; }
+.sheet .row { gap: 8px; }
+.sheet .sq { height: 36px; padding: 0 12px; font-size: 14px; border-radius: 8px; }
+.sheet .gridbar { display: flex !important; background: transparent; border: 0; padding: 0; gap: 6px; }
+.sheet .gridbar > .slabel { display: none; }
+.sheetgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+.sheetgrid .scol { display: grid; gap: 8px; align-content: start; }
+.sheetgrid .row { flex-wrap: wrap; }
+.sheet .gridbar .gbtn { height: 34px; }
+.sheet .bpmin { height: 34px; font-size: 15px; width: 84px; }
+.sheet label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
+.sheet .hsel { height: 36px; font-size: 15px; width: 100%; max-width: none; border-radius: 8px; }
+.sheet .setpanel { position: static; width: auto; box-shadow: none; border: 0; padding: 0; background: transparent; display: grid !important; }
+#toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 44px); transform: translateX(-50%); z-index: 60; max-width: min(560px, 80vw);
+  background: #1f242c; border: 1px solid var(--line2); border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--fg); box-shadow: 0 8px 24px #000b;
+  opacity: 0; pointer-events: none; transition: opacity .2s; }
+#toast.show { opacity: 1; }
+/* library rows on a phone: big and thumb-friendly */
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) 54px 40px 52px 44px 44px; gap: 6px; align-items: center; }
+html.phone #list .trow { padding: 0 10px; border-bottom: 1px solid var(--line); }
+html.phone #list .hdr { height: 26px; padding: 0 10px; }
+.prow .tt { min-width: 0; }
+.prow .tt b { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow .tt span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prow .ld { height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 700; font-size: 15px; }
+.prow .ld[data-d="0"] { color: var(--d0); } .prow .ld[data-d="1"] { color: var(--d1); }
+/* portrait phone: ask for landscape */
+#rotate { display: none; }
+@media (orientation: portrait) {
+  html.phone #rotate { display: flex; position: fixed; inset: 0; z-index: 80; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 30px; }
+  #rotate .ph { width: 64px; height: 110px; border: 3px solid var(--muted); border-radius: 14px; animation: turn 2.4s ease-in-out infinite; }
+  #rotate b { font-family: var(--f-disp); font-size: 22px; letter-spacing: .06em; }
+  #rotate span { color: var(--muted); max-width: 280px; }
+}
+@keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
+#resume { position: fixed; inset: 0; z-index: 90; background: #000c; display: flex; align-items: center; justify-content: center; }
+#resume[hidden] { display: none; }
+#resume button { height: 52px; padding: 0 28px; border-radius: 12px; border: 0; background: var(--d0); color: #031321; font-family: var(--f-disp); font-weight: 700; font-size: 18px; letter-spacing: .06em; }
+
 /* ---- touch screens, iPad and iPhone ---- */
 button, select, .pad, .sq { touch-action: manipulation; }
+.touch * { -webkit-tap-highlight-color: transparent; }
 .touchonly { display: none; }
 .touch .touchonly { display: inline-flex; align-items: center; }
 .touch .ltool .hlabel { display: none; }
 .noroute #outSel, .noroute #chPill, .noroute label[for=outSel], .noroute #hpDev { display: none; }
 #start .warn { color: var(--cue); }
 @media (max-width: 1100px) {
-  body { overflow: auto; }
-  #app { min-width: 0; height: auto; min-height: 100%; grid-template-rows: auto auto auto minmax(320px, auto); }
-  header { flex-wrap: wrap; height: auto; padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); gap: 8px; }
-  header .hlabel { display: none; }
-  #status { flex-basis: 100%; max-width: none; order: 10; }
-  #decks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  #decks > #mixer { grid-column: 1 / -1; grid-row: 2; }
-  .deck[data-i="0"] .dbody { grid-template-columns: 40px 120px minmax(0, 1fr); }
-  .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) 120px 40px; }
-  .jog { width: 120px; height: 120px; }
-  .ltool { flex-wrap: wrap; padding: 6px 10px; height: auto; }
-  #library { grid-template-rows: auto 1fr; }
-  .ltool .hlabel { display: none; }
-  #list { min-height: 300px; }
-  .cols { grid-template-columns: 30px minmax(120px, 3fr) minmax(80px, 2fr) 56px 44px 50px 40px; }
+  html:not(.phone) body { overflow: auto; }
+  html:not(.phone) #app { min-width: 0; height: auto; min-height: 100%; grid-template-rows: auto auto auto minmax(320px, auto); }
+  html:not(.phone) header { flex-wrap: wrap; height: auto; padding: 6px 10px; padding-top: max(6px, env(safe-area-inset-top)); gap: 8px; }
+  html:not(.phone) header .hlabel { display: none; }
+  html:not(.phone) #status { flex-basis: 100%; max-width: none; order: 10; }
+  html:not(.phone) #decks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  html:not(.phone) #decks > #mixer { grid-column: 1 / -1; grid-row: 2; }
+  html:not(.phone) .deck[data-i="0"] .dbody { grid-template-columns: 40px 120px minmax(0, 1fr); }
+  html:not(.phone) .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) 120px 40px; }
+  html:not(.phone) .jog { width: 120px; height: 120px; }
+  html:not(.phone) .ltool { flex-wrap: wrap; padding: 6px 10px; height: auto; }
+  html:not(.phone) #library { grid-template-rows: auto 1fr; }
+  html:not(.phone) .ltool .hlabel { display: none; }
+  html:not(.phone) #list { min-height: 300px; }
+  html:not(.phone) .cols { grid-template-columns: 30px minmax(120px, 3fr) minmax(80px, 2fr) 56px 44px 50px 40px; }
 }
 @media (max-width: 700px) {
-  #decks { grid-template-columns: minmax(0, 1fr); }
-  #decks > #mixer { grid-row: auto; }
-  #waves { grid-template-rows: 60px 60px; }
-  .cols { grid-template-columns: 26px minmax(110px, 3fr) 0 52px 40px 0 30px; }
-  .cols > :nth-child(3), .cols > :nth-child(6) { visibility: hidden; }
+  html:not(.phone) #decks { grid-template-columns: minmax(0, 1fr); }
+  html:not(.phone) #decks > #mixer { grid-row: auto; }
+  html:not(.phone) #waves { --lane: 60px; }
+  html:not(.phone) .cols { grid-template-columns: 26px minmax(110px, 3fr) 0 52px 40px 0 30px; }
+  html:not(.phone) .cols > :nth-child(3), html:not(.phone) .cols > :nth-child(6) { visibility: hidden; }
 }
 </style>
 </head>
@@ -215,6 +338,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
 <div id="app">
   <header>
     <div class="logo">CRATE<span>BOX</span></div>
+    <div class="ptabs phoneonly" role="tablist"><button data-tab="mix" class="on">MIX</button><button data-tab="lib">LIBRARY</button></div>
     <div class="pill" id="midiPill" title="Controller status"><i></i><span>No controller</span></div>
     <label class="hlabel" for="outSel">Output</label>
     <select class="hsel" id="outSel"><option value="">Default output</option></select>
@@ -232,6 +356,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
     <span id="status"></span>
     <span class="spacer"></span>
     <div id="masterSlot"></div>
+    <button class="iconbtn phoneonly" id="setOpen" aria-label="Settings">⚙</button>
   </header>
   <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas></section>
   <section id="decks"></section>
@@ -266,6 +391,11 @@ button, select, .pad, .sq { touch-action: manipulation; }
     <div id="list"></div>
   </section>
 </div>
+<div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><span>Cratebox is laid out for landscape on a phone: both decks and the mixer on one screen.</span></div>
+<div id="toast"></div>
+<div id="resume" hidden><button>Tap to resume audio</button></div>
+<div class="sheet" id="setSheet" hidden><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="setBody"></div></div></div>
+<div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
     <h1>CRATEBOX</h1>
@@ -291,6 +421,10 @@ const HAS_MIDI = !!navigator.requestMIDIAccess;
 const EMPTY_DECK_HINT = HAS_MIDI ? "Drop a file here, or press LOAD on the FLX4" : "Pick a track below and tap Load";
 document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)").matches || IOS);
 document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
+// phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
+const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(screen.width, screen.height) <= 500;
+document.documentElement.classList.toggle("phone", PHONE);
+if (PHONE) document.documentElement.dataset.tab = "mix";
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const dbToGain = (db) => Math.pow(10, db / 20);
 const fmtTime = (s) => {
@@ -304,6 +438,12 @@ function status(msg, ms = 4000) {
   el.textContent = msg;
   clearTimeout(statusTimer);
   if (ms) statusTimer = setTimeout(() => (el.textContent = ""), ms);
+  if (typeof PHONE !== "undefined" && PHONE) {
+    const t = $("#toast");
+    t.textContent = msg; t.classList.toggle("show", !!msg);
+    clearTimeout(status.tt);
+    status.tt = setTimeout(() => t.classList.remove("show"), Math.min(ms || 4000, 5000));
+  }
 }
 function h(tag, attrs = {}, ...kids) {
   const e = document.createElement(tag);
@@ -1905,7 +2045,7 @@ async function runAnalysisQueue() {
 }
 
 // ---- track list (virtualised) ----
-const ROW = 26;
+const ROW = typeof PHONE !== "undefined" && PHONE ? 50 : 26;
 const COLS = [["#", null], ["Title", "title"], ["Artist", "artist"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["Deck", null]];
 function applyView(keepSel) {
   const q = lib.query.toLowerCase();
@@ -1946,8 +2086,8 @@ function renderList(full) {
   const box = $("#list");
   if (full || !listInner) {
     box.innerHTML = "";
-    const hdr = h("div", { class: "hdr cols" });
-    COLS.forEach(([label, key]) => {
+    const hdr = h("div", { class: "hdr " + (PHONE ? "prow" : "cols") });
+    (PHONE ? [["Title", "title"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["", null], ["", null]] : COLS).forEach(([label, key]) => {
       const c = h("div", { class: lib.sort === key && key ? "sorted" : "" }, label + (lib.sort === key && key ? (lib.dir > 0 ? " ▴" : " ▾") : ""));
       if (key) c.onclick = () => { lib.dir = lib.sort === key ? -lib.dir : 1; lib.sort = key; applyView(true); };
       hdr.append(c);
@@ -1970,6 +2110,18 @@ function renderList(full) {
   for (let i = first; i < Math.min(lib.view.length, first + count); i++) {
     const t = lib.view[i];
     const onDeck = decks.findIndex((d) => d.track && d.track.id === t.id);
+    if (PHONE) {
+      const ld = (k) => { const b = h("button", { class: "ld", "data-d": k }, String(k + 1)); b.onclick = (e) => { e.stopPropagation(); lib.sel = i; loadSelected(k); }; return b; };
+      const row = h("div", { class: `trow prow${i === lib.sel ? " sel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}`, style: `top:${i * ROW}px;height:${ROW}px` },
+        h("div", { class: "tt" }, h("b", {}, t.title), h("span", {}, t.artist || "")),
+        h("div", { class: "num" + (t.gridManual ? " manual" : "") }, t.bpm ? t.bpm.toFixed(t.bpm % 1 ? 2 : 0) : t.bpm === 0 ? "?" : "…"),
+        keyCell(t, ref),
+        h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
+        ld(0), ld(1));
+      row.onclick = () => { lib.sel = i; renderList(); };
+      listInner.append(row);
+      continue;
+    }
     const row = h("div", { class: `trow cols${i === lib.sel ? " sel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}`, style: `top:${i * ROW}px`, draggable: "true" },
       h("div", { class: "n" }, String(i + 1)),
       h("div", { class: "t" }, t.title),
@@ -2170,8 +2322,8 @@ function buildDeck(i) {
     gb("×2", "Double the BPM", () => d.setBpm(d.bpm * 2, "doubled")),
     gb("TAP", "Tap along with the beat (4+ taps)", () => d.tap()),
     h("span", { class: "gsep" }),
-    gb("◀", "Slide the grid 5 ms earlier (Shift: 1 ms)", (e) => d.nudgeGrid(e.shiftKey ? -0.001 : -0.005)),
-    gb("▶", "Slide the grid 5 ms later (Shift: 1 ms)", (e) => d.nudgeGrid(e.shiftKey ? 0.001 : 0.005)),
+    gb("◀ 5ms", "Slide the grid 5 ms earlier (Shift: 1 ms)", (e) => d.nudgeGrid(e.shiftKey ? -0.001 : -0.005)),
+    gb("5ms ▶", "Slide the grid 5 ms later (Shift: 1 ms)", (e) => d.nudgeGrid(e.shiftKey ? 0.001 : 0.005)),
     gb("BEAT HERE", "Put the nearest beat line on the playhead (pause on a kick first)", () => d.beatHere()),
     gb("BAR 1 HERE", "Make the playhead the first beat of a bar", () => d.downbeatHere()),
     gb("RESET", "Back to the analysed grid", () => d.resetGrid()));
@@ -2407,6 +2559,7 @@ function drawOverviewBase(i) {
   const d = decks[i], cv = ui[i].overview;
   if (!cv) return;
   const [W, H] = fitCanvas(cv);
+  if (!W || !H) { overviewBase[i] = null; return; }
   const off = document.createElement("canvas");
   off.width = W; off.height = H;
   const g = off.getContext("2d");
@@ -2430,7 +2583,9 @@ function drawOverview(i) {
   const d = decks[i], cv = ui[i].overview;
   const g = cv.getContext("2d");
   const [W, H] = fitCanvas(cv);
+  if (!W || !H) return;
   if (!overviewBase[i] || overviewBase[i].width !== W) drawOverviewBase(i);
+  if (!overviewBase[i]) return;
   g.drawImage(overviewBase[i], 0, 0);
   if (!d.loaded) return;
   const t = d.now(), x = (t / d.duration) * W;
@@ -2453,6 +2608,7 @@ function lanePps(i, W) {
 function drawLane(i) {
   const cv = $("#lane" + i), g = cv.getContext("2d"), d = decks[i];
   const [W, H, dpr] = fitCanvas(cv);
+  if (!W || !H) return;
   g.fillStyle = "#050608"; g.fillRect(0, 0, W, H);
   const mid = H / 2, cx = Math.round(W / 2);
   g.fillStyle = i ? "#ff8a3d" : "#39a7ff";
@@ -2567,7 +2723,7 @@ function drawMeter(cv, level) {
 const MIDI = { access: null, inputs: [], outputs: [], sysex: false, ledCache: new Map(), msb: new Map(), keep: null, log: [], name: "" };
 const isFLX4 = (p) => /FLX4|DDJ/i.test(p.name || "");
 async function initMIDI() {
-  if (!navigator.requestMIDIAccess) { setMidiPill(false, IOS ? "Touch mode (no MIDI on iOS)" : "Web MIDI needs Chrome or Edge"); return; }
+  if (!navigator.requestMIDIAccess) { setMidiPill(false, IOS ? "Touch mode" : "Web MIDI needs Chrome or Edge"); return; }
   try { MIDI.access = await navigator.requestMIDIAccess({ sysex: true }); MIDI.sysex = true; }
   catch (e) {
     try { MIDI.access = await navigator.requestMIDIAccess(); }
@@ -2874,12 +3030,68 @@ $("#cueTest").addEventListener("click", () => {
   status("Beeping in the headphone mix only. Hear it from the speakers too? Then cue isn't separated yet.", 8000);
 });
 
+// Phone layout: same controls, rearranged. Loops, beat jump and the grid editor move into a
+// per-deck sheet (⋯), output/headphone options into the settings sheet (⚙).
+function phoneize() {
+  const openSheet = (id) => { $(id).hidden = false; };
+  for (const sh of document.querySelectorAll(".sheet")) {
+    sh.addEventListener("pointerdown", (e) => { if (e.target === sh || e.target.closest("[data-close]")) sh.hidden = true; });
+  }
+  // tabs
+  for (const b of document.querySelectorAll(".ptabs button")) b.addEventListener("click", () => {
+    document.documentElement.dataset.tab = b.dataset.tab;
+    for (const x of document.querySelectorAll(".ptabs button")) x.classList.toggle("on", x === b);
+    if (b.dataset.tab === "lib") requestAnimationFrame(() => renderList(true));
+  });
+  // settings sheet: headphones, test cue, master level, then the usual settings
+  const body = $("#setBody");
+  const field = (label, ...els) => h("div", { style: "display:grid;gap:6px" }, h("label", {}, label), ...els);
+  $("#masterSlot").querySelector(".knob").style.flexDirection = "row";
+  body.append(
+    field("Headphones", $("#hpSel")),
+    h("div", { class: "row" }, $("#cueTest"), $("#masterSlot")),
+    $("#setPanel"));
+  $("#cueTest").classList.add("sq");
+  $("#setOpen").addEventListener("click", () => openSheet("#setSheet"));
+  // decks
+  for (const i of [0, 1]) {
+    const u = ui[i], d = decks[i], el = document.querySelector(`.deck[data-i="${i}"]`);
+    const ctrl = el.querySelector(".ctrl");
+    const more = h("button", { class: "sq", "aria-label": "More" }, "⋯");
+    more.addEventListener("click", () => {
+      $("#deckSheetTitle").firstChild.textContent = `DECK ${i + 1}`;
+      const db = $("#deckBody"); db.innerHTML = "";
+      db.append(u.sheetParts);
+      u.gridBar.hidden = false;
+      $("#deckSheet").hidden = false;
+    });
+    const btns = h("div", { class: "pbtns" }, u.syncBtn, u.mtBtn, u.qtag, more);
+    ctrl.prepend(btns);
+    // everything else goes into the deck sheet
+    const loopRow = ctrl.querySelector(".row"), jumpRow = ctrl.querySelectorAll(".row")[1];
+    u.sheetParts = h("div", { class: "sheetgrid" },
+      h("div", { class: "scol" }, h("label", {}, "Loop"), loopRow, h("label", {}, "Beat jump"), jumpRow,
+        h("label", {}, "Tempo range"), h("div", { class: "row" }, u.range)),
+      h("div", { class: "scol" }, h("label", {}, "Beat grid"), u.gridBar));
+    u.range.classList.add("sq");
+    loopRow.style.display = jumpRow.style.display = "flex";
+    for (const m of Object.keys(u.modes)) u.modes[m].textContent = { hotcue: "CUES", beatloop: "LOOP", beatjump: "JUMP" }[m];
+  }
+  // mixer: CUE buttons under the faders, channel meters next to the master meter
+  const mx = $("#mixer"), fcols = mx.querySelectorAll(".faders > .fcol");
+  fcols[0].append(ui[0].pfl); fcols[2].append(ui[1].pfl);
+  const mm = h("div", { class: "mmeters" }, ui[0].meter, A.masterMeterCanvas, ui[1].meter);
+  mx.querySelector(".mcenter").append(mm);
+  mx.querySelector(".mcenter > .slabel").remove();
+}
+
 // =====================================================================================
 //  Build UI + main loop
 // =====================================================================================
 const deckEls = [buildDeck(0), buildMixer(), buildDeck(1)];
 $("#decks").append(...deckEls);
 $("#masterSlot").append(knob("master", "Master", M.master, (v) => { M.master = v; applyMaster(); }, { size: 30 }));
+if (PHONE) phoneize();
 refreshDeckUI(0); refreshDeckUI(1); refreshMixerUI();
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
@@ -2894,11 +3106,33 @@ $("#rangeSel").addEventListener("change", (e) => {
 renderList(true);
 
 let lastUi = 0, lastLed = 0;
+// keep the screen on while anything plays, and recover from iOS audio interruptions (calls, Siri)
+let wakeLock = null, wakePending = false;
+function updateWakeLock() {
+  if (!navigator.wakeLock) return;
+  const want = decks.some((d) => d.playing) && document.visibilityState === "visible";
+  if (want && !wakeLock && !wakePending) {
+    wakePending = true;
+    navigator.wakeLock.request("screen").then((l) => { wakeLock = l; l.addEventListener("release", () => { wakeLock = null; }); })
+      .catch(() => {}).finally(() => { wakePending = false; });
+  } else if (!want && wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+function checkAudioAlive() {
+  if (!A.ctx) return;
+  const st = A.ctx.state;
+  $("#resume").hidden = st === "running" || st === "closed";
+}
+$("#resume button").addEventListener("click", () => { if (A.ctx) A.ctx.resume().then(checkAudioAlive, checkAudioAlive); });
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && A.ctx && A.ctx.state !== "running") A.ctx.resume().catch(() => {}).finally(checkAudioAlive);
+  updateWakeLock();
+});
+let lastWake = 0;
 function frame(ts) {
+  if (ts - lastWake > 1000) { lastWake = ts; updateWakeLock(); if (A.ctx) checkAudioAlive(); }
   for (const d of decks) d.syncTick();
-  drawLane(0); drawLane(1);
-  drawOverview(0); drawOverview(1);
-  drawJog(0); drawJog(1);
+  // a drawing hiccup (e.g. a hidden canvas) must never stop the loop
+  for (const f of [drawLane, drawOverview, drawJog]) for (const i of [0, 1]) { try { f(i); } catch (e) {} }
   if (A.ctx) {
     for (const i of [0, 1]) {
       const c = A.decks[i];

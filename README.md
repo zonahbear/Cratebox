@@ -114,6 +114,14 @@ Cratebox runs on iOS by touch. **The FLX4 can't control it there**: every iOS br
 
 What works: both decks, mixer, sync, loops, hot cues (hold a pad to delete one), master tempo, keys, phrases, grid editing. Sound goes to whatever the phone or iPad is plugged into; for headphone cueing use **Split** (master in one ear, cue in the other) with a splitter cable.
 
+**On an iPhone, turn it sideways.** The phone layout is landscape: both waveforms on top, then deck 1, the mixer and deck 2 on one screen with no scrolling (sized for an iPhone 16 Pro Max, and it scales down to smaller iPhones and to Safari with its toolbar showing).
+- **MIX / LIBRARY** tabs at the top. In the library, tap **1** or **2** on a row to load it.
+- **⋯** on a deck: loops, beat jump, tempo range and the grid editor.
+- **⚙**: headphones (Split), test cue, master level, BPM range, waveform style, backspin.
+- The screen stays on while a track plays. If a call or Siri cuts the audio, a **Tap to resume audio** button appears.
+
+An iPad gets the full desktop layout, by touch.
+
 **Getting it onto the phone.** iOS only allows the audio engine on a secure (https) site, so Cratebox needs hosting once. The free, stable way is GitHub Pages:
 
 1. Make a free GitHub account, then a new **public** repository called `cratebox`.
