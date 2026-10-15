@@ -82,6 +82,14 @@ LEDs follow the software: PLAY and CUE blink like a CDJ, pads light for set hot 
 
 Not mapped yet: Beat FX, sampler, Pad FX, key shift, and the SMART CFX/keyboard modes.
 
+## Sync
+
+**SYNC** (or BEAT SYNC on the FLX4) matches tempo and lines up the beats, then keeps them locked.
+
+- **Halftime / double time:** if one track is half or double the other (70 and 140, 65 and 130, 85 and 170), sync leaves its speed alone and locks every beat of the slower one to every other beat of the faster one. The button shows **SYNC ½** or **SYNC ×2**. The master's tempo changes carry it along at half or double.
+- **Beat lock:** while both decks play, Cratebox keeps comparing their beat grids and corrects with a tiny speed change (at most 0.6%), so the mix never drifts. The **±ms** readout next to the key shows how far apart the beats are: green is locked. An offset of more than a quarter beat is left alone on purpose; SYNC off and on re-locks it.
+- If the readout says locked but you still hear the beats slide, that track's beat grid is off. Fix it with **GRID**.
+
 ## Waveforms
 
 - **RGB** (default): colour shows what's playing, rekordbox-style. Red is lows (kicks, sub), green is mids, blue is highs (hats, cymbals); mixes blend (a kick with a click goes orange-white). The lighter core is the average level, the outer edge the peaks. Detail is 300 points per second, drawn pixel by pixel.
@@ -197,4 +205,4 @@ Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work 
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
