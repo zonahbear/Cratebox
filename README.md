@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 0.9.1 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+Version 0.9.2 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
 
 A lightweight two-deck DJ app that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -164,7 +164,11 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 
 ## iPhone and iPad
 
-Cratebox runs on iOS by touch. **The FLX4 can't control it there**: every iOS browser (Chrome included, outside the EU) is Safari underneath, and Safari has no Web MIDI. For the FLX4 on iOS, use rekordbox's own app.
+Cratebox runs on iOS by touch. Safari has no Web MIDI (and every iOS browser is Safari underneath), so **for the FLX4 on an iPhone or iPad, open Cratebox in the free [MIDIWeb Browser](https://apps.apple.com/us/app/midiweb-browser/id6757226617) app** instead, with the FLX4 plugged in through a USB-C cable (or Apple's Lightning to USB 3 Camera Adapter on older phones). Cratebox picks up the Web MIDI that app adds, even if it arrives a moment after the page loads.
+
+- The older *Web MIDI Browser* app hasn't been updated since 2016 and can't pick files, so you can't add music in it; use MIDIWeb Browser.
+- Each app keeps its own storage: tracks added in Safari aren't visible in MIDIWeb Browser. Add your music inside the app you DJ from.
+- The FLX4 takes its power from the phone over USB. If it doesn't show up, try a powered USB-C hub.
 
 What works: both decks, mixer, sync, loops, hot cues (hold a pad to delete one), master tempo, keys, phrases, grid editing. Sound goes to whatever the phone or iPad is plugged into; for headphone cueing use **Split** (master in one ear, cue in the other) with a splitter cable.
 
@@ -207,4 +211,4 @@ Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work 
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given), and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_ios_midi.py` runs an iPhone inside a MIDI browser app (Web MIDI added late, stand-in FLX4), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given), and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.

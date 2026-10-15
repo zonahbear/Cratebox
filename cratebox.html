@@ -230,6 +230,8 @@ body.browse #mixer, body.browse .dbody { display: none; }
 
 /* ---- phone (landscape-first, sized for iPhone 16 Pro Max: 956 x 440) ---- */
 .phoneonly { display: none !important; }
+/* file pickers: invisible but not display:none, which some in-app browsers (iOS MIDI browsers) won't open */
+input.pick { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 html.phone .phoneonly { display: revert !important; }
 html.phone .ptabs.phoneonly { display: inline-flex !important; }
 html.phone .deskonly { display: none !important; }
@@ -250,7 +252,7 @@ html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-templ
 html.phone #library { flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 html.phone[data-tab="mix"] #library, html.phone[data-tab="lib"] #decks { display: none; }
 html.phone .ltool { height: 44px; flex-wrap: nowrap; gap: 8px; }
-html.phone .ltool > :not(#search):not(#addFolder):not(#removeBtn):not(#progress):not(#treeBtn):not(#addToBtn):not(#plRemove):not(#viewName) { display: none; }
+html.phone .ltool > :not(.pick):not(#search):not(#addFolder):not(#removeBtn):not(#progress):not(#treeBtn):not(#addToBtn):not(#plRemove):not(#viewName) { display: none; }
 html.phone #library { grid-template-columns: minmax(0, 1fr); }
 html.phone #tree { display: none; position: absolute; z-index: 15; left: 0; top: 44px; bottom: 0; width: min(320px, 70vw); font-size: 15px; box-shadow: 8px 0 24px #000a; }
 html.phone #library.treeopen #tree { display: block; }
@@ -498,15 +500,15 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
     <div class="ltool">
       <button class="hbtn" id="addFolder">Add music folder</button>
       <button class="hbtn" id="reconnect" hidden>Reconnect saved folder</button>
-      <input type="file" id="folderInput" webkitdirectory multiple hidden>
-      <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" multiple hidden>
+      <input type="file" id="folderInput" webkitdirectory multiple class="pick">
+      <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" multiple class="pick">
       <button class="hbtn phoneonly" id="treeBtn" title="Playlists and devices">☰</button>
       <b id="viewName" title="What the list is showing">Collection</b>
       <button class="hbtn touchonly" id="load1Btn">◀ Load 1</button>
       <button class="hbtn touchonly" id="load2Btn">Load 2 ▶</button>
       <button class="hbtn" id="addToBtn" title="Add the selected tracks to a playlist">Add to ▾</button>
       <button class="hbtn" id="plRemove" hidden title="Remove the selected tracks from this playlist (Delete key)">Remove from list</button>
-      <input type="file" id="xmlInput" accept=".xml,text/xml,application/xml" hidden>
+      <input type="file" id="xmlInput" accept=".xml,text/xml,application/xml" class="pick">
       <button class="hbtn" id="removeBtn" hidden title="Remove the selected imported track from this device">Remove</button>
       <input type="search" id="search" placeholder="Search title or artist">
       <button class="hbtn" id="browseBtn" title="Expand the library over the jogs and mixer (SHIFT + press BROWSE on the FLX4)">Expand library</button>
@@ -525,13 +527,13 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
             <p id="ctlNote" class="ctlnote"></p>
             <div class="ctlrow"><button class="hbtn" id="ctlLearn">Learn…</button><button class="hbtn" id="ctlClear">Clear learned</button>
               <button class="hbtn" id="ctlExport">Export</button><button class="hbtn" id="ctlImport">Import</button>
-              <input type="file" id="ctlImportFile" accept=".json,application/json" hidden></div>
+              <input type="file" id="ctlImportFile" accept=".json,application/json" class="pick"></div>
           </div>
           <label for="spinSel">Backspin <small>spin time after a fling</small></label>
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.1</p>
+          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.2</p>
         </div>
       </div>
       <span id="progress"></span>
@@ -554,7 +556,7 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.1</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.2</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -567,16 +569,25 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "0.9.1";
+const VERSION = "0.9.2";
 const $ = (s, r = document) => r.querySelector(s);
 // what this browser can do: iPhone/iPad Safari (and every iOS browser) has no Web MIDI, no folder
 // access and no output picking, so Cratebox switches to touch controls and imported files there
 const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const CAN_PICK_FOLDER = !!window.showDirectoryPicker;
 const CAN_ROUTE = typeof AudioContext !== "undefined" && "setSinkId" in AudioContext.prototype;
-const HAS_MIDI = !!navigator.requestMIDIAccess;
+// iOS MIDI browser apps (MIDIWeb Browser and the like) add Web MIDI with injected script, sometimes
+// after the page has started, so this is checked again when Start is pressed (waitForMidi)
+let HAS_MIDI = !!navigator.requestMIDIAccess;
 document.documentElement.classList.toggle("nomidi", !HAS_MIDI);
-const EMPTY_DECK_HINT = HAS_MIDI ? "Drop a file here, or press LOAD on your controller" : "Pick a track below and tap Load";
+const emptyDeckHint = () => HAS_MIDI ? "Drop a file here, or press LOAD on your controller" : "Pick a track below and tap Load";
+async function waitForMidi() {
+  for (let k = 0; !navigator.requestMIDIAccess && IOS && k < 15; k++) await new Promise((r) => setTimeout(r, 100));
+  const had = HAS_MIDI;
+  HAS_MIDI = !!navigator.requestMIDIAccess;
+  document.documentElement.classList.toggle("nomidi", !HAS_MIDI);
+  if (had !== HAS_MIDI) for (const i of [0, 1]) if (ui[i] && !decks[i].track) ui[i].artist.textContent = emptyDeckHint();
+}
 document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)").matches || IOS);
 document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
 // phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
@@ -3468,7 +3479,7 @@ function buildDeck(i) {
     }
   });
   u.title = h("b", {}, "No track loaded");
-  u.artist = h("span", {}, EMPTY_DECK_HINT);
+  u.artist = h("span", {}, emptyDeckHint());
   u.bpm = h("b", {}, "--.--");
   u.tempo = h("span", {}, "0.00%  ±6%");
   el.append(h("div", { class: "dhead" }, h("div", { class: "dnum" }, String(i + 1)), h("div", { class: "dtitle" }, u.title, u.artist), h("div", { class: "dbpm" }, u.bpm, u.tempo)));
@@ -3642,7 +3653,7 @@ function refreshDeckUI(i) {
   const d = decks[i], u = ui[i];
   if (!u.title) return;
   u.title.textContent = d.track ? (d.loading ? "Loading… " : "") + d.track.title : "No track loaded";
-  u.artist.textContent = d.track ? d.track.artist || "Unknown artist" : EMPTY_DECK_HINT;
+  u.artist.textContent = d.track ? d.track.artist || "Unknown artist" : emptyDeckHint();
   u.playBtn.classList.toggle("lit", d.playing);
   u.syncBtn.classList.toggle("lit", d.sync);
   u.qtag.classList.toggle("on", d.quant);
@@ -4655,7 +4666,7 @@ window.addEventListener("beforeunload", () => {
   const say = (t) => { note.hidden = false; note.textContent = t; };
   if (!window.isSecureContext) say("This page needs to be opened over https:// (or via the launcher on this computer). Without it the browser blocks the audio engine.");
   if (!HAS_MIDI) $("#startMidi").textContent = IOS
-    ? "iPhone and iPad browsers have no MIDI support, so the FLX4 can't control Cratebox here: everything works by touch. Tip: Share → Add to Home Screen for full screen and to keep your library."
+    ? "Safari (and every iPhone/iPad browser) has no MIDI, so here everything works by touch. To use the FLX4 on an iPhone or iPad, open this page in the free MIDIWeb Browser app from the App Store, with the controller plugged in through a USB-C cable or adapter."
     : "This browser has no Web MIDI, so the FLX4 won't respond. Use Chrome or Edge for the controller; touch and mouse controls still work.";
   if ("serviceWorker" in navigator && window.isSecureContext && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
@@ -4677,7 +4688,7 @@ $("#startBtn").addEventListener("click", async () => {
   restoreDevices();
   restoreFolder();
   restoreImported().then(() => { if (crashMsg) status(crashMsg, 12000); });
-  initMIDI();
+  waitForMidi().then(initMIDI);
   listOutputs();
   navigator.mediaDevices && navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener("devicechange", listOutputs);
   requestAnimationFrame(frame);

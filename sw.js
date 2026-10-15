@@ -1,6 +1,6 @@
 // Cratebox service worker: lets the installed app open with no connection.
 // The app files are fetched fresh when online (so updates show up) and served from the cache offline.
-const CACHE = "cratebox-0.9.1";
+const CACHE = "cratebox-0.9.2";
 const CORE = ["./", "./cratebox.html", "./manifest.webmanifest", "./icon-180.png", "./icon-512.png"];
 const APP_FILE = /\/(cratebox\.html|index\.html|manifest\.webmanifest|icon-\d+\.png)?$/;
 

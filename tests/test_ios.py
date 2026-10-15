@@ -64,7 +64,7 @@ def main():
         page.on("console", lambda m: m.type == "error" and "ERR_TUNNEL" not in m.text and "404" not in m.text and errors.append(m.text))
         page.goto(url)
         start_txt = page.inner_text("#start")
-        check("start screen explains there's no MIDI on iPhone", "no MIDI support" in start_txt)
+        check("start screen explains there's no MIDI in Safari and names a MIDI browser app", "has no MIDI" in start_txt and "MIDIWeb Browser" in start_txt)
         check("phone layout switched on", page.evaluate("document.documentElement.classList.contains('phone')"))
         page.tap("#startBtn")
         page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length === 2")
