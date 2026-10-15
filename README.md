@@ -1,5 +1,7 @@
 # Cratebox
 
+Version 0.9.0 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+
 A lightweight two-deck DJ app that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
 ## Start it (Windows)

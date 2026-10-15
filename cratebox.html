@@ -454,6 +454,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
+          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.0</p>
         </div>
       </div>
       <span id="progress"></span>
@@ -476,7 +477,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX</h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.0</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -489,6 +490,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
+const VERSION = "0.9.0";
 const $ = (s, r = document) => r.querySelector(s);
 // what this browser can do: iPhone/iPad Safari (and every iOS browser) has no Web MIDI, no folder
 // access and no output picking, so Cratebox switches to touch controls and imported files there
@@ -4605,7 +4607,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>
