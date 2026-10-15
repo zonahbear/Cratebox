@@ -15,11 +15,14 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin === self.location.origin && APP_FILE.test(url.pathname)) {
+    // offline, or GitHub Pages answering with an error page (it briefly 404s while it redeploys):
+    // use the cached copy if there is one
+    const cached = () => caches.match(req, { ignoreSearch: true }).then((m) => m || caches.match("./cratebox.html"));
     e.respondWith(
       fetch(req).then((r) => {
-        if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-        return r;
-      }).catch(() => caches.match(req, { ignoreSearch: true }).then((m) => m || caches.match("./cratebox.html")))
+        if (r.ok) { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return r; }
+        return cached().then((m) => m || r);
+      }).catch(cached)
     );
   } else if (/(^|\.)(gstatic|googleapis)\.com$/.test(url.hostname)) {
     // web fonts: cache first
