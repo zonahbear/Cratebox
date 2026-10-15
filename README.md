@@ -177,6 +177,16 @@ Only the app goes on GitHub, never your music.
 
 **Your music on iOS.** Tap **Add music** and pick tracks in the Files app (iCloud Drive, On My iPhone, a USB drive...). They're copied into Cratebox's own storage on the device, so the library is still there next time; **Remove** deletes the selected one. Keep it on the Home Screen: Safari may clear storage for sites you haven't opened in a while, but not for Home Screen apps. Long tracks use a lot of memory; older phones may struggle with two 8-minute tracks loaded.
 
+## Android
+
+Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work on an Android phone or tablet**, unlike on iPhone.
+
+- Host it on https first (the GitHub Pages steps above; open the link in Chrome on Android, then ⋮ → **Add to Home screen**). Chrome asks once for permission to use MIDI devices: allow it.
+- **Cabling:** the FLX4 can't run off the phone's power. Plug a USB power adapter or power bank into the FLX4's **power** USB port, and the phone into its **device** USB port (a USB-C to USB-C cable). That's Pioneer's own setup for rekordbox on Android.
+- On a phone you get the same landscape layout as on iPhone. The controller is picked up by name. **⚙** has the controller and mapping pickers and Learn.
+- **Music:** Android Chrome can't open a folder, so **Add music** copies the tracks you pick into Cratebox's storage, like on iPhone.
+- **Sound:** Android usually sends all audio to a USB audio device once it's plugged in, so the master comes out of the FLX4. Headphone cueing on the FLX4's own headphone socket is untested; **Split** (master one ear, cue the other) always works.
+
 ## Limits
 
 - No key shift, no recording.
@@ -187,4 +197,4 @@ Only the app goes on GitHub, never your music.
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.

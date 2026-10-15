@@ -232,6 +232,7 @@ body.browse #mixer, body.browse .dbody { display: none; }
 html.phone .phoneonly { display: revert !important; }
 html.phone .ptabs.phoneonly { display: inline-flex !important; }
 html.phone .deskonly { display: none !important; }
+html.phone.nomidi #ctlPanel { display: none; }
 html.phone, html.phone body { height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
 html.phone #app { min-width: 0; height: 100dvh; display: flex; flex-direction: column;
   padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
@@ -438,7 +439,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
-          <div id="ctlPanel" class="ctlpanel deskonly">
+          <div id="ctlPanel" class="ctlpanel">
             <label for="ctlIn">Controller</label>
             <select class="hsel" id="ctlIn"></select>
             <label for="ctlProfile">Mapping</label>
@@ -494,10 +495,13 @@ const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform 
 const CAN_PICK_FOLDER = !!window.showDirectoryPicker;
 const CAN_ROUTE = typeof AudioContext !== "undefined" && "setSinkId" in AudioContext.prototype;
 const HAS_MIDI = !!navigator.requestMIDIAccess;
+document.documentElement.classList.toggle("nomidi", !HAS_MIDI);
 const EMPTY_DECK_HINT = HAS_MIDI ? "Drop a file here, or press LOAD on your controller" : "Pick a track below and tap Load";
 document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)").matches || IOS);
 document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
 // phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
+// phones and tablets with no folder access copy picked tracks into the browser's storage instead
+const MOBILE_FILES = IOS || /Android/i.test(navigator.userAgent);
 const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(screen.width, screen.height) <= 500;
 // phones and tablets: Safari kills a tab that uses too much memory, so keep audio in 16 bit,
 // decode one track at a time and use bigger audio buffers
@@ -2074,7 +2078,7 @@ async function scanDir(dir, path = "") {
   return out;
 }
 async function pickFolder() {
-  if (!CAN_PICK_FOLDER && (IOS || !("webkitdirectory" in document.createElement("input")))) { $("#filesInput").click(); return; }
+  if (!CAN_PICK_FOLDER && (MOBILE_FILES || !("webkitdirectory" in document.createElement("input")))) { $("#filesInput").click(); return; }
   if (window.showDirectoryPicker) {
     try {
       const dir = await window.showDirectoryPicker({ id: "cratebox-music", mode: "read" });
@@ -4304,7 +4308,7 @@ function applyHeadphones(announce) {
   }
   if (announce) status(msg, 12000);
 }
-if (!CAN_PICK_FOLDER && IOS) $("#addFolder").textContent = "Add music";
+if (!CAN_PICK_FOLDER && MOBILE_FILES) $("#addFolder").textContent = "Add music";
 if (!CAN_ROUTE) {
   // no output choice here: only the modes that work on a single stereo output
   for (const v of ["quad", "device"]) { const o = $(`#hpSel option[value=${v}]`); if (o) o.remove(); }
@@ -4354,7 +4358,7 @@ function tagLearnables() {
   tag(widgets.headmix && widgets.headmix.el, "headMix", -1);
   tag(widgets.master && widgets.master.el, "master", -1);
 }
-$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; startLearn(); });
+$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; $("#setSheet").hidden = true; startLearn(); });
 $("#learnDone").addEventListener("click", stopLearn);
 $("#ctlClear").addEventListener("click", clearLearned);
 $("#ctlExport").addEventListener("click", exportMapping);
