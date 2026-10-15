@@ -96,7 +96,9 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 html.learning [data-learn] { outline: 1px dashed color-mix(in srgb, var(--loop) 70%, transparent); outline-offset: 2px; cursor: crosshair; }
 html.learning .learn-target { outline: 3px solid var(--loop) !important; }
 html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
-.overview { width: 100%; height: 44px; display: block; background: #050608; border-radius: 3px; cursor: pointer; }
+.overview { width: 100%; height: 44px; display: block; background: #050608; border-radius: 3px; cursor: pointer; touch-action: none; }
+#waves canvas { touch-action: none; cursor: grab; }
+#waves canvas:active { cursor: grabbing; }
 .dbody { display: grid; gap: 10px; align-items: start; }
 .deck[data-i="0"] .dbody { grid-template-columns: 48px 150px 1fr; grid-template-areas: "pitch jog ctrl"; }
 .deck[data-i="1"] .dbody { grid-template-columns: 1fr 150px 48px; grid-template-areas: "ctrl jog pitch"; }
@@ -158,8 +160,8 @@ body.browse #decks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 body.browse #mixer, body.browse .dbody { display: none; }
 #browseBtn.on { background: var(--d0); border-color: var(--d0); color: var(--bg); }
 /* library */
-#library { display: grid; grid-template-rows: 38px 1fr; background: var(--panel); border-top: 1px solid var(--line); min-height: 0; }
-.ltool { display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid var(--line); }
+#library { display: grid; grid-template-rows: 38px 1fr; grid-template-columns: 210px minmax(0, 1fr); position: relative; background: var(--panel); border-top: 1px solid var(--line); min-height: 0; }
+.ltool { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; padding: 0 12px; border-bottom: 1px solid var(--line); }
 .ltool input[type=search] { height: 26px; width: 260px; background: #0e1014; border: 1px solid var(--line2); border-radius: 4px; padding: 0 8px; }
 #progress { font-size: 12px; color: var(--muted); }
 #list { overflow-y: auto; position: relative; min-height: 0; }
@@ -183,6 +185,39 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .trow.sel { background: #24364d; }
 .trow.on0 .t { color: var(--d0); } .trow.on1 .t { color: var(--d1); }
 .trow:hover { background: #1a1e25; } .trow.sel:hover { background: #2a3f59; }
+/* playlist / device tree */
+#tree { overflow-y: auto; min-height: 0; border-right: 1px solid var(--line); background: #101318; padding: 4px 0 10px; font-size: 13px; user-select: none; }
+#tree.focus { box-shadow: inset 0 0 0 1px var(--d0); }
+#tree .thead { display: flex; align-items: center; gap: 4px; padding: 10px 8px 4px 10px; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+#tree .thead span { flex: 1; }
+#tree .thead.drop { background: #1d2a3a; }
+.ticon { height: 20px; min-width: 22px; padding: 0 5px; border-radius: 4px; border: 1px solid var(--line2); background: var(--raise); color: var(--fg); font-size: 12px; line-height: 1; }
+.ticon.wide { font-size: 10px; letter-spacing: .05em; }
+.trow2 { display: flex; align-items: center; gap: 4px; height: 26px; padding-right: 6px; cursor: pointer; white-space: nowrap; }
+.trow2:hover { background: #1a1e25; }
+.trow2.cur { background: #1f2f44; color: #fff; }
+.trow2.tsel { box-shadow: inset 3px 0 0 var(--d0); background: #22344a; }
+.trow2.drop { background: #2b4a6d; box-shadow: inset 0 0 0 1px var(--d0); }
+.trow2 .caret { width: 12px; flex: none; color: var(--muted); font-size: 10px; text-align: center; }
+.trow2 .ic { width: 14px; flex: none; color: var(--muted); text-align: center; font-size: 12px; }
+.trow2 .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.trow2 .ct { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
+.trow2.ro .nm { color: #c9d3e0; }
+.trow2 .tx { visibility: hidden; border: 0; background: transparent; color: var(--muted); font-size: 14px; width: 20px; padding: 0; }
+.trow2:hover .tx, .touch .trow2.cur .tx { visibility: visible; }
+.trow2 .tx:hover { color: var(--fg); }
+.tren { flex: 1; min-width: 0; height: 22px; background: #07080a; border: 1px solid var(--d0); border-radius: 3px; color: var(--fg); padding: 0 5px; font-size: 13px; }
+.tconfirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; background: #2a1a1c; font-size: 12px; }
+.tconfirm span { flex-basis: 100%; }
+.hbtn.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
+.popmenu { position: fixed; z-index: 70; min-width: 200px; max-width: 360px; max-height: 60vh; overflow-y: auto; display: grid; padding: 4px; background: var(--raise); border: 1px solid var(--line2); border-radius: 6px; box-shadow: 0 10px 30px #000c; }
+.popmenu button { text-align: left; height: 30px; padding: 0 10px; border: 0; background: transparent; color: var(--fg); border-radius: 4px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.popmenu button:hover { background: #2a3f59; }
+.popmenu .pmhead { padding: 6px 10px 2px; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+#viewName { flex: none; font-family: var(--f-disp); font-size: 14px; letter-spacing: .04em; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trow.missing div { color: #5d6573 !important; font-style: italic; }
+.trow.dropabove { box-shadow: inset 0 2px 0 var(--d0); } .trow.dropbelow { box-shadow: inset 0 -2px 0 var(--d0); }
+.trow.msel { background: #1d2c3e; }
 .empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .empty b { color: var(--fg); }
 
@@ -213,7 +248,14 @@ html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-templ
 html.phone #library { flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 html.phone[data-tab="mix"] #library, html.phone[data-tab="lib"] #decks { display: none; }
 html.phone .ltool { height: 44px; flex-wrap: nowrap; gap: 8px; }
-html.phone .ltool > :not(#search):not(#addFolder):not(#removeBtn):not(#progress) { display: none; }
+html.phone .ltool > :not(#search):not(#addFolder):not(#removeBtn):not(#progress):not(#treeBtn):not(#addToBtn):not(#plRemove):not(#viewName) { display: none; }
+html.phone #library { grid-template-columns: minmax(0, 1fr); }
+html.phone #tree { display: none; position: absolute; z-index: 15; left: 0; top: 44px; bottom: 0; width: min(320px, 70vw); font-size: 15px; box-shadow: 8px 0 24px #000a; }
+html.phone #library.treeopen #tree { display: block; }
+html.phone .trow2 { height: 40px; }
+html.phone .ticon { height: 30px; min-width: 34px; font-size: 15px; }
+html.phone #viewName { max-width: 150px; font-size: 13px; }
+html.phone #treeBtn { min-width: 40px; font-size: 16px; }
 html.phone #search { flex: 1; width: auto; height: 32px; font-size: 15px; border-radius: 8px; }
 html.phone .ltool .hbtn { height: 32px; border-radius: 8px; font-size: 14px; }
 /* deck cards */
@@ -379,8 +421,13 @@ button, select, .pad, .sq { touch-action: manipulation; }
       <button class="hbtn" id="reconnect" hidden>Reconnect saved folder</button>
       <input type="file" id="folderInput" webkitdirectory multiple hidden>
       <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" multiple hidden>
+      <button class="hbtn phoneonly" id="treeBtn" title="Playlists and devices">☰</button>
+      <b id="viewName" title="What the list is showing">Collection</b>
       <button class="hbtn touchonly" id="load1Btn">◀ Load 1</button>
       <button class="hbtn touchonly" id="load2Btn">Load 2 ▶</button>
+      <button class="hbtn" id="addToBtn" title="Add the selected tracks to a playlist">Add to ▾</button>
+      <button class="hbtn" id="plRemove" hidden title="Remove the selected tracks from this playlist (Delete key)">Remove from list</button>
+      <input type="file" id="xmlInput" accept=".xml,text/xml,application/xml" hidden>
       <button class="hbtn" id="removeBtn" hidden title="Remove the selected imported track from this device">Remove</button>
       <input type="search" id="search" placeholder="Search title or artist">
       <button class="hbtn" id="browseBtn" title="Expand the library over the jogs and mixer (SHIFT + press BROWSE on the FLX4)">Expand library</button>
@@ -409,8 +456,9 @@ button, select, .pad, .sq { touch-action: manipulation; }
       </div>
       <span id="progress"></span>
       <span class="spacer"></span>
-      <span class="hlabel">Browse knob scrolls · LOAD loads · drag rows onto a deck</span>
+      <span class="hlabel">Browse knob scrolls · press it for playlists · drag rows onto a deck or a playlist</span>
     </div>
+    <div id="tree" aria-label="Playlists and devices"></div>
     <div id="list"></div>
   </section>
 </div>
@@ -527,7 +575,7 @@ class DeckPlayer extends AudioWorkletProcessor {
         if (d.mt != null) this.mt = d.mt; if (d.spin) this.spinA = 9 / d.spin; this.coast = false; this.flush(); break;
       case "play": this.playing = d.v; if (d.v) this.ended = false; break;
       case "rate": this.rate = d.v; break;
-      case "seek": this.pos = Math.max(0, Math.min(this.len - 2, d.v)); this.target = this.pos; this.vel = 0; this.coast = false; this.flush(); break;
+      case "seek": this.seq = d.seq || 0; this.pos = Math.max(0, Math.min(this.len - 2, d.v)); this.target = this.pos; this.vel = 0; this.coast = false; this.flush(); break;
       case "bend": this.bend = Math.max(-0.6, Math.min(0.6, this.bend + d.v)); break;
       case "scratch":
         if (d.v) { this.vel = this.coast ? this.vel : (this.playing ? this.rate : 0); this.coast = false; }
@@ -535,7 +583,7 @@ class DeckPlayer extends AudioWorkletProcessor {
           // let go mid-fling (backwards, or well off the motor speed): keep spinning and coast back
           const goal = this.playing ? this.rate : 0;
           this.vel = Math.max(-10, Math.min(10, this.vel));
-          this.coast = this.vel < -0.5 || Math.abs(this.vel - goal) > 1.5;
+          this.coast = !d.noCoast && (this.vel < -0.5 || Math.abs(this.vel - goal) > 1.5);
           if (!this.coast) this.vel = 0;
         }
         this.scratching = d.v; this.target = this.pos; this.flush(); break;
@@ -652,7 +700,7 @@ class DeckPlayer extends AudioWorkletProcessor {
     if (Math.abs(this.bend) < 1e-5) this.bend = 0;
     if ((++this.n & 3) === 0) {
       const speed = this.scratching || this.coast ? vel : (this.playing ? this.rate * (1 + this.bend) : 0);
-      this.port.postMessage({ pos, playing: this.playing, ended: this.ended, speed, coast: this.coast, t: currentTime });
+      this.port.postMessage({ pos, playing: this.playing, ended: this.ended, speed, coast: this.coast, t: currentTime, seq: this.seq || 0 });
     }
     return true;
   }
@@ -1625,6 +1673,8 @@ class Deck {
   }
   onReport(d) {
     // d.t is the audio clock when the worklet finished this block: a shared reference for both decks
+    // a report sent before our latest seek arrived would undo it (scrubbing loses steps): skip those
+    if ((d.seq || 0) < (this.seekSeq || 0)) return;
     this.pos = d.pos; this.posT = d.t + 128 / this.sr; this.speed = d.speed;
     if (performance.now() > this.coastHold) this.coasting = d.coast;
     if (this.playing && !d.playing && d.ended) { this.playing = false; refreshDeckUI(this.i); }
@@ -1653,6 +1703,8 @@ class Deck {
     this.ana = null; this.mono = null;
     try {
       deckLoads++;
+      // rekordbox USB/SD tracks: take rekordbox's own grid, phrases and cues off the drive
+      if (track.device && !track.rbRead) { try { await readDeviceAnalysis(track); } catch (e) {} }
       // decode, copy out what we need, and drop the decoded buffer before anything else runs
       const dec = await heavy(async () => {
         markInflight(track);
@@ -1676,7 +1728,7 @@ class Deck {
       this.pos = 0; this.posT = A.ctx.currentTime; this.speed = 0;
       this.loop = { on: false, a: null, b: null };
       this.previewing = false;
-      const cached = analysisCurrent(track) && track.bpm > 0;
+      const cached = analysisCurrent(track) && track.bpm > 0 && track.firstBeat != null;
       this.mono = mono.slice(); this.monoFs = fs;          // kept to redo the phrases after grid edits
       const ana = await analyzeMono(mono, fs, { waveOnly: cached, xw: w ? w.mono : null, fsw: w ? w.fs : 0,
         grid: track.gridManual ? { bpm: track.bpm, firstBeat: track.firstBeat } : null });
@@ -1684,12 +1736,14 @@ class Deck {
       ana.duration = buf.duration;
       if (cached || track.gridManual) { ana.bpm = track.bpm; ana.firstBeat = track.firstBeat; }
       if (cached) { ana.key = track.key; ana.phrases = track.phrases; }
+      else if (track.keyFrom === "rekordbox" && track.key >= 0) ana.key = track.key;
       track.phrases = ana.phrases || [];
       ana.overview = buildOverview(ana);
       this.ana = ana;
       track.bpm = ana.bpm; track.duration = buf.duration; track.firstBeat = ana.firstBeat; track.key = ana.key; track.ver = ANALYSIS_VER;
       saveAnalysis(track);
-      const saved = loadCues(track);
+      let saved = loadCues(track);
+      if (!hasOwnCues(track)) { const rc = rbCuesFor(track); if (rc) saved = rc; }
       this.hot = saved.hot;
       this.cue = saved.cue != null ? saved.cue : ana.firstBeat;
       this.seek(this.cue);
@@ -1709,10 +1763,17 @@ class Deck {
     refreshDeckUI(this.i);
   }
 
+  // jump somewhere: with Q on while playing, land on the same beat phase so a mix stays locked
+  seekTo(t) {
+    if (!this.loaded) return;
+    if (this.playing && this.quant && this.bpm) { const now = this.now(); t = now + Math.round((t - now) / this.spb) * this.spb; }
+    this.seek(t);
+  }
   seek(t) {
     if (!this.loaded && !this.duration) return;
     t = clamp(t, 0, Math.max(0, this.duration - 0.01));
-    this.post({ t: "seek", v: t * this.sr });
+    this.seekSeq = (this.seekSeq || 0) + 1;
+    this.post({ t: "seek", v: t * this.sr, seq: this.seekSeq });
     this.pos = t * this.sr; this.posT = A.ctx.currentTime;
   }
   setPlaying(on) {
@@ -1803,12 +1864,12 @@ class Deck {
   setPitch(v) { this.pitch = clamp(v, -1, 1); this.sendRate(); }
 
   // ---- jog ----
-  jogTouch(on) {
+  jogTouch(on, noCoast) {
     if (!this.loaded) return;
     this.touch = on;
     // the jog keeps turning after a fling: ignore its untouched ticks until the coast ends
-    if (!on) { this.coasting = true; this.coastHold = performance.now() + 120; } else this.coasting = false;
-    this.post({ t: "scratch", v: on });
+    if (!on && !noCoast) { this.coasting = true; this.coastHold = performance.now() + 120; } else this.coasting = false;
+    this.post({ t: "scratch", v: on, noCoast: !!noCoast });
   }
   jogTicks(ticks, kind) {
     if (!this.loaded) return;
@@ -1897,6 +1958,7 @@ function loadCues(t) {
   } catch (e) {}
   return { cue: null, hot: new Array(8).fill(null) };
 }
+function hasOwnCues(t) { try { return localStorage.getItem(trackKey(t)) != null; } catch (e) { return false; } }
 function saveCues(d) {
   if (!d.track) return;
   try { localStorage.setItem(trackKey(d.track), JSON.stringify({ cue: d.cue, hot: d.hot })); } catch (e) {}
@@ -1906,14 +1968,14 @@ function saveCues(d) {
 //  Library: folder scan, tags, analysis cache (IndexedDB)
 // =====================================================================================
 const AUDIO_EXT = /\.(mp3|wav|wave|flac|m4a|aac|ogg|oga|opus|webm|aif|aiff)$/i;
-const lib = { tracks: [], view: [], sel: 0, sort: null, dir: 1, query: "", queue: [], running: false };
+const lib = { tracks: [], view: [], viewPos: [], sel: 0, selIds: new Set(), anchor: 0, sort: null, dir: 1, query: "", queue: [], running: false };
 let db = null;
 function openDB() {
   return new Promise((res) => {
-    const r = indexedDB.open("cratebox", 2);
+    const r = indexedDB.open("cratebox", 3);
     r.onupgradeneeded = (e) => {
       const d = r.result;
-      for (const st of ["analysis", "settings", "files"]) if (!d.objectStoreNames.contains(st)) d.createObjectStore(st);
+      for (const st of ["analysis", "settings", "files", "playlists"]) if (!d.objectStoreNames.contains(st)) d.createObjectStore(st);
     };
     r.onsuccess = () => res((db = r.result));
     r.onerror = () => res(null);
@@ -1999,6 +2061,7 @@ async function addFiles(entries) {
     if (!analysisCurrent(t)) lib.queue.push(t);
   }
   status(`Added ${lib.tracks.length - before} tracks`);
+  plRematch(); renderTree();
   applyView();
   runAnalysisQueue();
 }
@@ -2087,7 +2150,7 @@ async function restoreFolder() {
 
 async function saveAnalysis(t) {
   await idbPut("analysis", t.id, { title: t.title, artist: t.artist, bpm: t.bpm, duration: t.duration, firstBeat: t.firstBeat, key: t.key, ver: t.ver,
-    gridManual: !!t.gridManual, autoBpm: t.autoBpm, autoFirst: t.autoFirst, phrases: t.phrases });
+    gridManual: !!t.gridManual, autoBpm: t.autoBpm, autoFirst: t.autoFirst, phrases: t.phrases, keyFrom: t.keyFrom, gridFrom: t.gridFrom });
 }
 async function runAnalysisQueue() {
   if (lib.running) return;
@@ -2119,7 +2182,7 @@ async function runAnalysisQueue() {
       const { mono, fs } = dec, buf = { duration: dec.duration };
       const r = await analyzeMono(mono, fs, { noWave: true, grid: t.gridManual ? { bpm: t.bpm, firstBeat: t.firstBeat } : null });
       if (!t.gridManual) { t.bpm = r.bpm; t.firstBeat = r.firstBeat; }
-      t.duration = buf.duration; t.key = r.key; t.phrases = r.phrases || []; t.ver = ANALYSIS_VER;
+      t.duration = buf.duration; if (t.keyFrom !== "rekordbox" || t.key == null || t.key < 0) t.key = r.key; t.phrases = r.phrases || []; t.ver = ANALYSIS_VER;
       await saveAnalysis(t);
     } catch (e) {
       t.bpm = t.bpm || 0; t.duration = t.duration || 0; t.key = -1;
@@ -2138,17 +2201,19 @@ function applyView(keepSel) {
   const q = lib.query.toLowerCase();
   const selId = lib.view[lib.sel] && lib.view[lib.sel].id;
   const ck = (t) => { const c = camelot(t.key); return c ? c.label.toLowerCase() : ""; };
-  let v = lib.tracks.filter((t) => !q || t.title.toLowerCase().includes(q) || t.artist.toLowerCase().includes(q) || ck(t) === q);
-  for (const t of v) { const c = camelot(t.key); t.keySort = c ? c.sort : 99; }
+  // the current view (collection, a playlist, a device) in its own order, then search, then sort
+  let v = viewTracks().map((t, i) => ({ t, i: t.missing && t.pos != null ? t.pos : i }))
+    .filter(({ t }) => !q || (t.title || "").toLowerCase().includes(q) || (t.artist || "").toLowerCase().includes(q) || ck(t) === q);
+  for (const { t } of v) { const c = camelot(t.key); t.keySort = c ? c.sort : 99; }
   if (lib.sort) {
     const k = lib.sort, d = lib.dir;
-    v = v.slice().sort((a, b) => {
-      const x = a[k], y = b[k];
+    v.sort((a, b) => {
+      const x = a.t[k], y = b.t[k];
       if (typeof x === "number" || typeof y === "number") return ((x || 0) - (y || 0)) * d;
       return String(x || "").localeCompare(String(y || "")) * d;
     });
   }
-  lib.view = v;
+  lib.view = v.map((e) => e.t); lib.viewPos = v.map((e) => e.i);
   if (keepSel && selId) { const i = v.findIndex((t) => t.id === selId); lib.sel = i >= 0 ? i : 0; }
   else lib.sel = clamp(lib.sel, 0, Math.max(0, v.length - 1));
   renderList(true);
@@ -2177,10 +2242,11 @@ function renderList(full) {
     (PHONE ? [["Title", "title"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["", null], ["", null]] : COLS).forEach(([label, key]) => {
       const c = h("div", { class: lib.sort === key && key ? "sorted" : "" }, label + (lib.sort === key && key ? (lib.dir > 0 ? " ▴" : " ▾") : ""));
       if (key) c.onclick = () => { lib.dir = lib.sort === key ? -lib.dir : 1; lib.sort = key; applyView(true); };
+      else if (label === "#") { c.title = "Back to the list's own order"; c.onclick = () => { lib.sort = null; applyView(true); }; }
       hdr.append(c);
     });
     box.append(hdr);
-    if (!lib.tracks.length) {
+    if (!lib.tracks.length && PL.view.kind === "all") {
       box.append(h("div", { class: "empty" }, h("b", {}, "No music yet. "), "Click ", h("b", {}, $("#addFolder").textContent),
         " and pick the folder you DJ from. Cratebox reads it in place: nothing is copied or uploaded.", h("br"),
         "You can also drag audio files straight onto a deck."));
@@ -2205,21 +2271,48 @@ function renderList(full) {
         keyCell(t, ref),
         h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
         ld(0), ld(1));
-      row.onclick = () => { lib.sel = i; renderList(); };
+      if (t.missing) row.classList.add("missing");
+      if (lib.selIds.has(t.id)) row.classList.add("msel");
+      row.onclick = (e) => selectRow(i, e);
       listInner.append(row);
       continue;
     }
-    const row = h("div", { class: `trow cols${i === lib.sel ? " sel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}`, style: `top:${i * ROW}px`, draggable: "true" },
-      h("div", { class: "n" }, String(i + 1)),
+    const row = h("div", { class: `trow cols${i === lib.sel ? " sel" : ""}${lib.selIds.has(t.id) && i !== lib.sel ? " msel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}${t.missing ? " missing" : ""}`,
+      style: `top:${i * ROW}px`, draggable: "true", title: t.missing ? "Not in a connected folder right now" : "" },
+      h("div", { class: "n" }, String((lib.viewPos[i] != null ? lib.viewPos[i] : i) + 1)),
       h("div", { class: "t" }, t.title),
       h("div", {}, t.artist),
       h("div", { class: "num" + (t.gridManual ? " manual" : ""), title: t.gridManual ? "Beat grid edited by hand" : "" }, t.bpm ? t.bpm.toFixed(t.bpm % 1 ? 2 : 0) : t.bpm === 0 ? "?" : "…"),
       keyCell(t, ref),
       h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
       h("div", { class: "num" }, onDeck >= 0 ? String(onDeck + 1) : ""));
-    row.onclick = () => { lib.sel = i; renderList(); };
+    row.onclick = (e) => selectRow(i, e);
     row.ondblclick = () => loadSelected(decks[0].playing && !decks[1].playing ? 1 : 0);
-    row.ondragstart = (e) => { e.dataTransfer.setData("text/cratebox", t.id); e.dataTransfer.effectAllowed = "copy"; };
+    row.ondragstart = (e) => {
+      // drag the whole selection if this row is part of it
+      const inSel = lib.selIds.has(t.id) && lib.selIds.size > 1;
+      const rows = inSel ? lib.view.map((x, k) => k).filter((k) => lib.selIds.has(lib.view[k].id)) : [i];
+      e.dataTransfer.setData("text/cratebox", JSON.stringify(rows.map((k) => lib.view[k]).filter((x) => !x.missing).map((x) => x.id)));
+      e.dataTransfer.effectAllowed = "copyMove";
+      PL.dragRows = isOwnPlaylistView() ? rows.map((k) => lib.viewPos[k]) : null;
+    };
+    row.ondragend = () => { PL.dragRows = null; for (const x of document.querySelectorAll(".dropabove,.dropbelow")) x.classList.remove("dropabove", "dropbelow"); };
+    row.ondragover = (e) => {
+      if (!PL.dragRows) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = "move";
+      const r = row.getBoundingClientRect(), below = e.clientY > r.top + r.height / 2;
+      row.classList.toggle("dropabove", !below); row.classList.toggle("dropbelow", below);
+    };
+    row.ondragleave = () => row.classList.remove("dropabove", "dropbelow");
+    row.ondrop = (e) => {
+      if (!PL.dragRows) return;
+      e.preventDefault();
+      const below = row.classList.contains("dropbelow");
+      row.classList.remove("dropabove", "dropbelow");
+      const p = plGet(PL.view.id), from = PL.dragRows;
+      PL.dragRows = null;
+      if (p) plMove(p, from, lib.viewPos[i] + (below ? 1 : 0));
+    };
     listInner.append(row);
   }
 }
@@ -2242,6 +2335,43 @@ $("#waveSel").addEventListener("change", (e) => {
   try { localStorage.setItem("cb.wave", waveStyle); } catch (err) {}
   overviewBase[0] = overviewBase[1] = null;
 });
+// scrolling waveforms: drag to move through the track (audio follows the hand while playing, like
+// grabbing the record; silent while paused), tap/click to jump to that spot
+for (const i of [0, 1]) {
+  const cv = $("#lane" + i), d = decks[i];
+  let g = null;
+  const ppsCss = () => cv.clientWidth / zoomSecs / Math.max(0.05, d.rate());
+  cv.addEventListener("pointerdown", (e) => {
+    if (!d.loaded || MIDI.learning) return;
+    cv.setPointerCapture(e.pointerId);
+    g = { x0: e.clientX, x: e.clientX, t0: performance.now(), moved: false, scratch: d.playing };
+  });
+  const drag = (e) => {
+    const dx = e.clientX - g.x;
+    g.x = e.clientX;
+    if (!g.moved) {
+      if (Math.abs(e.clientX - g.x0) < 4) return;
+      g.moved = true;
+      if (g.scratch) d.jogTouch(true);
+    }
+    const dt = -dx / ppsCss();                       // drag left = later in the track
+    if (g.scratch) d.jogTicks(dt / (1.8 / 720), "scratch");
+    else d.seek(clamp(d.now() + dt, 0, d.duration));
+  };
+  cv.addEventListener("pointermove", (e) => { if (g && cv.hasPointerCapture(e.pointerId)) drag(e); });
+  const end = (e) => {
+    if (!g) return;
+    if (g.moved && e.clientX !== g.x) drag(e);          // movement folded into the release
+    if (g.moved && g.scratch) d.jogTouch(false, true);
+    else if (!g.moved && performance.now() - g.t0 < 400) {
+      const r = cv.getBoundingClientRect();
+      d.seekTo(clamp(d.now() + (e.clientX - r.left - r.width / 2) / ppsCss(), 0, d.duration));
+    }
+    g = null;
+  };
+  cv.addEventListener("pointerup", end);
+  cv.addEventListener("pointercancel", () => { if (g && g.moved && g.scratch) d.jogTouch(false, true); g = null; });
+}
 for (const i of [0, 1]) $("#lane" + i).addEventListener("wheel", (e) => {
   e.preventDefault();
   zoomSecs = clamp(zoomSecs * (e.deltaY > 0 ? 1.15 : 1 / 1.15), 1, 32);
@@ -2257,9 +2387,25 @@ $("#spinSel").addEventListener("change", (e) => {
 $("#browseBtn").addEventListener("click", () => setBrowse(!document.body.classList.contains("browse")));
 try { if (localStorage.getItem("cb.browse") === "1") setBrowse(true); } catch (e) {}
 $("#search").addEventListener("input", (e) => { lib.query = e.target.value; applyView(); });
+// click: select; Ctrl/Cmd-click: add/remove; Shift-click: a range
+function selectRow(i, e) {
+  const t = lib.view[i];
+  if (!t) return;
+  if (e && (e.ctrlKey || e.metaKey)) {
+    if (!lib.selIds.size && lib.view[lib.sel]) lib.selIds.add(lib.view[lib.sel].id);
+    lib.selIds.has(t.id) ? lib.selIds.delete(t.id) : lib.selIds.add(t.id);
+    lib.anchor = i;
+  } else if (e && e.shiftKey) {
+    lib.selIds = new Set();
+    for (let k = Math.min(lib.anchor, i); k <= Math.max(lib.anchor, i); k++) lib.selIds.add(lib.view[k].id);
+  } else { lib.selIds = new Set(); lib.anchor = i; }
+  lib.sel = i;
+  renderList();
+}
 function moveSel(d) {
   if (!lib.view.length) return;
-  lib.sel = clamp(lib.sel + d, 0, lib.view.length - 1);
+  lib.selIds = new Set();
+  lib.sel = lib.anchor = clamp(lib.sel + d, 0, lib.view.length - 1);
   const box = $("#list"), y = lib.sel * ROW + ROW;
   if (y < box.scrollTop + ROW) box.scrollTop = y - ROW * 2;
   else if (y > box.scrollTop + box.clientHeight - ROW) box.scrollTop = y - box.clientHeight + ROW;
@@ -2267,8 +2413,848 @@ function moveSel(d) {
 }
 function loadSelected(i) {
   const t = lib.view[lib.sel];
+  if (t && t.missing) return status(`"${t.title}" isn't in a connected folder or device right now`);
   if (t) decks[i].load(t);
 }
+// =====================================================================================
+//  rekordbox: USB/SD exports (export.pdb + ANLZ files) and rekordbox XML
+// =====================================================================================
+// export.pdb ("Device Library") and ANLZ layouts follow Deep Symmetry's reverse-engineering in
+// crate-digger (rekordbox_pdb.ksy / rekordbox_anlz.ksy). Read-only: Cratebox never writes to a stick.
+
+const RB = {};
+RB.pdbString = function (dv, pos) {
+  const lk = dv.getUint8(pos);
+  if (lk === 0x40 || lk === 0x90) {
+    const len = dv.getUint16(pos + 1, true);
+    const bytes = new Uint8Array(dv.buffer, dv.byteOffset + pos + 4, Math.max(0, len - 4));
+    return new TextDecoder(lk === 0x40 ? "latin1" : "utf-16le").decode(bytes).replace(/\0+$/, "");
+  }
+  const n = (lk >> 1) - 1;
+  if (n <= 0) return "";
+  return new TextDecoder("latin1").decode(new Uint8Array(dv.buffer, dv.byteOffset + pos + 1, n));
+};
+RB.PAGE = { tracks: 0, genres: 1, artists: 2, albums: 3, labels: 4, keys: 5, colors: 6, playlistTree: 7, playlistEntries: 8, artwork: 13 };
+// every present row of one table: calls fn(dataView, rowOffsetInFile)
+RB.pdbRows = function (dv, type, fn) {
+  const lenPage = dv.getUint32(4, true), numTables = dv.getUint32(8, true);
+  for (let t = 0; t < numTables; t++) {
+    const tp = 28 + t * 16;
+    if (dv.getUint32(tp, true) !== type) continue;
+    let page = dv.getUint32(tp + 8, true);
+    const last = dv.getUint32(tp + 12, true), seen = new Set();
+    while (!seen.has(page) && (page + 1) * lenPage <= dv.byteLength) {
+      seen.add(page);
+      const p = page * lenPage;
+      if (dv.getUint32(p + 8, true) !== type) break;
+      const packed = dv.getUint8(p + 24) | (dv.getUint8(p + 25) << 8) | (dv.getUint8(p + 26) << 16);
+      const numOffsets = packed & 0x1fff, flags = dv.getUint8(p + 27);
+      if ((flags & 0x40) === 0 && numOffsets > 0) {
+        const groups = Math.floor((numOffsets - 1) / 16) + 1;
+        for (let g = 0; g < groups; g++) {
+          const base = p + lenPage - g * 0x24;
+          const present = dv.getUint16(base - 4, true);
+          for (let r = 0; r < 16 && g * 16 + r < numOffsets; r++) {
+            if (!((present >> r) & 1)) continue;
+            const ofs = dv.getUint16(base - (6 + 2 * r), true);
+            fn(dv, p + 40 + ofs);
+          }
+        }
+      }
+      if (page === last) break;
+      page = dv.getUint32(p + 12, true);
+    }
+  }
+};
+RB.parsePdb = function (buf) {
+  const dv = new DataView(buf), S = RB.pdbString;
+  const named = (type, idAt, nameFn) => {
+    const m = new Map();
+    RB.pdbRows(dv, type, (v, o) => { try { m.set(v.getUint32(o + idAt, true), nameFn(v, o)); } catch (e) {} });
+    return m;
+  };
+  const nearFar = (nearAt, farAt) => (v, o) => {
+    const sub = v.getUint16(o, true);
+    return S(v, o + ((sub & 0x04) ? v.getUint16(o + farAt, true) : v.getUint8(o + nearAt)));
+  };
+  const artists = named(RB.PAGE.artists, 4, nearFar(9, 0x0a));
+  const albums = named(RB.PAGE.albums, 12, nearFar(21, 0x16));
+  const genres = named(RB.PAGE.genres, 0, (v, o) => S(v, o + 4));
+  const keys = named(RB.PAGE.keys, 0, (v, o) => S(v, o + 8));
+  const labels = named(RB.PAGE.labels, 0, (v, o) => S(v, o + 4));
+  const tracks = [];
+  RB.pdbRows(dv, RB.PAGE.tracks, (v, o) => {
+    try {
+      const str = (k) => S(v, o + v.getUint16(o + 94 + 2 * k, true));
+      tracks.push({
+        id: v.getUint32(o + 72, true), title: str(17), artist: artists.get(v.getUint32(o + 68, true)) || "",
+        album: albums.get(v.getUint32(o + 64, true)) || "", genre: genres.get(v.getUint32(o + 60, true)) || "",
+        label: labels.get(v.getUint32(o + 40, true)) || "", key: keys.get(v.getUint32(o + 32, true)) || "",
+        bpm: v.getUint32(o + 56, true) / 100, duration: v.getUint16(o + 84, true), size: v.getUint32(o + 16, true),
+        sampleRate: v.getUint32(o + 8, true), rating: v.getUint8(o + 89), color: v.getUint8(o + 88),
+        path: str(20), filename: str(19), anlzPath: str(14), comment: str(16), dateAdded: str(10),
+      });
+    } catch (e) {}
+  });
+  const tree = [];
+  RB.pdbRows(dv, RB.PAGE.playlistTree, (v, o) => {
+    try { tree.push({ parent: v.getUint32(o, true), sort: v.getUint32(o + 8, true), id: v.getUint32(o + 12, true), folder: v.getUint32(o + 16, true) !== 0, name: S(v, o + 20) }); } catch (e) {}
+  });
+  const entries = [];
+  RB.pdbRows(dv, RB.PAGE.playlistEntries, (v, o) => {
+    try { entries.push({ index: v.getUint32(o, true), track: v.getUint32(o + 4, true), playlist: v.getUint32(o + 8, true) }); } catch (e) {}
+  });
+  const byList = new Map();
+  for (const e of entries) { if (!byList.has(e.playlist)) byList.set(e.playlist, []); byList.get(e.playlist).push(e); }
+  for (const n of tree) n.tracks = n.folder ? [] : (byList.get(n.id) || []).sort((a, b) => a.index - b.index).map((e) => e.track);
+  tree.sort((a, b) => a.parent - b.parent || a.sort - b.sort);
+  return { tracks, playlists: tree };
+};
+
+// ANLZ (.DAT/.EXT): beat grid, hot and memory cues, rekordbox's own phrase analysis
+RB.parseAnlz = function (buf) {
+  const dv = new DataView(buf), out = { beats: [], hot: [], memory: [], phrases: null };
+  if (dv.byteLength < 12 || dv.getUint32(0) !== 0x504d4149) return out;            // "PMAI"
+  let pos = dv.getUint32(4);
+  const tag = (s) => (s.charCodeAt(0) << 24 | s.charCodeAt(1) << 16 | s.charCodeAt(2) << 8 | s.charCodeAt(3)) >>> 0;
+  const PQTZ = tag("PQTZ"), PCOB = tag("PCOB"), PCO2 = tag("PCO2"), PSSI = tag("PSSI");
+  const cues2 = { hot: [], memory: [] };
+  while (pos + 12 <= dv.byteLength) {
+    const four = dv.getUint32(pos), lenTag = dv.getUint32(pos + 8), b = pos + 12;
+    if (lenTag < 12) break;
+    try {
+      if (four === PQTZ) {
+        const n = dv.getUint32(b + 8);
+        for (let i = 0; i < n; i++) {
+          const e = b + 12 + i * 8;
+          out.beats.push({ n: dv.getUint16(e), bpm: dv.getUint16(e + 2) / 100, ms: dv.getUint32(e + 4) });
+        }
+      } else if (four === PCOB || four === PCO2) {
+        const n = dv.getUint16(b + (four === PCOB ? 6 : 4));
+        let e = b + (four === PCOB ? 12 : 8);
+        for (let i = 0; i < n && e + 12 <= pos + lenTag; i++) {
+          const lenEntry = dv.getUint32(e + 8), hot = dv.getUint32(e + 12);
+          const typ = dv.getUint8(e + (four === PCOB ? 28 : 16));
+          const ms = dv.getUint32(e + (four === PCOB ? 32 : 20)), loopMs = dv.getUint32(e + (four === PCOB ? 36 : 24));
+          // (PCOB's status field only marks an active loop: 0 is an ordinary cue, so it's not a filter)
+          const cue = { hot, ms, loopMs: typ === 2 ? loopMs : null };
+          (four === PCO2 ? cues2 : out)[hot ? "hot" : "memory"].push(cue);
+          e += lenEntry || 56;
+        }
+      } else if (four === PSSI) {
+        const lenEntries = dv.getUint16(b + 4), bodyLen = lenTag - 12 - 6;
+        const body = new Uint8Array(buf.slice(b + 6, b + 6 + bodyLen));
+        const raw = (body[0] << 8) | body[1];
+        if (raw > 20) {
+          const m = [0xcb, 0xe1, 0xee, 0xfa, 0xe5, 0xee, 0xad, 0xee, 0xe9, 0xd2, 0xe9, 0xeb, 0xe1, 0xe9, 0xf3, 0xe8, 0xe9, 0xf4, 0xe1];
+          for (let i = 0; i < body.length; i++) body[i] ^= (m[i % m.length] + lenEntries) & 0xff;
+        }
+        const bv = new DataView(body.buffer), mood = bv.getUint16(0), endBeat = bv.getUint16(8);
+        const list = [];
+        for (let i = 0; i < lenEntries; i++) {
+          const e = 14 + i * 24;
+          if (e + 6 > body.length) break;
+          list.push({ beat: bv.getUint16(e + 2), kind: bv.getUint16(e + 4) });
+        }
+        out.phrases = { mood, endBeat, list };
+      }
+    } catch (e) {}
+    pos += lenTag;
+  }
+  // the extended (.EXT) cue lists hold all eight hot cues: prefer them when present
+  if (cues2.hot.length) out.hot = cues2.hot;
+  if (cues2.memory.length) out.memory = cues2.memory;
+  return out;
+};
+// rekordbox phrase names -> Cratebox's
+RB.phraseLabel = function (mood, kind) {
+  if (mood === 1) return { 1: "Intro", 2: "Build", 3: "Breakdown", 5: "Drop", 6: "Outro" }[kind] || "Groove";
+  return { 1: "Intro", 8: "Breakdown", 9: "Drop", 10: "Outro" }[kind] || "Groove";
+};
+// beat grid + phrases in Cratebox's terms (constant tempo: first downbeat and the main BPM)
+RB.gridFromBeats = function (beats) {
+  if (!beats || beats.length < 2) return null;
+  // the most common tempo, and the first downbeat
+  const count = new Map();
+  for (const b of beats) count.set(b.bpm, (count.get(b.bpm) || 0) + 1);
+  const bpm = [...count.entries()].sort((a, b) => b[1] - a[1])[0][0];
+  const down = beats.find((b) => b.n === 1) || beats[0];
+  return { bpm, firstBeat: down.ms / 1000 };
+};
+RB.phrasesFrom = function (anlz) {
+  const p = anlz.phrases, beats = anlz.beats;
+  if (!p || !p.list.length || !beats.length) return null;
+  const at = (beat) => (beats[Math.max(0, Math.min(beats.length - 1, beat - 1))].ms / 1000);
+  return p.list.map((e, i) => {
+    const next = i + 1 < p.list.length ? p.list[i + 1].beat : p.endBeat || e.beat + 32;
+    return { start: at(e.beat), bars: Math.max(1, Math.round((next - e.beat) / 4)), label: RB.phraseLabel(p.mood, e.kind) };
+  });
+};
+
+// ---- rekordbox XML (File > Export Collection in xml format) ----
+RB.parseXml = function (text) {
+  const doc = new DOMParser().parseFromString(text, "application/xml");
+  if (doc.querySelector("parsererror") || !doc.querySelector("DJ_PLAYLISTS")) throw new Error("not a rekordbox XML file");
+  const tracks = new Map();
+  for (const t of doc.querySelectorAll("COLLECTION > TRACK")) {
+    const a = (k) => t.getAttribute(k) || "";
+    let loc = a("Location");
+    try { loc = decodeURI(loc.replace(/^file:\/\/localhost/, "")); } catch (e) {}
+    const tempo = t.querySelector("TEMPO");
+    const marks = [...t.querySelectorAll("POSITION_MARK")].map((m) => ({
+      num: +m.getAttribute("Num"), start: +m.getAttribute("Start"), end: m.getAttribute("End") != null ? +m.getAttribute("End") : null,
+      type: +(m.getAttribute("Type") || 0), name: m.getAttribute("Name") || "",
+    }));
+    tracks.set(a("TrackID"), {
+      id: a("TrackID"), title: a("Name"), artist: a("Artist"), album: a("Album"), genre: a("Genre"), key: a("Tonality"),
+      bpm: +a("AverageBpm") || 0, duration: +a("TotalTime") || 0, size: +a("Size") || 0, location: loc,
+      filename: loc.split(/[\\/]/).pop(), grid: tempo ? { bpm: +tempo.getAttribute("Bpm"), firstBeat: +tempo.getAttribute("Inizio"),
+        beat: +(tempo.getAttribute("Battito") || 1) } : null, marks,
+    });
+  }
+  const lists = [];
+  const walk = (node, parent) => {
+    for (const n of node.children) {
+      if (n.tagName !== "NODE") continue;
+      const folder = n.getAttribute("Type") === "0", name = n.getAttribute("Name") || "";
+      const me = { name, folder, parent, tracks: folder ? [] : [...n.children].filter((c) => c.tagName === "TRACK").map((c) => c.getAttribute("Key")), key: lists.length };
+      lists.push(me);
+      if (folder) walk(n, me.key);
+    }
+  };
+  const root = doc.querySelector("PLAYLISTS > NODE");
+  if (root) walk(root, null);
+  return { tracks, playlists: lists };
+};
+// "Am", "C#m", "Ebm", "F", "8A", "11B" -> Cratebox key index (0-11 major, 12-23 minor)
+RB.keyIndex = function (s) {
+  if (!s) return -1;
+  s = s.trim();
+  let m = /^(\d{1,2})\s*([AB])$/i.exec(s);
+  if (m) {
+    const num = +m[1], minor = m[2].toUpperCase() === "A";
+    for (let k = 0; k < 24; k++) { const c = camelot(k); if (c.num === num && (c.letter === "A") === minor) return k; }
+    return -1;
+  }
+  m = /^([A-G])([#♯b♭]?)\s*(m|min|minor)?$/i.exec(s.replace(/maj(or)?$/i, ""));
+  if (!m) return -1;
+  let pc = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 }[m[1].toUpperCase()];
+  if (m[2] === "#" || m[2] === "♯") pc++;
+  if (m[2] === "b" || m[2] === "♭") pc--;
+  pc = (pc + 12) % 12;
+  return (m[3] ? 12 : 0) + pc;
+};
+const KEY_XML = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+RB.keyName = (k) => (k == null || k < 0 ? "" : KEY_XML[k % 12] + (k >= 12 ? "m" : ""));
+
+// =====================================================================================
+//  Playlists, rekordbox USB/SD devices and rekordbox XML
+// =====================================================================================
+// Own playlists live in IndexedDB ("playlists"): { id, name, folder, parent, order, items: [trackId],
+// meta: { trackId: {title, artist, file, size} } } - meta lets a playlist show (and later re-find)
+// tracks whose folder isn't connected right now.
+// Devices are rekordbox USB/SD exports opened read-only: their tracks join the library (marked with
+// t.device) and their playlist tree shows under DEVICES.
+const PL = { lists: [], devices: [], view: { kind: "all" }, open: new Set(), focus: "list", treeRows: [], treeSel: 0 };
+let plSaveT = 0;
+const plDirty = new Set();
+function plNew(name, folder = false, parent = null) {
+  const id = "pl" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const order = PL.lists.filter((x) => x.parent === parent).length;
+  const p = { id, name, folder, parent, order, items: [], meta: {} };
+  PL.lists.push(p); plSave(p);
+  if (parent) PL.open.add(parent);
+  return p;
+}
+function plGet(id) { return PL.lists.find((x) => x.id === id); }
+function plSave(p) {
+  // batched: everything changed in the last moment is written together
+  for (const x of p ? [p] : PL.lists) plDirty.add(x);
+  clearTimeout(plSaveT);
+  plSaveT = setTimeout(() => {
+    for (const x of plDirty) if (PL.lists.includes(x)) idbPut("playlists", x.id, x);
+    plDirty.clear();
+  }, 150);
+}
+async function plLoad() {
+  const all = await idb("playlists", "readonly", (o) => o.getAll());
+  PL.lists = (all || []).filter((x) => x && x.id);
+  try { for (const id of JSON.parse(localStorage.getItem("cb.plOpen") || "[]")) PL.open.add(id); } catch (e) {}
+  renderTree();
+}
+function metaOf(t) { return { title: t.title, artist: t.artist, file: t.name || (t.rel || "").split("/").pop(), size: t.size || 0 }; }
+function plAdd(p, tracks, at) {
+  if (!p || p.folder) return 0;
+  const ids = tracks.filter((t) => t && !t.missing).map((t) => t.id);
+  for (const t of tracks) if (t && !t.missing) p.meta[t.id] = metaOf(t);
+  if (at == null || at > p.items.length) at = p.items.length;
+  p.items.splice(at, 0, ...ids);
+  plSave(p); renderTree();
+  if (PL.view.kind === "pl" && PL.view.id === p.id) applyView(true);
+  return ids.length;
+}
+function plRemoveAt(p, positions) {
+  const drop = new Set(positions);
+  p.items = p.items.filter((_, i) => !drop.has(i));
+  plSave(p); renderTree(); applyView(true);
+}
+function plMove(p, positions, to) {
+  // move the items at `positions` so they start at index `to` (in the list before removal)
+  const pos = [...positions].sort((a, b) => a - b), moving = pos.map((i) => p.items[i]);
+  const before = pos.filter((i) => i < to).length;
+  const rest = p.items.filter((_, i) => !pos.includes(i));
+  rest.splice(Math.max(0, to - before), 0, ...moving);
+  p.items = rest; plSave(p); applyView(true);
+  lib.selIds = new Set(moving); lib.sel = Math.max(0, to - before); renderList();
+}
+function plDelete(p) {
+  const kill = new Set([p.id]);
+  let grew = true;
+  while (grew) { grew = false; for (const x of PL.lists) if (x.parent && kill.has(x.parent) && !kill.has(x.id)) { kill.add(x.id); grew = true; } }
+  PL.lists = PL.lists.filter((x) => !kill.has(x.id));
+  for (const id of kill) idb("playlists", "readwrite", (o) => o.delete(id));
+  if (PL.view.kind === "pl" && kill.has(PL.view.id)) setView({ kind: "all" });
+  renderTree();
+}
+// tracks of a playlist; ones we can't find show as "missing" rows
+function plTracks(p) {
+  const byId = new Map(lib.tracks.map((t) => [t.id, t]));
+  return p.items.map((id, i) => byId.get(id) || { id, missing: true, title: (p.meta[id] || {}).title || id.split("|")[0].split("/").pop(), artist: (p.meta[id] || {}).artist || "", pos: i });
+}
+// a folder was (re)connected: point missing playlist entries at tracks with the same file name and size
+function plRematch() {
+  const byFile = new Map();
+  for (const t of lib.tracks) {
+    const f = (t.name || "").toLowerCase();
+    byFile.set(f + "|" + t.size, t); if (!byFile.has(f)) byFile.set(f, t);
+  }
+  const have = new Set(lib.tracks.map((t) => t.id));
+  for (const p of PL.lists) {
+    let changed = false;
+    p.items = p.items.map((id) => {
+      if (have.has(id)) return id;
+      const m = p.meta[id];
+      if (!m || !m.file) return id;
+      const f = m.file.toLowerCase(), t = byFile.get(f + "|" + m.size) || byFile.get(f);
+      if (!t) return id;
+      changed = true; p.meta[t.id] = metaOf(t); return t.id;
+    });
+    if (changed) plSave(p);
+  }
+}
+function setView(v) {
+  PL.view = v;
+  lib.selIds = new Set(); lib.sel = lib.anchor = 0;
+  if (v.kind === "pl") lib.sort = null;          // a playlist opens in its own order (so it can be rearranged)
+  $("#list").scrollTop = 0;
+  $("#library").classList.remove("treeopen");
+  applyView(); renderTree();
+  const name = viewName(v);
+  $("#viewName").textContent = name;
+  $("#plRemove").hidden = v.kind !== "pl";
+}
+function viewName(v) {
+  if (v.kind === "all") return "Collection";
+  if (v.kind === "pl") { const p = plGet(v.id); return p ? p.name : "Playlist"; }
+  const d = PL.devices.find((x) => x.id === v.dev);
+  if (!d) return "Device";
+  if (v.kind === "dev") return d.name;
+  const n = d.tree.find((x) => x.id === v.id);
+  return `${d.name} · ${n ? n.name : ""}`;
+}
+// the tracks the list shows for the current view (before search and sort)
+function viewTracks() {
+  const v = PL.view;
+  if (v.kind === "pl") { const p = plGet(v.id); return p ? plTracks(p) : []; }
+  if (v.kind === "dev") return lib.tracks.filter((t) => t.device === v.dev);
+  if (v.kind === "devpl") {
+    const d = PL.devices.find((x) => x.id === v.dev), n = d && d.tree.find((x) => x.id === v.id);
+    if (!n) return [];
+    return n.tracks.map((rid) => d.byRbId.get(rid)).filter(Boolean);
+  }
+  return lib.tracks.filter((t) => !t.device);
+}
+function isOwnPlaylistView() { return PL.view.kind === "pl" && !lib.sort && !lib.query; }
+
+// ---- the tree (sidebar on desktop, sheet on phones) ----
+function treeRows() {
+  const rows = [{ kind: "all", depth: 0, label: "Collection", count: lib.tracks.filter((t) => !t.device).length }];
+  rows.push({ kind: "head", label: "Playlists", what: "pl" });
+  const kids = (parent) => PL.lists.filter((x) => x.parent === parent).sort((a, b) => a.order - b.order || a.name.localeCompare(b.name));
+  const walk = (parent, depth) => {
+    for (const p of kids(parent)) {
+      rows.push({ kind: p.folder ? "folder" : "pl", id: p.id, depth, label: p.name, count: p.folder ? null : p.items.length });
+      if (p.folder && PL.open.has(p.id)) walk(p.id, depth + 1);
+    }
+  };
+  walk(null, 1);
+  rows.push({ kind: "head", label: "Devices", what: "dev" });
+  for (const d of PL.devices) {
+    rows.push({ kind: "dev", dev: d.id, depth: 1, label: d.name, count: d.trackCount });
+    if (!PL.open.has("dev:" + d.id)) continue;
+    const dk = (parent) => d.tree.filter((x) => x.parent === parent).sort((a, b) => a.sort - b.sort);
+    const dw = (parent, depth) => {
+      for (const n of dk(parent)) {
+        rows.push({ kind: n.folder ? "devfolder" : "devpl", dev: d.id, id: n.id, depth, label: n.name, count: n.folder ? null : n.tracks.length });
+        if (n.folder && PL.open.has(`dev:${d.id}:${n.id}`)) dw(n.id, depth + 1);
+      }
+    };
+    dw(0, 2);
+  }
+  return rows;
+}
+function rowIsView(r) {
+  const v = PL.view;
+  return (r.kind === "all" && v.kind === "all") || (r.kind === "pl" && v.kind === "pl" && v.id === r.id)
+    || (r.kind === "dev" && v.kind === "dev" && v.dev === r.dev) || (r.kind === "devpl" && v.kind === "devpl" && v.dev === r.dev && v.id === r.id);
+}
+function openRow(r) {
+  if (r.kind === "all") setView({ kind: "all" });
+  else if (r.kind === "pl") setView({ kind: "pl", id: r.id });
+  else if (r.kind === "dev") { PL.open.add("dev:" + r.dev); setView({ kind: "dev", dev: r.dev }); }
+  else if (r.kind === "devpl") setView({ kind: "devpl", dev: r.dev, id: r.id });
+  else if (r.kind === "folder" || r.kind === "devfolder") toggleOpen(r);
+}
+function toggleOpen(r) {
+  const k = r.kind === "folder" ? r.id : r.kind === "dev" ? "dev:" + r.dev : `dev:${r.dev}:${r.id}`;
+  PL.open.has(k) ? PL.open.delete(k) : PL.open.add(k);
+  renderTree();
+}
+function renderTree() {
+  const box = document.getElementById("tree");
+  if (!box) return;
+  const rows = PL.treeRows = treeRows();
+  try { localStorage.setItem("cb.plOpen", JSON.stringify([...PL.open].filter((x) => !x.startsWith("dev:")))); } catch (e) {}
+  PL.treeSel = clamp(PL.treeSel, 0, rows.length - 1);
+  box.innerHTML = "";
+  box.classList.toggle("focus", PL.focus === "tree");
+  rows.forEach((r, i) => {
+    if (r.kind === "head") {
+      const head = h("div", { class: "thead" }, h("span", {}, r.label.toUpperCase()));
+      if (r.what === "pl") {
+        head.append(h("button", { class: "ticon", title: "New playlist", onclick: () => startRename(plNew(nextName("Playlist")), true) }, "+"),
+          h("button", { class: "ticon", title: "New folder", onclick: () => startRename(plNew(nextName("Folder"), true), true) }, "▤"),
+          h("button", { class: "ticon", title: "rekordbox XML: import / export", onclick: (e) => xmlMenu(e.currentTarget) }, "⋯"));
+        head.addEventListener("dragover", (e) => { if (PL.dragList) { e.preventDefault(); head.classList.add("drop"); } });
+        head.addEventListener("dragleave", () => head.classList.remove("drop"));
+        head.addEventListener("drop", (e) => { head.classList.remove("drop"); if (PL.dragList) { e.preventDefault(); movePlaylist(PL.dragList, null); } });
+      } else if (CAN_PICK_FOLDER) {
+        head.append(h("button", { class: "ticon wide", title: "Open a rekordbox USB stick or SD card (read-only)", onclick: openDevice }, "+ USB"));
+      }
+      box.append(head);
+      return;
+    }
+    const folderish = r.kind === "folder" || r.kind === "devfolder" || r.kind === "dev";
+    const openKey = r.kind === "folder" ? r.id : r.kind === "dev" ? "dev:" + r.dev : `dev:${r.dev}:${r.id}`;
+    const caret = folderish ? h("span", { class: "caret", onclick: (e) => { e.stopPropagation(); toggleOpen(r); } }, PL.open.has(openKey) ? "▾" : "▸") : h("span", { class: "caret" }, "");
+    const icon = { all: "♫", pl: "≡", folder: "", dev: "⏏", devpl: "≡", devfolder: "" }[r.kind];
+    const el = h("div", { class: `trow2${rowIsView(r) ? " cur" : ""}${PL.focus === "tree" && i === PL.treeSel ? " tsel" : ""}${r.kind.startsWith("dev") ? " ro" : ""}`, style: `padding-left:${6 + r.depth * 12}px` },
+      caret, h("span", { class: "ic" }, icon), h("span", { class: "nm" }, r.label), r.count != null ? h("span", { class: "ct" }, String(r.count)) : "");
+    el.addEventListener("click", () => { PL.treeSel = i; openRow(r); });
+    if (r.kind === "pl" || r.kind === "folder") {
+      el.addEventListener("dblclick", () => startRename(plGet(r.id)));
+      if (TOUCH_UI) el.append(h("button", { class: "tx", title: "Rename or delete", onclick: (e) => { e.stopPropagation();
+        popMenu(e.currentTarget, [["Rename", () => startRename(plGet(r.id))], ["Delete…", () => confirmDelete(el, plGet(r.id))]]); } }, "⋯"));
+      else el.append(h("button", { class: "tx", title: "Delete", onclick: (e) => { e.stopPropagation(); confirmDelete(el, plGet(r.id)); } }, "×"));
+      el.draggable = true;
+      el.addEventListener("dragstart", (e) => { PL.dragList = r.id; e.dataTransfer.setData("text/cratebox-pl", r.id); e.dataTransfer.effectAllowed = "move"; });
+      el.addEventListener("dragend", () => { PL.dragList = null; });
+      el.addEventListener("dragover", (e) => {
+        const tracks = e.dataTransfer.types.includes("text/cratebox");
+        if ((tracks && r.kind === "pl") || (PL.dragList && PL.dragList !== r.id && r.kind === "folder")) { e.preventDefault(); el.classList.add("drop"); }
+      });
+      el.addEventListener("dragleave", () => el.classList.remove("drop"));
+      el.addEventListener("drop", (e) => {
+        el.classList.remove("drop");
+        const data = e.dataTransfer.getData("text/cratebox");
+        if (data && r.kind === "pl") {
+          e.preventDefault();
+          const n = plAdd(plGet(r.id), dragTracks(data));
+          status(`Added ${n} track${n === 1 ? "" : "s"} to ${r.label}`);
+        } else if (PL.dragList && r.kind === "folder") { e.preventDefault(); movePlaylist(PL.dragList, r.id); }
+      });
+    }
+    if (r.kind === "devpl") el.append(h("button", { class: "tx", title: "Copy to my playlists", onclick: (e) => { e.stopPropagation(); copyDevicePlaylist(r); } }, "⧉"));
+    if (r.kind === "dev") el.append(h("button", { class: "tx", title: "Close this device", onclick: (e) => { e.stopPropagation(); closeDevice(r.dev); } }, "×"));
+    box.append(el);
+  });
+}
+const TOUCH_UI = document.documentElement.classList.contains("touch");
+// FLX4 browse: press to jump between the tree and the track list, turn to move in whichever has focus
+function treeMove(n) {
+  const rows = PL.treeRows.length ? PL.treeRows : treeRows();
+  let i = PL.treeSel;
+  for (let step = 0; step < Math.abs(n); step++) {
+    let j = i + Math.sign(n);
+    while (j >= 0 && j < rows.length && rows[j].kind === "head") j += Math.sign(n);
+    if (j < 0 || j >= rows.length) break;
+    i = j;
+  }
+  PL.treeSel = i;
+  const r = rows[i];
+  if (r && (r.kind === "all" || r.kind === "pl" || r.kind === "devpl")) openRow(r);      // show what's in it as you scroll, like rekordbox
+  else renderTree();
+  const el = document.querySelectorAll("#tree .trow2")[rows.slice(0, i).filter((x) => x.kind !== "head").length];
+  if (el) el.scrollIntoView({ block: "nearest" });
+}
+function treePress() {
+  if (PL.focus !== "tree") {
+    PL.focus = "tree";
+    const rows = treeRows(), cur = rows.findIndex(rowIsView);
+    PL.treeSel = cur >= 0 ? cur : 0;
+    renderTree();
+    return;
+  }
+  const r = PL.treeRows[PL.treeSel];
+  if (!r) return;
+  if (r.kind === "folder" || r.kind === "devfolder") return toggleOpen(r);
+  if (r.kind === "dev" && !PL.open.has("dev:" + r.dev)) { openRow(r); return; }
+  if (!rowIsView(r)) openRow(r);
+  PL.focus = "list";
+  renderTree(); renderList();
+}
+function nextName(base) {
+  let n = 1;
+  while (PL.lists.some((x) => x.name === `${base} ${n}`)) n++;
+  return `${base} ${n}`;
+}
+function movePlaylist(id, parent) {
+  const p = plGet(id);
+  if (!p) return;
+  // no moving a folder into itself
+  for (let x = parent; x; x = (plGet(x) || {}).parent) if (x === id) return;
+  p.parent = parent; p.order = PL.lists.filter((x) => x.parent === parent && x !== p).length;
+  if (parent) PL.open.add(parent);
+  plSave(p); renderTree();
+}
+function startRename(p, isNew) {
+  if (!p) return;
+  renderTree();
+  const rows = [...document.querySelectorAll("#tree .trow2")], i = PL.treeRows.filter((r) => r.kind !== "head").findIndex((r) => r.id === p.id);
+  const el = rows[i];
+  if (!el) return;
+  const nm = el.querySelector(".nm"), inp = h("input", { class: "tren", value: p.name });
+  nm.replaceWith(inp);
+  inp.focus(); inp.select();
+  const done = (keep) => {
+    if (done.ran) return; done.ran = true;
+    const v = inp.value.trim();
+    if (keep && v) { p.name = v; plSave(p); }
+    renderTree();
+    if (isNew && !p.folder) setView({ kind: "pl", id: p.id });
+  };
+  inp.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Enter") done(true); if (e.key === "Escape") done(false); });
+  inp.addEventListener("blur", () => done(true));
+}
+function confirmDelete(el, p) {
+  if (!p) return;
+  const n = p.folder ? PL.lists.filter((x) => x.parent === p.id).length : p.items.length;
+  const bar = h("div", { class: "tconfirm" }, h("span", {}, `Delete "${p.name}"${p.folder && n ? ` and what's in it` : ""}?`),
+    h("button", { class: "hbtn danger", onclick: (e) => { e.stopPropagation(); plDelete(p); status(`Deleted ${p.name}`); } }, "Delete"),
+    h("button", { class: "hbtn", onclick: (e) => { e.stopPropagation(); renderTree(); } }, "Cancel"));
+  el.replaceWith(bar);
+}
+function dragTracks(data) {
+  let ids;
+  try { ids = JSON.parse(data); } catch (e) { ids = [data]; }
+  if (!Array.isArray(ids)) ids = [ids];
+  const byId = new Map(lib.tracks.map((t) => [t.id, t]));
+  return ids.map((id) => byId.get(id)).filter(Boolean);
+}
+function selectedTracks() {
+  const ids = lib.selIds && lib.selIds.size ? lib.selIds : new Set(lib.view[lib.sel] ? [lib.view[lib.sel].id] : []);
+  return lib.view.filter((t) => ids.has(t.id));
+}
+// "Add to playlist" menu (toolbar button; also how phones add tracks)
+function addToMenu(btn) {
+  const tracks = selectedTracks();
+  if (!tracks.length) return status("Select a track first");
+  const own = PL.lists.filter((x) => !x.folder);
+  const path = (p) => { const parts = [p.name]; for (let x = plGet(p.parent); x; x = plGet(x.parent)) parts.unshift(x.name); return parts.join(" / "); };
+  popMenu(btn, [
+    ...own.sort((a, b) => path(a).localeCompare(path(b))).map((p) => [path(p) + ` (${p.items.length})`, () => {
+      const n = plAdd(p, tracks); status(`Added ${n} track${n === 1 ? "" : "s"} to ${p.name}`);
+    }]),
+    ["+ New playlist…", () => { const p = plNew(nextName("Playlist")); plAdd(p, tracks); startRename(p); status(`Added ${tracks.length} to a new playlist`); }],
+  ]);
+}
+function popMenu(anchor, items) {
+  closeMenus();
+  const m = h("div", { class: "popmenu" });
+  for (const [label, fn] of items) {
+    if (fn === null) { m.append(h("div", { class: "pmhead" }, label)); continue; }
+    const b = h("button", {}, label);
+    b.addEventListener("click", (e) => { e.stopPropagation(); closeMenus(); fn(); });
+    m.append(b);
+  }
+  document.body.append(m);
+  const r = anchor.getBoundingClientRect();
+  const top = r.bottom + 4 + m.offsetHeight > innerHeight ? Math.max(8, r.top - m.offsetHeight - 4) : r.bottom + 4;
+  m.style.left = Math.max(8, Math.min(innerWidth - m.offsetWidth - 8, r.left)) + "px";
+  m.style.top = top + "px";
+  setTimeout(() => document.addEventListener("pointerdown", closeMenusOutside, { capture: true }), 0);
+}
+function closeMenusOutside(e) { if (!e.target.closest(".popmenu")) closeMenus(); }
+function closeMenus() { for (const m of document.querySelectorAll(".popmenu")) m.remove(); document.removeEventListener("pointerdown", closeMenusOutside, { capture: true }); }
+function removeFromPlaylist() {
+  const v = PL.view;
+  if (v.kind !== "pl") return;
+  const p = plGet(v.id);
+  const ids = lib.selIds && lib.selIds.size ? lib.selIds : new Set(lib.view[lib.sel] ? [lib.view[lib.sel].id] : []);
+  const pos = [];
+  lib.view.forEach((t, k) => { if (ids.has(t.id)) pos.push(lib.viewPos[k]); });
+  if (!pos.length) return;
+  plRemoveAt(p, pos);
+  lib.selIds = new Set();
+  status(`Removed ${pos.length} from ${p.name}`);
+}
+
+// ---- rekordbox USB / SD ----
+async function openDevice() {
+  let dir;
+  try { dir = await window.showDirectoryPicker({ id: "cratebox-usb", mode: "read" }); }
+  catch (e) { return; }
+  await mountDevice(dir, true);
+}
+async function subHandle(dir, path, kind) {
+  const parts = path.split("/").filter(Boolean);
+  let h2 = dir;
+  for (let i = 0; i < parts.length; i++) {
+    const last = i === parts.length - 1;
+    h2 = last && kind === "file" ? await h2.getFileHandle(parts[i]) : await h2.getDirectoryHandle(parts[i]);
+  }
+  return h2;
+}
+async function mountDevice(dir, remember) {
+  let pdb;
+  try { pdb = await (await (await subHandle(dir, "PIONEER/rekordbox/export.pdb", "file")).getFile()).arrayBuffer(); }
+  catch (e) { return status(`"${dir.name}" doesn't look like a rekordbox USB/SD export (no PIONEER/rekordbox/export.pdb). Pick the drive itself.`, 9000); }
+  let db;
+  try { db = RB.parsePdb(pdb); } catch (e) { return status("Couldn't read that rekordbox database: " + e.message, 9000); }
+  const id = "usb-" + dir.name;
+  if (PL.devices.some((x) => x.id === id)) {
+    closeDevice(id, true);
+    if (PL.devices.some((x) => x.id === id)) return status(`${dir.name} is already open`);
+  }
+  // your own edits to these tracks (grid fixes) from earlier sessions
+  const saved = new Map();
+  await idb("analysis", "readonly", (o) => {
+    const r = o.openCursor(IDBKeyRange.bound(id + "|", id + "|\uffff"));
+    r.onsuccess = () => { const c = r.result; if (c) { saved.set(c.key, c.value); c.continue(); } };
+    return null;
+  });
+  const dev = { id, name: dir.name, dir, tree: db.playlists, byRbId: new Map(), trackCount: db.tracks.length };
+  for (const r of db.tracks) {
+    const t = {
+      id: `${id}|${r.path}`, name: r.filename, rel: r.path, size: r.size, title: r.title || r.filename, artist: r.artist,
+      bpm: r.bpm ? foldBpm(r.bpm) : null, key: RB.keyIndex(r.key), duration: r.duration, firstBeat: null, device: id,
+      rb: r, ver: ANALYSIS_VER, phrases: [], stored: false, handle: null, file: null,
+      async getFile() { if (!this.handle) this.handle = await subHandle(dir, this.rel, "file"); return this.handle.getFile(); },
+    };
+    if (t.key == null) t.key = -1;
+    const c = saved.get(t.id);
+    if (c && c.gridManual) Object.assign(t, { bpm: c.bpm, firstBeat: c.firstBeat, gridManual: true, autoBpm: c.autoBpm, autoFirst: c.autoFirst });
+    dev.byRbId.set(r.id, t);
+    lib.tracks.push(t);
+  }
+  PL.devices.push(dev);
+  PL.open.add("dev:" + id);
+  if (remember) {
+    const saved = (await idbGet("settings", "devices")) || [];
+    await idbPut("settings", "devices", saved.filter((d) => d.name !== dir.name).concat([dir]));
+  }
+  renderTree(); applyView(true);
+  status(`${dir.name}: ${db.tracks.length} tracks, ${db.playlists.filter((p) => !p.folder).length} playlists (read-only)`);
+}
+function closeDevice(id, quiet) {
+  const d = PL.devices.find((x) => x.id === id);
+  if (!d) return;
+  if (decks.some((k) => k.track && k.track.device === id)) { if (!quiet) status("Load something else on the decks first"); return; }
+  PL.devices = PL.devices.filter((x) => x !== d);
+  lib.tracks = lib.tracks.filter((t) => t.device !== id);
+  if (!quiet) idbGet("settings", "devices").then((s) => idbPut("settings", "devices", (s || []).filter((x) => x.name !== d.name)));
+  if (PL.view.dev === id) setView({ kind: "all" }); else { renderTree(); applyView(true); }
+}
+async function restoreDevices() {
+  const saved = (await idbGet("settings", "devices")) || [];
+  for (const dir of saved) {
+    try { if ((await dir.queryPermission({ mode: "read" })) === "granted") await mountDevice(dir, false); } catch (e) {}
+  }
+}
+// rekordbox's own analysis for a device track: grid, phrases, hot cues and the memory cue
+async function readDeviceAnalysis(t) {
+  const dev = PL.devices.find((x) => x.id === t.device);
+  if (!dev || !t.rb || !t.rb.anlzPath) return false;
+  const read = async (p) => { try { return RB.parseAnlz(await (await (await subHandle(dev.dir, p, "file")).getFile()).arrayBuffer()); } catch (e) { return null; } };
+  const dat = await read(t.rb.anlzPath), ext = await read(t.rb.anlzPath.replace(/\.DAT$/i, ".EXT"));
+  if (!dat || !dat.beats.length) return false;
+  const g = RB.gridFromBeats(dat.beats);
+  if (!t.gridManual) { t.bpm = g.bpm; t.firstBeat = g.firstBeat; t.autoBpm = g.bpm; t.autoFirst = g.firstBeat; }
+  const ph = ext ? RB.phrasesFrom({ beats: dat.beats, phrases: ext.phrases }) : null;
+  t.phrases = ph || [];
+  const cues = ext && (ext.hot.length || ext.memory.length) ? ext : dat;
+  t.rbCues = { hot: cues.hot, memory: cues.memory };
+  t.rbRead = true;
+  return true;
+}
+function rbCuesFor(t) {
+  // rekordbox hot cues A-H and the first memory cue, used until you set your own in Cratebox
+  const c = t.rbCues;
+  if (!c) return null;
+  const hot = new Array(8).fill(null);
+  for (const q of c.hot) if (q.hot >= 1 && q.hot <= 8) hot[q.hot - 1] = q.ms / 1000;
+  const mem = c.memory.slice().sort((a, b) => a.ms - b.ms)[0];
+  return { cue: mem ? mem.ms / 1000 : null, hot };
+}
+function copyDevicePlaylist(r) {
+  const d = PL.devices.find((x) => x.id === r.dev), n = d && d.tree.find((x) => x.id === r.id);
+  if (!n) return;
+  const p = plNew(n.name);
+  plAdd(p, n.tracks.map((rid) => d.byRbId.get(rid)).filter(Boolean));
+  status(`Copied "${n.name}" to your playlists (${p.items.length} tracks). It plays from ${d.name} while that's plugged in.`);
+}
+
+// ---- rekordbox XML ----
+function xmlMenu(btn) {
+  popMenu(btn, [
+    ["Import rekordbox XML…", () => $("#xmlInput").click()],
+    ["Export to rekordbox XML…", exportXml],
+    ["Music folder path for export…", askBasePath],
+  ]);
+}
+function askBasePath() {
+  const cur = pref("cb.basePath", "");
+  const v = prompt(`Where is "${rootFolderName() || "your music folder"}" on this computer? rekordbox needs full paths, e.g. C:\\Users\\you\\Music`, cur);
+  if (v != null) setPref("cb.basePath", v.trim().replace(/[\\/]+$/, ""));
+}
+function rootFolderName() { const t = lib.tracks.find((x) => !x.device && !x.stored && x.rel); return t ? t.rel.split("/")[0] : ""; }
+async function importXml(file) {
+  let x;
+  try { x = RB.parseXml(await file.text()); } catch (e) { return status("Couldn't read that file: " + e.message, 8000); }
+  // match rekordbox's tracks to files Cratebox knows (file name + size, then file name)
+  const byFile = new Map();
+  for (const t of lib.tracks) {
+    if (t.device) continue;
+    const f = (t.name || "").toLowerCase();
+    byFile.set(f + "|" + t.size, t); if (!byFile.has(f)) byFile.set(f, t);
+  }
+  const resolved = new Map();
+  let matched = 0, applied = 0;
+  for (const [rid, r] of x.tracks) {
+    const f = (r.filename || "").toLowerCase(), t = byFile.get(f + "|" + r.size) || byFile.get(f);
+    if (t) { matched++; resolved.set(rid, t); if (applyRekordboxTrack(t, r)) applied++; }
+    else resolved.set(rid, { id: "rbx|" + r.filename + "|" + r.size, missing: true, title: r.title, artist: r.artist, name: r.filename, size: r.size });
+  }
+  // playlists go into a folder of their own
+  const stamp = new Date().toLocaleDateString();
+  const top = plNew(`rekordbox (${stamp})`, true);
+  const made = new Map();
+  for (const n of x.playlists) {
+    const parent = n.parent == null ? top.id : made.get(n.parent);
+    const p = plNew(n.name, n.folder, parent);
+    made.set(n.key, p.id);
+    if (!n.folder) {
+      for (const rid of n.tracks) {
+        const t = resolved.get(rid);
+        if (!t) continue;
+        p.items.push(t.id);
+        p.meta[t.id] = t.missing ? { title: t.title, artist: t.artist, file: t.name, size: t.size } : metaOf(t);
+      }
+      plSave(p);
+    }
+  }
+  PL.open.add(top.id);
+  renderTree(); applyView(true);
+  status(`rekordbox XML: ${x.tracks.size} tracks (${matched} found in your folders, grids/cues/keys taken from rekordbox for ${applied}), ${x.playlists.filter((p) => !p.folder).length} playlists`, 12000);
+}
+// take rekordbox's grid, key and cues for a track (your own Cratebox edits win)
+function applyRekordboxTrack(t, r) {
+  let did = false;
+  if (r.grid && r.grid.bpm > 0 && !t.gridManual) {
+    const spb = 60 / r.grid.bpm;
+    let first = r.grid.firstBeat - ((r.grid.beat || 1) - 1) * spb;       // back to the downbeat
+    const bar = 4 * spb;
+    first -= Math.floor(first / bar) * bar;
+    t.bpm = r.grid.bpm; t.firstBeat = first; t.gridManual = true; t.gridFrom = "rekordbox";
+    if (!t.autoBpm) { t.autoBpm = t.bpm; t.autoFirst = first; }
+    did = true;
+  }
+  const k = RB.keyIndex(r.key);
+  if (k >= 0) { t.key = k; t.keyFrom = "rekordbox"; did = true; }
+  if (!t.duration && r.duration) t.duration = r.duration;
+  if (r.marks.length) {
+    const have = localStorage.getItem(trackKey(t));
+    if (!have) {
+      const hot = new Array(8).fill(null);
+      for (const m of r.marks) if (m.num >= 0 && m.num < 8) hot[m.num] = m.start;
+      const mem = r.marks.filter((m) => m.num === -1).sort((a, b) => a.start - b.start)[0];
+      try { localStorage.setItem(trackKey(t), JSON.stringify({ cue: mem ? mem.start : null, hot })); } catch (e) {}
+      did = true;
+    }
+  }
+  if (did) {
+    saveAnalysis(t);
+    // not analysed yet: the analysis still runs (length, phrases) but keeps rekordbox's grid and key
+    if (!analysisCurrent(t) && !lib.queue.includes(t)) { lib.queue.push(t); runAnalysisQueue(); }
+  }
+  return did;
+}
+function xmlEsc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function exportXml() {
+  const base = pref("cb.basePath", "");
+  if (!base && lib.tracks.some((t) => !t.device && !t.stored)) {
+    askBasePath();
+    if (!pref("cb.basePath", "")) return status("Export needs the music folder's location on this computer", 8000);
+  }
+  const root = pref("cb.basePath", "").replace(/\\/g, "/");
+  const own = lib.tracks.filter((t) => !t.device);
+  const tid = new Map(own.map((t, i) => [t.id, i + 1]));
+  const loc = (t) => {
+    // the picked folder's name is the first part of rel; the base path is where that folder lives
+    const rel = t.rel.split("/").slice(1).join("/"), full = root ? `${root}/${rel}` : rel;
+    return "file://localhost/" + encodeURI(full.replace(/^\/+/, "")).replace(/#/g, "%23").replace(/\?/g, "%3F");
+  };
+  const out = ['<?xml version="1.0" encoding="UTF-8"?>', '<DJ_PLAYLISTS Version="1.0.0">', '  <PRODUCT Name="Cratebox" Version="1" Company="Cratebox"/>', `  <COLLECTION Entries="${own.length}">`];
+  for (const t of own) {
+    const c = loadCues(t), attrs = { TrackID: tid.get(t.id), Name: t.title, Artist: t.artist, Kind: (t.name || "").split(".").pop().toUpperCase() + " File",
+      Size: t.size || 0, TotalTime: Math.round(t.duration || 0), AverageBpm: (t.bpm || 0).toFixed(2), Tonality: RB.keyName(t.key), Location: loc(t) };
+    out.push(`    <TRACK ${Object.entries(attrs).map(([k, v]) => `${k}="${xmlEsc(v)}"`).join(" ")}>`);
+    if (t.bpm && t.firstBeat != null) out.push(`      <TEMPO Inizio="${t.firstBeat.toFixed(3)}" Bpm="${t.bpm.toFixed(2)}" Metro="4/4" Battito="1"/>`);
+    if (c.cue != null) out.push(`      <POSITION_MARK Name="" Type="0" Start="${c.cue.toFixed(3)}" Num="-1"/>`);
+    c.hot.forEach((v, i) => { if (v != null) out.push(`      <POSITION_MARK Name="" Type="0" Start="${v.toFixed(3)}" Num="${i}"/>`); });
+    out.push("    </TRACK>");
+  }
+  out.push("  </COLLECTION>", "  <PLAYLISTS>");
+  const node = (parent, ind) => {
+    const kids = PL.lists.filter((x) => x.parent === parent).sort((a, b) => a.order - b.order);
+    for (const p of kids) {
+      if (p.folder) { out.push(`${ind}<NODE Type="0" Name="${xmlEsc(p.name)}" Count="${PL.lists.filter((x) => x.parent === p.id).length}">`); node(p.id, ind + "  "); out.push(`${ind}</NODE>`); }
+      else {
+        const items = p.items.filter((id) => tid.has(id));
+        out.push(`${ind}<NODE Name="${xmlEsc(p.name)}" Type="1" KeyType="0" Entries="${items.length}">`);
+        for (const id of items) out.push(`${ind}  <TRACK Key="${tid.get(id)}"/>`);
+        out.push(`${ind}</NODE>`);
+      }
+    }
+  };
+  out.push(`    <NODE Type="0" Name="ROOT" Count="${PL.lists.filter((x) => !x.parent).length}">`);
+  node(null, "      ");
+  out.push("    </NODE>", "  </PLAYLISTS>", "</DJ_PLAYLISTS>");
+  const a = h("a", { href: URL.createObjectURL(new Blob([out.join("\n")], { type: "application/xml" })), download: "cratebox-rekordbox.xml" });
+  document.body.append(a); a.click(); a.remove();
+  status(`Exported ${own.length} tracks and ${PL.lists.filter((x) => !x.folder).length} playlists. In rekordbox: Preferences → Advanced → Imported Library = this file, and tick rekordbox xml under View → Layout.`, 12000);
+}
+
+// toolbar
+$("#addToBtn").addEventListener("click", (e) => addToMenu(e.currentTarget));
+$("#plRemove").addEventListener("click", removeFromPlaylist);
+$("#xmlInput").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importXml(f); });
+$("#treeBtn").addEventListener("click", (e) => { e.stopPropagation(); $("#library").classList.toggle("treeopen"); });
+document.addEventListener("pointerdown", (e) => {
+  if ($("#library").classList.contains("treeopen") && !e.target.closest("#tree, #treeBtn, .popmenu")) $("#library").classList.remove("treeopen");
+});
+$("#tree").addEventListener("pointerdown", () => { if (PL.focus !== "tree") return; PL.focus = "list"; });
+
 
 // =====================================================================================
 //  UI widgets: knobs and sliders that both the mouse and the FLX4 move
@@ -2361,7 +3347,8 @@ function buildDeck(i) {
   el.addEventListener("dragover", (e) => { e.preventDefault(); });
   el.addEventListener("drop", (e) => {
     e.preventDefault();
-    const id = e.dataTransfer.getData("text/cratebox");
+    let id = e.dataTransfer.getData("text/cratebox");
+    try { const a = JSON.parse(id); id = Array.isArray(a) ? a[0] : a; } catch (err) {}
     if (id) { const t = lib.tracks.find((x) => x.id === id); if (t) d.load(t); return; }
     const f = [...e.dataTransfer.files].find((f) => AUDIO_EXT.test(f.name));
     if (f) {
@@ -2386,11 +3373,16 @@ function buildDeck(i) {
   u.mtBtn = h("button", { class: "tag", title: "Master tempo (keylock): change tempo without changing the key", onclick: () => d.setMT(!d.mt) }, "MT");
   el.append(h("div", { class: "dinfo" }, u.elapsed, u.remain, u.beats, u.phraseTag, h("span", { class: "spacer" }), u.keyTag, u.mtag, u.gridBtn, u.mtBtn, u.qtag));
   u.overview = h("canvas", { class: "overview", height: "44" });
+  // click/tap to jump, drag to scrub
+  const ovSeek = (e) => { const r = u.overview.getBoundingClientRect(); d.seekTo(clamp((e.clientX - r.left) / r.width, 0, 1) * d.duration); };
   u.overview.addEventListener("pointerdown", (e) => {
-    if (!d.loaded) return;
-    const r = u.overview.getBoundingClientRect();
-    d.seek(((e.clientX - r.left) / r.width) * d.duration);
+    if (!d.loaded || MIDI.learning) return;
+    u.overview.setPointerCapture(e.pointerId);
+    ovSeek(e);
   });
+  u.overview.addEventListener("pointermove", (e) => { if (d.loaded && u.overview.hasPointerCapture(e.pointerId)) ovSeek(e); });
+  // the release point counts too (a fast drag's last move can be folded into the release)
+  u.overview.addEventListener("pointerup", (e) => { if (d.loaded && u.overview.hasPointerCapture(e.pointerId)) ovSeek(e); });
   el.append(u.overview);
   // grid editor (GRID button toggles it)
   const gb = (label, title, fn) => { const b = h("button", { class: "sq gbtn", title }, label); b.addEventListener("click", (e) => fn(e)); return b; };
@@ -3013,7 +4005,7 @@ function runEntry(e, type, v, isLsb) {
       case "jogTop": return d.jogTicks(relTicks(v), "scratch");
       case "jogSide": return d.jogTicks(relTicks(v), "bend");
       case "jogSearch": return d.jogTicks(relTicks(v), "search");
-      case "browse": return moveSel(relKnob(v));
+      case "browse": return PL.focus === "tree" ? treeMove(relKnob(v)) : moveSel(relKnob(v));
       case "zoom": zoomSecs = clamp(zoomSecs * (relKnob(v) > 0 ? 0.8 : 1.25), 2, 32); return;
     }
   }
@@ -3068,7 +4060,7 @@ function pressAction(name, arg, d, deck, on) {
     case "hotClear": if (on) d.clearHot(+arg); return;
     case "loop": if (on) d.beatLoop(+arg); return;
     case "load": if (on) loadSelected(deck); return;
-    case "browsePress": if (on) $("#search").focus(); return;
+    case "browsePress": if (on) treePress(); return;
     case "browseShift": if (on) setBrowse(!document.body.classList.contains("browse")); return;
     case "browseUp": if (on) moveSel(-1); return;
     case "browseDown": if (on) moveSel(1); return;
@@ -3526,7 +4518,9 @@ function frame(ts) {
 
 window.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT") return;
-  if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); }
+  if ((e.key === "Delete" || e.key === "Backspace") && PL.view.kind === "pl") { e.preventDefault(); removeFromPlaylist(); }
+  else if ((e.key === "a" || e.key === "A") && (e.ctrlKey || e.metaKey)) { e.preventDefault(); lib.selIds = new Set(lib.view.map((t) => t.id)); renderList(); }
+  else if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); }
   else if (e.key === "ArrowUp") { e.preventDefault(); moveSel(-1); }
   else if (e.key === "ArrowLeft" && e.shiftKey) loadSelected(0);
   else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(1);
@@ -3560,6 +4554,8 @@ $("#startBtn").addEventListener("click", async () => {
   $("#start").remove();
   await openDB();
   const crashMsg = checkLastCrash();
+  await plLoad();
+  restoreDevices();
   restoreFolder();
   restoreImported().then(() => { if (crashMsg) status(crashMsg, 12000); });
   initMIDI();
@@ -3569,7 +4565,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>
