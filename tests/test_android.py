@@ -57,7 +57,7 @@ def main():
         page.tap(".ptabs button[data-tab=lib]")
         check("library button says Add music (file picker, not folder)", page.inner_text("#addFolder") == "Add music")
         with page.expect_file_chooser() as fc:
-            page.tap("#addFolder")
+            page.tap("#addFolder", force=True)
         fc.value.set_files(files)
         page.wait_for_function("cratebox.lib.tracks.length === 2 && cratebox.lib.tracks.every(t => t.stored)")
         page.reload()

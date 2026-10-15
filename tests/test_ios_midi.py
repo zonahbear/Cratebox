@@ -50,11 +50,13 @@ def main():
 
         page.tap(".ptabs button[data-tab=lib]")
         with page.expect_file_chooser() as fc:
-            page.tap("#addFolder")
+            page.tap("#addFolder", force=True)
         fc.value.set_files(files)
         page.wait_for_function("cratebox.lib.tracks.length === 2 && cratebox.lib.tracks.every(t => t.stored)", timeout=30000)
         check("file picker opens and imports tracks", True)
         check("file pickers are invisible but not display:none", page.evaluate("[...document.querySelectorAll('input[type=file]')].every(e => getComputedStyle(e).display !== 'none' && !e.hidden)"))
+        hit = page.evaluate("(() => { const b = document.querySelector('#addFolder').getBoundingClientRect(); const e = document.elementFromPoint(b.left + b.width / 2, b.top + b.height / 2); return e && e.id; })()")
+        check("tapping Add music lands on the real file input, not a script click", hit == "filesInput", str(hit))
 
         page.tap("#list .trow >> nth=0 >> .ld[data-d='0']")
         page.wait_for_function("cratebox.decks[0].loaded", timeout=60000)

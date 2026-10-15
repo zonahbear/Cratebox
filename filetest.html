@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cratebox file picker test</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 16px; background: #0b0d10; color: #e6e9ee; font: 16px/1.45 system-ui, sans-serif; }
+  h1 { font-size: 20px; margin: 0 0 4px; }
+  p { color: #8a93a2; margin: 4px 0 14px; }
+  .t { border: 1px solid #343a45; border-radius: 10px; padding: 12px; margin: 10px 0; background: #13161b; }
+  .t b { display: block; margin-bottom: 8px; }
+  .t input[type=file] { font-size: 16px; }
+  .btn { position: relative; display: inline-block; padding: 10px 16px; border-radius: 8px; background: #39a7ff; color: #031321; font-weight: 700; border: 0; font-size: 16px; }
+  .btn input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; }
+  .r { margin-top: 8px; font-family: ui-monospace, monospace; font-size: 14px; color: #586070; }
+  .r.ok { color: #3ddc84; } .r.bad { color: #ff3b55; }
+  pre { white-space: pre-wrap; color: #8a93a2; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>File picker test</h1>
+<p>Open this page in the app you DJ from (MIDIWeb Browser), try each box and pick one or two audio files. Then tell Claude which boxes turn green.</p>
+
+<div class="t"><b>1. Plain file input, audio only</b><input type="file" id="a" accept="audio/*" multiple><div class="r" id="ra">not tried</div></div>
+<div class="t"><b>2. Plain file input, any file</b><input type="file" id="b" multiple><div class="r" id="rb">not tried</div></div>
+<div class="t"><b>3. Button with the input on top (what Cratebox 0.9.3 does)</b><span class="btn">Add music<input type="file" id="c" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" multiple></span><div class="r" id="rc">not tried</div></div>
+<div class="t"><b>4. Button that opens a hidden input from script (what Cratebox 0.9.2 did)</b><button class="btn" id="dbtn">Add music</button><input type="file" id="d" accept="audio/*" multiple hidden><div class="r" id="rd">not tried</div></div>
+
+<pre id="env"></pre>
+<script>
+  for (const id of ["a", "b", "c", "d"]) {
+    const inp = document.getElementById(id), out = document.getElementById("r" + id);
+    inp.addEventListener("click", () => { out.textContent = "picker asked for…"; out.className = "r"; });
+    inp.addEventListener("change", () => {
+      const f = [...inp.files];
+      out.textContent = f.length ? `OK: ${f.length} file(s): ${f.map((x) => `${x.name} (${(x.size / 1e6).toFixed(1)} MB)`).join(", ")}` : "picker closed, nothing picked";
+      out.className = "r " + (f.length ? "ok" : "bad");
+    });
+  }
+  document.getElementById("dbtn").addEventListener("click", () => document.getElementById("d").click());
+  document.getElementById("env").textContent =
+    `UA: ${navigator.userAgent}\nWeb MIDI: ${!!navigator.requestMIDIAccess}\nSecure context: ${window.isSecureContext}`;
+</script>
+</body>
+</html>

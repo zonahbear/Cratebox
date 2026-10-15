@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 0.9.2 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+Version 0.9.3 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
 
 A lightweight two-deck DJ app that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -167,6 +167,7 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 Cratebox runs on iOS by touch. Safari has no Web MIDI (and every iOS browser is Safari underneath), so **for the FLX4 on an iPhone or iPad, open Cratebox in the free [MIDIWeb Browser](https://apps.apple.com/us/app/midiweb-browser/id6757226617) app** instead, with the FLX4 plugged in through a USB-C cable (or Apple's Lightning to USB 3 Camera Adapter on older phones). Cratebox picks up the Web MIDI that app adds, even if it arrives a moment after the page loads.
 
 - The older *Web MIDI Browser* app hasn't been updated since 2016 and can't pick files, so you can't add music in it; use MIDIWeb Browser.
+- If **Add music** does nothing in a MIDI browser app, open `filetest.html` (next to `cratebox.html`) in that app: it tries four ways of picking files and shows which ones the app allows.
 - Each app keeps its own storage: tracks added in Safari aren't visible in MIDIWeb Browser. Add your music inside the app you DJ from.
 - The FLX4 takes its power from the phone over USB. If it doesn't show up, try a powered USB-C hub.
 
