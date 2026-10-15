@@ -140,6 +140,17 @@ def main():
         # lanes stay put across many frames (the iOS growth bug)
         hs = page.evaluate("new Promise(r => setTimeout(() => r([lane0.clientHeight, lane1.clientHeight]), 1500))")
         check("waveform lanes keep their height", hs[0] == hs[1] and hs[0] < 60, str(hs))
+        # channel faders: start at 100%, and the handle is drawn where a touch would put it (0% = bottom)
+        geo = "(() => { const sl = document.querySelectorAll('#mixer .faders .vslider')[0], r = sl.getBoundingClientRect(), t = sl.querySelector('.thumb').getBoundingClientRect(); return { x: r.left + r.width / 2, top: r.top, bottom: r.bottom, h: r.height, thumb: t.top + t.height / 2 - r.top }; })()"
+        g0 = page.evaluate(geo)
+        fd = {"start": page.evaluate("cratebox.M.fader[0]"), "top": g0["thumb"], "h": g0["h"]}
+        page.mouse.click(g0["x"], g0["bottom"] - 1)
+        fd["zeroVal"] = page.evaluate("cratebox.M.fader[0]"); fd["zeroAt"] = page.evaluate(geo)["thumb"]
+        page.mouse.click(g0["x"], g0["top"] + 1)
+        fd["fullVal"] = page.evaluate("cratebox.M.fader[0]")
+        check("channel faders start at 100%", fd["start"] == 1, str(fd))
+        check("fader handle is drawn where the finger is: 0% at the bottom, 100% at the top",
+              fd["zeroVal"] < 0.01 and abs(fd["zeroAt"] - (fd["h"] - 4)) < 2 and abs(fd["top"] - 4) < 2 and fd["fullVal"] > 0.99, str(fd))
 
         # deck extras sheet
         page.tap(".deck[data-i='0'] .pbtns button:has-text('⋯')")

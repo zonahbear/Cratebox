@@ -31,7 +31,7 @@ body { overflow: hidden; user-select: none; -webkit-user-select: none; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--d0); outline-offset: 1px; }
-#app { height: 100%; display: grid; grid-template-rows: 42px auto auto minmax(150px, 1fr); min-width: 1180px; }
+#app { height: 100%; display: grid; grid-template-rows: 42px auto auto minmax(120px, 1fr); min-width: 1000px; }
 
 /* header */
 header { display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--line); }
@@ -246,7 +246,7 @@ html.phone #midiPill { height: 24px; padding: 0 8px; font-size: 11px; }
 .ptabs button.on { background: var(--line2); color: var(--fg); }
 .iconbtn { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-size: 17px; line-height: 1; }
 html.phone #waves { --lane: 46px; flex: 0 0 auto; border-radius: 8px; border: 0; }
-html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-template-columns: minmax(0, 1fr) 196px minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
+html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-template-columns: minmax(0, 1fr) calc(150px + 2 * clamp(26px, calc((100dvh - 200px) / 6.5), 40px)) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
 html.phone #library { flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
 html.phone[data-tab="mix"] #library, html.phone[data-tab="lib"] #decks { display: none; }
 html.phone .ltool { height: 44px; flex-wrap: nowrap; gap: 8px; }
@@ -296,8 +296,8 @@ html.phone .pad { height: clamp(28px, calc((100dvh - 320px) / 2), 40px); font-si
 html.phone #mixer { border-radius: 10px; padding: 6px; gap: 2px 4px; grid-template-columns: auto auto 1fr auto auto; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-items: center; }
 html.phone #mixer .strip { display: grid; grid-template-columns: auto; gap: 0; }
 html.phone #mixer .strip .knob { gap: 0; }
-html.phone #mixer .strip .knob svg { width: 26px; height: 26px; }
-html.phone #mixer .strip .slabel { font-size: 8px; letter-spacing: .04em; }
+html.phone #mixer .strip .knob svg { width: clamp(26px, calc((100dvh - 200px) / 6.5), 40px); height: clamp(26px, calc((100dvh - 200px) / 6.5), 40px); }
+html.phone #mixer .strip .slabel { font-size: 9px; letter-spacing: .04em; }
 html.phone #mixer .strip[data-i="0"] { grid-column: 1; grid-row: 1; }
 html.phone #mixer .strip[data-i="1"] { grid-column: 5; grid-row: 1; }
 html.phone #mixer .faders { display: contents; }
@@ -389,6 +389,83 @@ button, select, .pad, .sq { touch-action: manipulation; }
   html:not(.phone) .cols { grid-template-columns: 26px minmax(110px, 3fr) 0 52px 40px 0 30px; }
   html:not(.phone) .cols > :nth-child(3), html:not(.phone) .cols > :nth-child(6) { visibility: hidden; }
 }
+/* ---- scaling: every size from a small phone to a 1440p monitor ----
+   Decks are size containers, so what's inside them (jog, labels) follows the deck's own width;
+   heights follow the window height so the waveforms and library stay visible on short laptops. */
+.deck { container: deck / inline-size; }
+.modes .sh { display: none; }
+@container deck (max-width: 500px) { .modes .lg { display: none; } .modes .sh { display: inline; } }
+html:not(.phone) .deck { --jog: clamp(96px, min(30cqw, calc(100vh - 600px)), 150px); }
+html:not(.phone) .deck[data-i="0"] .dbody { grid-template-columns: 44px var(--jog) minmax(0, 1fr); }
+html:not(.phone) .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) var(--jog) 44px; }
+html:not(.phone) .jog { width: var(--jog); height: var(--jog); }
+html:not(.phone) .round { width: clamp(46px, calc(var(--jog) * .36), 54px); height: clamp(46px, calc(var(--jog) * .36), 54px); }
+html:not(.phone) .pad { height: clamp(28px, calc(100vh / 24), 40px); }
+html:not(.phone) .overview { height: clamp(30px, calc(100vh / 20), 44px); }
+html:not(.phone) #waves { --lane: clamp(50px, calc((100vh - 590px) / 2), 74px); }
+.pads { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.ctrl { grid-template-columns: minmax(0, 1fr); }
+/* short laptop screens (720-820 px tall): tighter decks so both waveforms and some library still fit */
+@media (max-height: 820px) and (min-width: 1101px) {
+  html:not(.phone) .deck { padding: 7px 10px 8px; gap: 6px; --jog: clamp(96px, min(30cqw, calc(100vh - 600px)), 150px); }
+  html:not(.phone) .dnum { font-size: 28px; }
+  html:not(.phone) .dbpm b { font-size: 21px; }
+  html:not(.phone) .dbody, html:not(.phone) .ctrl { gap: 6px; }
+  html:not(.phone) .jogwrap { gap: 6px; }
+  html:not(.phone) .ctrl .sq { height: 26px; }
+  html:not(.phone) .overview { height: 30px; }
+  html:not(.phone) #decks { padding: 6px 8px; }
+  html:not(.phone) #waves { --lane: clamp(50px, calc((100vh - 620px) / 2), 74px); }
+  /* mixer knobs in pairs (TRIM HI / MID LOW / CFX CUE) instead of one tall column */
+  html:not(.phone) #mixer { padding: 8px; gap: 6px; }
+  html:not(.phone) #mixer .strip { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 4px; align-items: center; justify-items: center; align-content: start; }
+  html:not(.phone) #mixer .strip .cuebtn { width: 100%; max-width: 56px; }
+  html:not(.phone) #mixer .mcenter .meter { height: 86px !important; }
+}
+@media (min-width: 1101px) and (max-width: 1399px) {
+  html:not(.phone) #decks { grid-template-columns: minmax(0, 1fr) 260px minmax(0, 1fr); }
+}
+@media (max-width: 1100px) {
+  html:not(.phone) .deck { --jog: clamp(96px, 30cqw, 150px); }
+  html:not(.phone) #waves { --lane: 66px; }
+}
+@media (max-width: 700px) { html:not(.phone) #waves { --lane: 60px; } }
+/* tablets: finger-sized controls */
+html.touch:not(.phone) button.tag { min-height: 28px; padding: 0 10px; display: inline-flex; align-items: center; }
+html.touch:not(.phone) .hbtn, html.touch:not(.phone) .hsel, html.touch:not(.phone) .ltool input[type=search] { height: 34px; }
+html.touch:not(.phone) .sq, html.touch:not(.phone) .ctrl .sq { height: 36px; min-width: 36px; }
+html.touch:not(.phone) .modes button { height: 32px; font-size: 12px; }
+html.touch:not(.phone) .cuebtn { height: 34px; }
+html.touch:not(.phone) .ticon { height: 28px; min-width: 30px; }
+html.touch:not(.phone) .vslider { width: 34px; }
+html.touch:not(.phone) .vslider::before { left: 15px; }
+html.touch:not(.phone) .vslider .thumb { width: 34px; height: 18px; margin-top: -9px; }
+html.touch:not(.phone) .vslider .thumb::after { top: 8px; }
+html.touch:not(.phone) .hslider .thumb { width: 22px; margin-left: -11px; }
+/* phones: buttons shrink with the deck instead of spilling out of it */
+html.phone .pbtns { grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
+html.phone .pbtns .sq, html.phone .pbtns .tag { min-width: 0; overflow: hidden; }
+html.phone #mixer .cuebtn { height: 26px; }
+html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
+/* narrow phones (iPhone SE, mini): a jog that small is no use, so the deck drops it and stacks CUE over PLAY */
+@container deck (max-width: 300px) {
+  html.phone .jog { display: none; }
+  html.phone .transport { flex-direction: column; }
+  html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px 44px minmax(0, 1fr); }
+  html.phone .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) 44px 24px; }
+  html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px 44px minmax(0, 1fr); }
+  html.phone .dbody { gap: 5px; }
+  html.phone .pbtns { gap: 3px; }
+  html.phone .pbtns .sq, html.phone .pbtns .tag, html.phone .modes button { font-size: 11px; letter-spacing: 0; }
+  html.phone .modes button { padding: 0 1px; }
+}
+/* short phones (360-380 px tall): drop the artist line and tighten the pads */
+@media (max-height: 400px) {
+  html.phone .dtitle span { display: none; }
+  html.phone header { height: 34px; }
+  html.phone .pad { height: clamp(24px, calc((100dvh - 300px) / 2), 40px); }
+  html.phone .pbtns .sq, html.phone .pbtns .tag { height: 26px; }
+}
 </style>
 </head>
 <body>
@@ -454,7 +531,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.0</p>
+          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.1</p>
         </div>
       </div>
       <span id="progress"></span>
@@ -477,7 +554,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.0</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.1</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -490,7 +567,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "0.9.0";
+const VERSION = "0.9.1";
 const $ = (s, r = document) => r.querySelector(s);
 // what this browser can do: iPhone/iPad Safari (and every iOS browser) has no Web MIDI, no folder
 // access and no output picking, so Cratebox switches to touch controls and imported files there
@@ -1507,7 +1584,7 @@ function routeOutput(mode) {
 //  Mixer state (all controls normalised 0..1, like the hardware)
 // =====================================================================================
 const M = {
-  trim: [0.5, 0.5], hi: [0.5, 0.5], mid: [0.5, 0.5], low: [0.5, 0.5], cfx: [0.5, 0.5], fader: [0.8, 0.8],
+  trim: [0.5, 0.5], hi: [0.5, 0.5], mid: [0.5, 0.5], low: [0.5, 0.5], cfx: [0.5, 0.5], fader: [1, 1],
   pfl: [false, false], xfader: 0.5, headMix: 0.5, master: 0.8,
 };
 const ramp = (p, v) => { if (A.ctx) p.setTargetAtTime(v, A.ctx.currentTime, 0.008); };
@@ -3339,7 +3416,7 @@ function vslider(id, value, onInput, { center = false, height = 150 } = {}) {
   const th = h("div", { class: "thumb" });
   el.append(th);
   let v = value;
-  const draw = () => { th.style.top = `${4 + (1 - v) * (height - 8)}px`; };
+  const draw = () => { th.style.top = `calc(4px + ${1 - v} * (100% - 8px))`; };   // follows the real (CSS) height
   const set = (nv, emit = true) => { v = clamp(nv, 0, 1); draw(); if (emit) onInput(v); };
   const fromY = (e) => { const r = el.getBoundingClientRect(); return 1 - (e.clientY - r.top - 4) / (r.height - 8); };
   el.addEventListener("pointerdown", (e) => { el.setPointerCapture(e.pointerId); set(fromY(e)); });
@@ -3468,8 +3545,9 @@ function buildDeck(i) {
     h("button", { class: "sq", onclick: () => d.beatJump(4) }, "4 ▶▶"));
   u.modes = {};
   const modes = h("div", { class: "modes" });
-  for (const [m, label] of [["hotcue", "HOT CUE"], ["beatloop", "BEAT LOOP"], ["beatjump", "BEAT JUMP"]]) {
-    u.modes[m] = h("button", { onclick: () => { d.padMode = m; refreshDeckUI(i); } }, label);
+  // long and short labels: a narrow deck (container query) shows the short ones
+  for (const [m, label, short] of [["hotcue", "HOT CUE", "CUES"], ["beatloop", "BEAT LOOP", "LOOP"], ["beatjump", "BEAT JUMP", "JUMP"]]) {
+    u.modes[m] = h("button", { title: label, onclick: () => { d.padMode = m; refreshDeckUI(i); } }, h("span", { class: "lg" }, label), h("span", { class: "sh" }, short));
     modes.append(u.modes[m]);
   }
   u.pads = [];
@@ -4446,7 +4524,6 @@ function phoneize() {
       h("div", { class: "scol" }, h("label", {}, "Beat grid"), u.gridBar));
     u.range.classList.add("sq");
     loopRow.style.display = jumpRow.style.display = "flex";
-    for (const m of Object.keys(u.modes)) u.modes[m].textContent = { hotcue: "CUES", beatloop: "LOOP", beatjump: "JUMP" }[m];
   }
   // mixer: CUE buttons under the faders, channel meters next to the master meter
   const mx = $("#mixer"), fcols = mx.querySelectorAll(".faders > .fcol");

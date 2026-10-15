@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 0.9.0 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+Version 0.9.1 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
 
 A lightweight two-deck DJ app that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -207,4 +207,4 @@ Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work 
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given), and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
