@@ -126,6 +126,31 @@ Edits are saved with the track, re-analysis never overwrites them, and the libra
 - Titles and artists come from MP3 ID3 tags, otherwise from "Artist - Title" file names.
 - Drag a row onto a deck, double-click it, press LOAD, or use Shift+← / Shift+→. Drop any audio file from Explorer straight onto a deck too.
 - Hot cues and cue points are saved per track.
+- Ctrl-click and Shift-click select several rows; Ctrl+A selects the whole list. Click the **#** header to go back to the list's own order.
+
+## Playlists
+
+The column on the left of the library is the tree: **Collection**, your **Playlists**, and any rekordbox **Devices**.
+
+- **+** makes a playlist, **▤** a folder. Type a name and press Enter. Double-click to rename; hover and click **×** to delete (it asks first).
+- Add tracks by dragging rows onto a playlist in the tree, or select them and use **Add to ▾**. Drag a playlist onto a folder to file it there, or onto the PLAYLISTS heading to take it back out.
+- Inside a playlist, drag rows up and down to rearrange them, and press **Delete** (or **Remove from list**) to take them out. That only removes them from the playlist, never from your folder.
+- Playlists are kept in the browser. A track whose folder isn't connected shows greyed out, and comes back by itself once you reconnect the folder (matched by file name and size).
+- **FLX4:** press the BROWSE knob to jump to the tree, turn it to walk the playlists (the list follows as you go), press again to go back to the tracks. LOAD still loads.
+- **Phone:** tap **☰** in the library for the tree, **⋯** on a playlist to rename or delete it, and **Add to ▾** to add the selected track.
+
+## rekordbox
+
+**USB sticks and SD cards** (desktop Chrome/Edge): click **+ USB** under DEVICES and pick the drive itself (the folder that holds `PIONEER`). Cratebox reads the rekordbox export on it: every track, the playlist tree, and for each track you load, rekordbox's own beat grid, phrases, hot cues A–H and first memory cue. These replace Cratebox's own analysis for that track, until you edit the grid or set cues yourself. Your edits stay on this computer.
+
+- **Read-only.** Cratebox never writes to the stick, so it can't damage a set you've prepared for the club.
+- **⧉** on a device playlist copies it into your own playlists. Those tracks still play from the stick, so they show greyed out when it's not plugged in.
+- **×** on the device closes it. The browser remembers the drive, and it opens again by itself when it's plugged in and Chrome still has permission.
+
+**rekordbox XML** (the **⋯** next to PLAYLISTS):
+
+- **Import:** in rekordbox, *File → Export Collection in xml format*, then pick that file. Your playlists arrive in a folder called "rekordbox (date)". For tracks Cratebox can find in your music folder (matched by file name and size), it takes rekordbox's beat grid, key, hot cues and memory cue. Tracks it can't find appear greyed out in their playlists.
+- **Export:** writes `cratebox-rekordbox.xml` with every track, its grid, key and cues, and all your playlists. rekordbox needs full file paths, so the first time it asks where your music folder is on this computer (for example `C:\Users\jonah\Music`). Change it later under *Music folder path for export*. In rekordbox: *Preferences → Advanced*, set **Imported Library** (under rekordbox xml) to the file, tick **rekordbox xml** under *Preferences → View → Layout*, and the playlists show in the rekordbox xml tree (hit its reload button after re-exporting).
 
 ## iPhone and iPad
 
@@ -152,12 +177,24 @@ Only the app goes on GitHub, never your music.
 
 **Your music on iOS.** Tap **Add music** and pick tracks in the Files app (iCloud Drive, On My iPhone, a USB drive...). They're copied into Cratebox's own storage on the device, so the library is still there next time; **Remove** deletes the selected one. Keep it on the Home Screen: Safari may clear storage for sites you haven't opened in a while, but not for Home Screen apps. Long tracks use a lot of memory; older phones may struggle with two 8-minute tracks loaded.
 
+## Android
+
+Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work on an Android phone or tablet**, unlike on iPhone.
+
+- Host it on https first (the GitHub Pages steps above; open the link in Chrome on Android, then ⋮ → **Add to Home screen**). Chrome asks once for permission to use MIDI devices: allow it.
+- **Cabling:** the FLX4 can't run off the phone's power. Plug a USB power adapter or power bank into the FLX4's **power** USB port, and the phone into its **device** USB port (a USB-C to USB-C cable). That's Pioneer's own setup for rekordbox on Android.
+- On a phone you get the same landscape layout as on iPhone. The controller is picked up by name. **⚙** has the controller and mapping pickers and Learn.
+- **Music:** Android Chrome can't open a folder, so **Add music** copies the tracks you pick into Cratebox's storage, like on iPhone.
+- **Sound:** Android usually sends all audio to a USB audio device once it's plugged in, so the master comes out of the FLX4. Headphone cueing on the FLX4's own headphone socket is untested; **Split** (master one ear, cue the other) always works.
+
 ## Limits
 
-- No key shift, no recording, no playlists or rekordbox library import yet.
+- No key shift, no recording.
+- rekordbox: USB/SD exports in the classic `export.pdb` format, which every rekordbox 5/6/7 USB export still includes. Device Library Plus (`exportLibrary.db`) alone isn't read. Playlists on a stick are read-only, and Cratebox doesn't read rekordbox 6/7's own encrypted `master.db` on your PC: use the XML export for that.
+- rekordbox beat grids with tempo changes come in as one tempo (the most common one).
 - Audio files must be something Chrome can decode: MP3, WAV, FLAC, AAC/M4A, OGG/Opus. Not AIFF.
 - Beat grids assume a steady tempo. Live-drummed tracks will drift.
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, and `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes). Both need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
