@@ -2,37 +2,26 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>Cratebox</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b0d10">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Cratebox">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" href="icon-180.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<title>Cratebox (Mac)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="icon.png">
+<link rel="stylesheet" href="fonts/fonts.css">
 <style>
 /* Dark booth look: deck 1 blue, deck 2 orange, red for live/hot states. */
-:root {
-  --bg: #0b0d10; --panel: #13161b; --raise: #1b1f26; --line: #272c35; --line2: #343a45;
+:root { --bg: #0b0d10; --panel: #13161b; --raise: #1b1f26; --line: #272c35; --line2: #343a45;
   --fg: #e6e9ee; --muted: #8a93a2; --dim: #586070;
   --d0: #39a7ff; --d1: #ff8a3d; --d2: #2fd3c0; --d3: #e15bd2; --hot: #ff3b55; --ok: #3ddc84; --cue: #ffb020; --loop: #f5d64a;
   --f-disp: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   --f-ui: "Barlow", system-ui, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
-  color-scheme: dark;
-}
+  color-scheme: dark; }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 13px; }
-body { overflow: hidden; user-select: none; -webkit-user-select: none; }
+body { overflow: hidden; user-select: none; }
 button, input, select { font: inherit; color: inherit; }
 button { cursor: pointer; }
 :focus-visible { outline: 2px solid var(--d0); outline-offset: 1px; }
 #app { height: 100%; display: grid; grid-template-rows: 42px auto auto minmax(120px, 1fr); min-width: 1000px; }
-
 /* header */
 header { display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--panel); border-bottom: 1px solid var(--line); }
 .logo { font-family: var(--f-disp); font-weight: 700; font-size: 22px; letter-spacing: .08em; }
@@ -48,16 +37,17 @@ header { display: flex; align-items: center; gap: 16px; padding: 0 14px; backgro
 header select { min-width: 0; max-width: 220px; flex: 0 1 auto; }
 header { min-width: 0; overflow: hidden; }
 .hbtn { height: 26px; padding: 0 10px; white-space: nowrap; background: var(--raise); border: 1px solid var(--line2); border-radius: 4px; font-size: 12px; }
-
 /* scrolling waveforms */
 #waves { --lane: 74px; display: grid; grid-template-rows: var(--lane) var(--lane); gap: 2px; background: #000; border-bottom: 1px solid var(--line); overflow: hidden; }
-/* fixed heights: a canvas sized "100%" can grow every time it's redrawn on iOS Safari */
+/* fixed heights: a canvas sized "100%" can grow every time it's redrawn */
 #waves canvas { width: 100%; height: var(--lane); display: block; }
-
 /* decks + mixer */
 #decks { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr); gap: 8px; padding: 8px; background: var(--bg); }
 .deck { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 4px; padding: 10px; display: grid; gap: 8px; min-width: 0; }
-.deck[data-i="0"] { --c: var(--d0); } .deck[data-i="1"] { --c: var(--d1); } .deck[data-i="2"] { --c: var(--d2); } .deck[data-i="3"] { --c: var(--d3); }
+.deck[data-i="0"] { --c: var(--d0); }
+.deck[data-i="1"] { --c: var(--d1); }
+.deck[data-i="2"] { --c: var(--d2); }
+.deck[data-i="3"] { --c: var(--d3); }
 .dhead { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; min-width: 0; }
 .dnum { font-family: var(--f-disp); font-weight: 700; font-size: 34px; color: var(--c); line-height: 1; text-align: center; }
 .dtitle { min-width: 0; }
@@ -126,7 +116,6 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .pad.set { background: color-mix(in srgb, var(--ok) 22%, #101318); border-color: var(--ok); color: var(--fg); }
 .pad.on { background: color-mix(in srgb, var(--loop) 30%, #101318); border-color: var(--loop); color: var(--fg); }
 .pad:active { filter: brightness(1.4); }
-
 /* sliders + knobs */
 .vslider { position: relative; width: 26px; height: 150px; touch-action: none; cursor: ns-resize; }
 .vslider::before { content: ""; position: absolute; left: 11px; top: 4px; bottom: 4px; width: 4px; border-radius: 2px; background: #07080a; border: 1px solid var(--line2); }
@@ -148,10 +137,12 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .knob .kcap { fill: var(--knob-cap, #252a32); stroke: var(--knob-edge, #3a414c); }
 .knob .ktrack { stroke: var(--knob-track, #2a2f38); }
 .knob .kline { stroke: var(--knob-line, #f2f4f7); }
-
 #mixer { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; display: grid; grid-template-columns: 1fr 34px 1fr; grid-template-rows: auto auto auto; gap: 8px 6px; }
 .strip { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.strip[data-i="0"] { --c: var(--d0); } .strip[data-i="1"] { --c: var(--d1); } .strip[data-i="2"] { --c: var(--d2); } .strip[data-i="3"] { --c: var(--d3); }
+.strip[data-i="0"] { --c: var(--d0); }
+.strip[data-i="1"] { --c: var(--d1); }
+.strip[data-i="2"] { --c: var(--d2); }
+.strip[data-i="3"] { --c: var(--d3); }
 .mcenter { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .meter { width: 8px; height: 126px; display: block; }
 .cuebtn { width: 56px; height: 26px; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 13px; letter-spacing: .05em; }
@@ -173,16 +164,14 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .beatfx .bfxc.on { color: var(--bg); background: var(--loop); border-color: var(--loop); }
 .beatfx .knob { flex: none; flex-direction: row; gap: 3px; }
 .beatfx .knob .slabel { font-size: 9px; }
-html.touch:not(.phone) .beatfx button { height: 30px; }
-html.touch:not(.phone) .beatfx .bfxb, html.touch:not(.phone) .beatfx .bfxc { width: 28px; }
-html.touch .beatfx .knob svg { width: 30px; height: 30px; }
 /* PAD FX pads */
 .pad.pfx { color: #b9c3d3; font-size: 11px; letter-spacing: .02em; line-height: 1.05; overflow: hidden; padding: 0 1px; }
 .pad.pfx .pn, .pad.pfx .pb { display: block; white-space: nowrap; }
 .pad.pfx .pb { font-family: var(--f-mono); font-size: .9em; opacity: .8; }
-html.phone .pad.pfx { font-size: 10.5px; letter-spacing: 0; }
 /* narrower decks: a smaller font; the narrowest: 3-4 letter names (the text itself stays the full name) */
-@container deck (max-width: 400px) { .pad.pfx { font-size: 10px; letter-spacing: 0; } }
+@container deck (max-width: 400px) {
+  .pad.pfx { font-size: 10px; letter-spacing: 0; }
+}
 @container deck (max-width: 300px) {
   .pad.pfx { font-size: 9px; }
   .pad.pfx .pn[data-s] { font-size: 0; }
@@ -194,21 +183,13 @@ html[data-theme="booth"] .beatfx { background: #050607; border-color: #23262c; }
 html[data-theme="booth"] .beatfx button { background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; }
 html[data-theme="booth"] .beatfx .bfxc.on { background: var(--loop); color: #000; }
 html[data-theme="booth"] .beatfx .bfxon.lit { background: var(--hot); color: #fff; box-shadow: 0 0 12px #ff2d4b88; }
-/* phones: Beat FX lives in its own sheet (FX in the header) */
-html.phone #mixer .beatfx { display: none; }
-#fxSheet .beatfx { display: grid; grid-column: auto; }
-#fxSheet .beatfx button { height: 36px; font-size: 14px; }
-#fxSheet .beatfx .bfxb, #fxSheet .beatfx .bfxc { width: 36px; }
 .mcuebtn { width: 30px; height: 22px; padding: 0; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 10px; letter-spacing: .03em; color: var(--muted); }
 .mcuebtn.lit { background: var(--cue); color: var(--bg); border-color: var(--cue); }
-html.touch:not(.phone) .mcuebtn { height: 28px; }
-html.phone .mcuebtn { display: none; }
 html[data-theme="booth"] .mcuebtn { background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; color: #d7dce4; }
 html[data-theme="booth"] .mcuebtn.lit { background: var(--cue); color: #000; box-shadow: 0 0 12px #ffaa0088; }
 .faders { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 34px 1fr; gap: 6px; align-items: end; }
 .faders .fcol { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .xfade { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
-
 /* expanded library: decks shrink to their header, overview and waveform */
 body.browse #decks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 body.browse #mixer, body.browse .dbody { display: none; }
@@ -238,8 +219,12 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .trow div { padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trow .n, .trow .num { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .trow.sel { background: #24364d; }
-.trow.on0 .t { color: var(--d0); } .trow.on1 .t { color: var(--d1); } .trow.on2 .t { color: var(--d2); } .trow.on3 .t { color: var(--d3); }
-.trow:hover { background: #1a1e25; } .trow.sel:hover { background: #2a3f59; }
+.trow.on0 .t { color: var(--d0); }
+.trow.on1 .t { color: var(--d1); }
+.trow.on2 .t { color: var(--d2); }
+.trow.on3 .t { color: var(--d3); }
+.trow:hover { background: #1a1e25; }
+.trow.sel:hover { background: #2a3f59; }
 /* playlist / device tree */
 #tree { overflow-y: auto; min-height: 0; border-right: 1px solid var(--line); background: #101318; padding: 4px 0 10px; font-size: 13px; user-select: none; }
 #tree.focus { box-shadow: inset 0 0 0 1px var(--d0); }
@@ -259,7 +244,7 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .trow2 .ct { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
 .trow2.ro .nm { color: #c9d3e0; }
 .trow2 .tx { visibility: hidden; border: 0; background: transparent; color: var(--muted); font-size: 14px; width: 20px; padding: 0; }
-.trow2:hover .tx, .touch .trow2.cur .tx { visibility: visible; }
+.trow2:hover .tx { visibility: visible; }
 .trow2 .tx:hover { color: var(--fg); }
 .tren { flex: 1; min-width: 0; height: 22px; background: #07080a; border: 1px solid var(--d0); border-radius: 3px; color: var(--fg); padding: 0 5px; font-size: 13px; }
 .tconfirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; background: #2a1a1c; font-size: 12px; }
@@ -271,108 +256,18 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .popmenu .pmhead { padding: 6px 10px 2px; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
 #viewName { flex: none; font-family: var(--f-disp); font-size: 14px; letter-spacing: .04em; max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .trow.missing div { color: #5d6573 !important; font-style: italic; }
-.trow.dropabove { box-shadow: inset 0 2px 0 var(--d0); } .trow.dropbelow { box-shadow: inset 0 -2px 0 var(--d0); }
+.trow.dropabove { box-shadow: inset 0 2px 0 var(--d0); }
+.trow.dropbelow { box-shadow: inset 0 -2px 0 var(--d0); }
 .trow.msel { background: #1d2c3e; }
 .empty { padding: 40px; text-align: center; color: var(--muted); font-size: 14px; line-height: 1.6; }
 .empty b { color: var(--fg); }
-
 #start { position: fixed; inset: 0; z-index: 50; background: rgba(5, 6, 8, .88); display: grid; place-items: center; }
 #start .card { width: 460px; background: var(--panel); border: 1px solid var(--line2); border-radius: 8px; padding: 26px 28px; }
 #start h1 { font-family: var(--f-disp); font-size: 30px; margin: 0 0 6px; letter-spacing: .05em; }
 #start p { color: var(--muted); line-height: 1.5; margin: 6px 0; }
 #start button { margin-top: 14px; width: 100%; height: 44px; border-radius: 6px; border: 0; background: var(--d0); color: #031321; font-family: var(--f-disp); font-weight: 700; font-size: 18px; letter-spacing: .06em; }
-
-/* ---- phone (landscape-first, sized for iPhone 16 Pro Max: 956 x 440) ---- */
-.phoneonly { display: none !important; }
-/* file pickers: invisible but not display:none, which some in-app browsers (iOS MIDI browsers) won't open */
 input.pick { position: fixed; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
-.tapfile { position: relative; display: inline-flex; flex: none; }
-input.pick.over { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; pointer-events: auto; z-index: 1; font-size: 16px; cursor: pointer; }
-html.phone .phoneonly { display: revert !important; }
-html.phone .ptabs.phoneonly { display: inline-flex !important; }
-html.phone .deskonly { display: none !important; }
-html.phone.nomidi #ctlPanel { display: none; }
-html.phone, html.phone body { height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
-html.phone #app { min-width: 0; height: 100dvh; display: flex; flex-direction: column;
-  padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
-html.phone header { flex: 0 0 auto; height: 38px; padding: 0 2px; gap: 10px; background: transparent; border: 0; flex-wrap: nowrap; }
-html.phone header > :not(.logo):not(.ptabs):not(.spacer):not(#setOpen):not(#fxOpen):not(#midiPill) { display: none; }
-html.phone #fxOpen { font-family: var(--f-disp); font-weight: 700; font-size: 15px; letter-spacing: .04em; }
-html.phone .logo { font-size: 18px; }
-html.phone #midiPill { height: 24px; padding: 0 8px; font-size: 11px; }
-.ptabs { display: inline-flex; background: var(--raise); border: 1px solid var(--line2); border-radius: 9px; padding: 2px; gap: 2px; }
-.ptabs button { height: 28px; padding: 0 16px; border: 0; border-radius: 7px; background: transparent; color: var(--muted); font-family: var(--f-disp); font-weight: 600; font-size: 14px; letter-spacing: .08em; }
-.ptabs button.on { background: var(--line2); color: var(--fg); }
 .iconbtn { width: 34px; height: 30px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-size: 17px; line-height: 1; }
-html.phone #waves { --lane: 46px; flex: 0 0 auto; border-radius: 8px; border: 0; }
-html.phone #decks { flex: 1 1 0; min-height: 0; padding: 0; gap: 6px; grid-template-columns: minmax(0, 1fr) calc(150px + 2 * clamp(26px, calc((100dvh - 200px) / 6.5), 40px)) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); }
-html.phone #library { flex: 1 1 0; min-height: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-html.phone[data-tab="mix"] #library, html.phone[data-tab="lib"] #decks { display: none; }
-html.phone .ltool { height: 44px; flex-wrap: nowrap; gap: 8px; }
-html.phone .ltool > :not(.pick):not(.tapfile):not(#search):not(#addFolder):not(#removeBtn):not(#progress):not(#treeBtn):not(#addToBtn):not(#plRemove):not(#viewName) { display: none; }
-html.phone #library { grid-template-columns: minmax(0, 1fr); }
-html.phone #tree { display: none; position: absolute; z-index: 15; left: 0; top: 44px; bottom: 0; width: min(320px, 70vw); font-size: 15px; box-shadow: 8px 0 24px #000a; }
-html.phone #library.treeopen #tree { display: block; }
-html.phone .trow2 { height: 40px; }
-html.phone .ticon { height: 30px; min-width: 34px; font-size: 15px; }
-html.phone #viewName { max-width: 150px; font-size: 13px; }
-html.phone #treeBtn { min-width: 40px; font-size: 16px; }
-html.phone #search { flex: 1; width: auto; height: 32px; font-size: 15px; border-radius: 8px; }
-html.phone .ltool .hbtn { height: 32px; border-radius: 8px; font-size: 14px; }
-/* deck cards */
-html.phone .deck { --jog: clamp(64px, calc(100dvh - 304px), 112px); padding: 6px 8px 8px; gap: 5px; border-radius: 10px; grid-template-rows: auto auto auto minmax(0, 1fr); align-content: stretch; }
-html.phone .dhead { grid-template-columns: 18px minmax(0, 1fr) auto; gap: 6px; }
-html.phone .dnum { font-size: 22px; }
-html.phone .dtitle b { font-size: 13px; }
-html.phone .dtitle span { font-size: 11px; }
-html.phone .dbpm b { font-size: 19px; }
-html.phone .dbpm span { font-size: 10px; }
-html.phone .dinfo { gap: 8px; font-size: 11px; flex-wrap: nowrap; overflow: hidden; height: 18px; }
-html.phone .dinfo > :not(.remain):not(.phrasetag):not(.keytag):not(.spacer):not(.mastertag) { display: none; }
-html.phone .dinfo .remain { font-size: 13px; }
-html.phone .phrasetag { font-size: 12px; }
-html.phone .keytag { font-size: 11px; padding: 0 5px; }
-html.phone .overview { height: 22px; border-radius: 4px; }
-html.phone .gridbar { display: none; }
-html.phone .dbody { min-height: 0; align-items: center; gap: 8px; }
-html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px max(var(--jog), 96px) minmax(0, 1fr); grid-template-areas: "pitch jog ctrl"; }
-html.phone .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) max(var(--jog), 96px) 24px; grid-template-areas: "ctrl jog pitch"; }
-html.phone .pitchwrap .slabel, html.phone .pitchwrap .tag { display: none; }
-html.phone .pitchwrap .vslider { height: calc(var(--jog) + 48px) !important; width: 24px; }
-html.phone .jogwrap { gap: 6px; }
-html.phone .jog { width: var(--jog); height: var(--jog); }
-html.phone .transport { gap: 8px; }
-html.phone .round { width: 44px; height: 44px; font-size: 12px; border-width: 2px; }
-html.phone .ctrl { gap: 5px; align-content: center; }
-html.phone .ctrl > .row { display: none; }
-.pbtns { display: grid; grid-template-columns: 1.6fr 1fr 1fr 1fr; gap: 4px; }
-.pbtns .sq, .pbtns .tag { height: 28px; padding: 0; font-size: 13px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-.pbtns .tag { font-family: var(--f-disp); font-weight: 600; border: 1px solid var(--line2); }
-html.phone .modes button { height: 24px; font-size: 11px; border-radius: 6px; }
-html.phone .pads { gap: 4px; }
-html.phone .pad { height: clamp(28px, calc((100dvh - 320px) / 2), 40px); font-size: 13px; padding: 0; border-radius: 6px; }
-/* mixer: knobs in two columns, faders beside them, crossfader underneath */
-html.phone #mixer { border-radius: 10px; padding: 6px; gap: 2px 4px; grid-template-columns: auto auto 1fr auto auto; grid-template-rows: minmax(0, 1fr) auto; align-items: center; justify-items: center; }
-html.phone #mixer .strip { display: grid; grid-template-columns: auto; gap: 0; }
-html.phone #mixer .strip .knob { gap: 0; }
-html.phone #mixer .strip .knob svg { width: clamp(26px, calc((100dvh - 200px) / 6.5), 40px); height: clamp(26px, calc((100dvh - 200px) / 6.5), 40px); }
-html.phone #mixer .strip .slabel { font-size: 9px; letter-spacing: .04em; }
-html.phone #mixer .strip[data-i="0"] { grid-column: 1; grid-row: 1; }
-html.phone #mixer .strip[data-i="1"] { grid-column: 5; grid-row: 1; }
-html.phone #mixer .faders { display: contents; }
-html.phone #mixer .faders > .fcol:first-child { grid-column: 2; grid-row: 1; }
-html.phone #mixer .faders > .fcol:last-child { grid-column: 4; grid-row: 1; }
-html.phone #mixer .faders > .fcol:nth-child(2) { display: none; }
-html.phone #mixer .mcenter { grid-column: 3; grid-row: 1; gap: 4px; }
-html.phone #mixer .mcenter .knob svg { width: 28px; height: 28px; }
-html.phone #mixer .mcenter .slabel { font-size: 8px; }
-html.phone #mixer .vslider { height: clamp(90px, calc(100dvh - 290px), 150px) !important; }
-html.phone #mixer .meter { height: clamp(70px, calc(100dvh - 320px), 120px) !important; width: 6px !important; }
-html.phone .mmeters { display: flex; gap: 3px; align-items: flex-end; }
-html.phone #mixer .cuebtn { width: 40px; height: 22px; font-size: 11px; border-radius: 5px; margin-top: 2px; }
-html.phone #mixer .xfade { grid-column: 1 / -1; grid-row: 2; width: 100%; }
-html.phone #mixer .fcol .slabel { display: none; }
-/* sheets (settings, deck extras) */
 .sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: #000a; }
 .sheet[hidden] { display: none; }
 .sheet .panel { width: min(860px, calc(100vw - 2 * max(12px, env(safe-area-inset-left)))); max-height: 86dvh; overflow: auto; background: var(--panel); border: 1px solid var(--line2); border-bottom: 0; border-radius: 14px 14px 0 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 10px; }
@@ -380,54 +275,16 @@ html.phone #mixer .fcol .slabel { display: none; }
 .sheet h3 .spacer { flex: 1; }
 .sheet .row { gap: 8px; }
 .sheet .sq { height: 36px; padding: 0 12px; font-size: 14px; border-radius: 8px; }
-.sheet .gridbar { display: flex !important; background: transparent; border: 0; padding: 0; gap: 6px; }
-.sheet .gridbar > .slabel { display: none; }
 .sheet .report label { font-size: 13px; color: var(--fg); }
 .sheet .report small { color: var(--muted); }
-.sheet .report textarea { width: 100%; background: #07080a; border: 1px solid var(--line2); border-radius: 6px; color: var(--fg); padding: 8px; font: 15px/1.4 var(--f-ui); resize: vertical; user-select: text; -webkit-user-select: text; }
+.sheet .report textarea { width: 100%; background: #07080a; border: 1px solid var(--line2); border-radius: 6px; color: var(--fg); padding: 8px; font: 15px/1.4 var(--f-ui); resize: vertical; user-select: text; }
 .sheet .report pre { margin: 0; max-height: 140px; overflow: auto; padding: 8px; background: #07080a; border: 1px solid var(--line); border-radius: 6px; font: 11px/1.45 var(--f-mono); color: var(--muted); white-space: pre-wrap; }
 .sheet .report pre:empty { display: none; }
-.sheetgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
-.sheetgrid .scol { display: grid; gap: 8px; align-content: start; }
-.sheetgrid .row { flex-wrap: wrap; }
-.sheet .gridbar .gbtn { height: 34px; }
-.sheet .bpmin { height: 34px; font-size: 15px; width: 84px; }
 .sheet label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
-.sheet .hsel { height: 36px; font-size: 15px; width: 100%; max-width: none; border-radius: 8px; }
-.sheet .setpanel { position: static; width: auto; box-shadow: none; border: 0; padding: 0; background: transparent; display: grid !important; }
-#toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 44px); transform: translateX(-50%); z-index: 60; max-width: min(560px, 80vw);
-  background: #1f242c; border: 1px solid var(--line2); border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--fg); box-shadow: 0 8px 24px #000b;
-  opacity: 0; pointer-events: none; transition: opacity .2s; }
-#toast.show { opacity: 1; }
-/* library rows on a phone: big and thumb-friendly */
-.prow { display: grid; grid-template-columns: minmax(0, 1fr) 54px 40px 52px 44px 44px; gap: 6px; align-items: center; }
-html.phone #list .trow { padding: 0 10px; border-bottom: 1px solid var(--line); }
-html.phone #list .hdr { height: 26px; padding: 0 10px; }
-.prow .tt { min-width: 0; }
-.prow .tt b { display: block; font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prow .tt span { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.prow .ld { height: 32px; border-radius: 8px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 700; font-size: 15px; }
-.prow .ld[data-d="0"] { color: var(--d0); } .prow .ld[data-d="1"] { color: var(--d1); }
-/* portrait phone: ask for landscape */
-#rotate { display: none; }
-@media (orientation: portrait) {
-  html.phone #rotate { display: flex; position: fixed; inset: 0; z-index: 80; background: var(--bg); flex-direction: column; align-items: center; justify-content: center; gap: 16px; text-align: center; padding: 30px; }
-  #rotate .ph { width: 64px; height: 110px; border: 3px solid var(--muted); border-radius: 14px; animation: turn 2.4s ease-in-out infinite; }
-  #rotate b { font-family: var(--f-disp); font-size: 22px; letter-spacing: .06em; }
-  #rotate span { color: var(--muted); max-width: 280px; }
-}
-@keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
 #resume { position: fixed; inset: 0; z-index: 90; background: #000c; display: flex; align-items: center; justify-content: center; }
 #resume[hidden] { display: none; }
 #resume button { height: 52px; padding: 0 28px; border-radius: 12px; border: 0; background: var(--d0); color: #031321; font-family: var(--f-disp); font-weight: 700; font-size: 18px; letter-spacing: .06em; }
-
-/* ---- touch screens, iPad and iPhone ---- */
 button, select, .pad, .sq { touch-action: manipulation; }
-.touch * { -webkit-tap-highlight-color: transparent; }
-.touchonly { display: none; }
-.touch .touchonly { display: inline-flex; align-items: center; }
-.touch .ltool .hlabel { display: none; }
-.noroute #outSel, .noroute #chPill, .noroute label[for=outSel], .noroute #hpDev { display: none; }
 #start .warn { color: var(--cue); }
 @media (max-width: 1100px) {
   html:not(.phone) body { overflow: auto; }
@@ -453,16 +310,22 @@ button, select, .pad, .sq { touch-action: manipulation; }
   html:not(.phone) .cols { grid-template-columns: 26px minmax(110px, 3fr) 0 52px 40px 0 30px; }
   html:not(.phone) .cols > :nth-child(3), html:not(.phone) .cols > :nth-child(6) { visibility: hidden; }
 }
-/* ---- scaling: every size from a small phone to a 1440p monitor ----
+/* ---- scaling: laptop screens up to a 1440p monitor ----
    Decks are size containers, so what's inside them (jog, labels) follows the deck's own width;
    heights follow the window height so the waveforms and library stay visible on short laptops. */
 .deck { container: deck / inline-size; }
 .modes .sh { display: none; }
 /* four pad-mode buttons: short labels (CUES LOOP JUMP FX) unless the deck is wide */
-@container deck (max-width: 680px) { .modes .lg { display: none; } .modes .sh { display: inline; } }
-html.phone .modes button { padding: 0 2px; letter-spacing: 0; }
-@container deck (max-width: 440px) { .modes button { padding: 0 2px !important; font-size: 11px !important; letter-spacing: 0 !important; } }
-@container deck (max-width: 260px) { .modes button { font-size: 8.5px !important; padding: 0 !important; } }
+@container deck (max-width: 680px) {
+  .modes .lg { display: none; }
+  .modes .sh { display: inline; }
+}
+@container deck (max-width: 440px) {
+  .modes button { padding: 0 2px !important; font-size: 11px !important; letter-spacing: 0 !important; }
+}
+@container deck (max-width: 260px) {
+  .modes button { font-size: 8.5px !important; padding: 0 !important; }
+}
 html:not(.phone) .deck { --jog: clamp(96px, min(30cqw, calc(100vh - 600px)), 150px); }
 html:not(.phone) .deck[data-i="0"] .dbody { grid-template-columns: 44px var(--jog) minmax(0, 1fr); }
 html:not(.phone) .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) var(--jog) 44px; }
@@ -498,44 +361,9 @@ html:not(.phone) #waves { --lane: clamp(50px, calc((100vh - 590px) / 2), 74px); 
   html:not(.phone) .deck { --jog: clamp(96px, 30cqw, 150px); }
   html:not(.phone) #waves { --lane: 66px; }
 }
-@media (max-width: 700px) { html:not(.phone) #waves { --lane: 60px; } }
-/* tablets: finger-sized controls */
-html.touch:not(.phone) button.tag { min-height: 28px; padding: 0 10px; display: inline-flex; align-items: center; }
-html.touch:not(.phone) .hbtn, html.touch:not(.phone) .hsel, html.touch:not(.phone) .ltool input[type=search] { height: 34px; }
-html.touch:not(.phone) .sq, html.touch:not(.phone) .ctrl .sq { height: 36px; min-width: 36px; }
-html.touch:not(.phone) .modes button { height: 32px; font-size: 12px; }
-html.touch:not(.phone) .cuebtn { height: 34px; }
-html.touch:not(.phone) .ticon { height: 28px; min-width: 30px; }
-html.touch:not(.phone) .vslider { width: 34px; }
-html.touch:not(.phone) .vslider::before { left: 15px; }
-html.touch:not(.phone) .vslider .thumb { width: 34px; height: 18px; margin-top: -9px; }
-html.touch:not(.phone) .vslider .thumb::after { top: 8px; }
-html.touch:not(.phone) .hslider .thumb { width: 22px; margin-left: -11px; }
-/* phones: buttons shrink with the deck instead of spilling out of it */
-html.phone .pbtns { grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr)); }
-html.phone .pbtns .sq, html.phone .pbtns .tag { min-width: 0; overflow: hidden; }
-html.phone #mixer .cuebtn { height: 26px; }
-html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
-/* narrow phones (iPhone SE, mini): a jog that small is no use, so the deck drops it and stacks CUE over PLAY */
-@container deck (max-width: 300px) {
-  html.phone .jog { display: none; }
-  html.phone .transport { flex-direction: column; }
-  html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px 44px minmax(0, 1fr); }
-  html.phone .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) 44px 24px; }
-  html.phone .deck[data-i="0"] .dbody { grid-template-columns: 24px 44px minmax(0, 1fr); }
-  html.phone .dbody { gap: 5px; }
-  html.phone .pbtns { gap: 3px; }
-  html.phone .pbtns .sq, html.phone .pbtns .tag, html.phone .modes button { font-size: 11px; letter-spacing: 0; }
-  html.phone .modes button { padding: 0 1px; }
+@media (max-width: 700px) {
+  html:not(.phone) #waves { --lane: 60px; }
 }
-/* short phones (360-380 px tall): drop the artist line and tighten the pads */
-@media (max-height: 400px) {
-  html.phone .dtitle span { display: none; }
-  html.phone header { height: 34px; }
-  html.phone .pad { height: clamp(24px, calc((100dvh - 300px) / 2), 40px); }
-  html.phone .pbtns .sq, html.phone .pbtns .tag { height: 26px; }
-}
-/* ---- 4-deck mode (computers and tablets): decks 3 and 4 under 1 and 2, mixer channels 3 1 2 4 ---- */
 html:not(.four) .ch34 { display: none !important; }
 /* set recording */
 #recBtn { font-weight: 600; }
@@ -628,32 +456,25 @@ html.ownlanes.four:not(.phone) #mixer .faders .vslider { height: clamp(112px, ca
 @media (max-width: 1100px) {
   html.ownlanes:not(.phone) #app { grid-template-rows: auto auto minmax(320px, auto); }
 }
-
 /* ---- Booth look: an original club-player style. Black glass screens, brushed panels, rubber pads, LED rings ---- */
-html[data-theme="booth"] {
-  --bg: #000; --panel: #101215; --raise: #1d2025; --line: #23262c; --line2: #33373f;
+html[data-theme="booth"] { --bg: #000; --panel: #101215; --raise: #1d2025; --line: #23262c; --line2: #33373f;
   --fg: #eef1f5; --muted: #8d96a5; --dim: #5a6271;
   --d0: #2f9dff; --d1: #ff7b2e; --d2: #22d6b8; --d3: #e553c8;
   --hot: #ff2d4b; --ok: #24e07a; --cue: #ffaa00; --loop: #ffd21f;
   --knob-cap: #1a1c20; --knob-edge: #4a4f58; --knob-track: #26292f; --knob-line: #ffffff;
-  --screen: #030405;
-}
+  --screen: #030405; }
 html[data-theme="booth"] header { background: linear-gradient(#17191d, #0b0c0e); border-bottom: 1px solid #000; box-shadow: 0 1px 0 #24272d; }
 html[data-theme="booth"] .logo { letter-spacing: .14em; }
 html[data-theme="booth"] #decks { background: radial-gradient(120% 80% at 50% 0%, #15171b 0%, #050506 70%); }
-html[data-theme="booth"] .deck, html[data-theme="booth"] #mixer {
-  background: linear-gradient(180deg, #1b1e23 0%, #121418 38%, #0d0f12 100%);
+html[data-theme="booth"] .deck, html[data-theme="booth"] #mixer { background: linear-gradient(180deg, #1b1e23 0%, #121418 38%, #0d0f12 100%);
   border: 1px solid #000; border-top: 1px solid #2c3037; border-radius: 10px;
-  box-shadow: inset 0 1px 0 #ffffff10, 0 6px 18px #000c;
-}
+  box-shadow: inset 0 1px 0 #ffffff10, 0 6px 18px #000c; }
 html[data-theme="booth"] .deck { border-top: 1px solid #2c3037; }
 html[data-theme="booth"]:not(.phone) .deck { padding: 10px; }
 /* the screen: black glass with the deck colour as a thin status bar */
-html.ownlanes[data-theme="booth"] .deck .screen {
-  background: var(--screen); border: 1px solid #000; border-radius: 7px; padding: 8px 10px 10px;
+html.ownlanes[data-theme="booth"] .deck .screen { background: var(--screen); border: 1px solid #000; border-radius: 7px; padding: 8px 10px 10px;
   box-shadow: inset 0 0 0 1px #1d2026, inset 0 10px 24px #ffffff06, 0 0 0 3px #08090b;
-  border-top: 3px solid var(--c);
-}
+  border-top: 3px solid var(--c); }
 html[data-theme="booth"]:not(.phone) .dnum { font-size: 30px; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
 html[data-theme="booth"]:not(.phone) .dtitle b { font-size: 16px; letter-spacing: .01em; }
 html[data-theme="booth"]:not(.phone) .dbpm b { font-family: var(--f-mono); font-size: 26px; color: #fff; padding: 2px 8px; border: 1px solid #2a2e35; border-radius: 4px; background: #0a0c0e; display: inline-block; }
@@ -666,10 +487,8 @@ html[data-theme="booth"] .tag { border-radius: 3px; border-color: #3a3f48; color
 html[data-theme="booth"] .tag.on { color: #000; background: var(--c); border-color: var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent); }
 html[data-theme="booth"] .keytag { background: #0a0b0d; }
 /* hardware buttons */
-html[data-theme="booth"] .sq, html[data-theme="booth"] .modes button, html[data-theme="booth"] .cuebtn {
-  background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; border-radius: 5px;
-  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; color: #d7dce4;
-}
+html[data-theme="booth"] .sq, html[data-theme="booth"] .modes button, html[data-theme="booth"] .cuebtn { background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; border-radius: 5px;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; color: #d7dce4; }
 html[data-theme="booth"] .sq:active, html[data-theme="booth"] .pad:active { transform: translateY(1px); box-shadow: inset 0 1px 0 #ffffff08; }
 html[data-theme="booth"] .sq.lit { color: var(--c); border-color: #050506; box-shadow: inset 0 0 0 1px var(--c), 0 0 10px color-mix(in srgb, var(--c) 45%, transparent); }
 html[data-theme="booth"] .sq.sync.lit, html[data-theme="booth"] .deck .mini .sq.lit.msync { background: var(--c); color: #000; }
@@ -709,11 +528,8 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div id="app">
   <header>
     <div class="logo">CRATE<span>BOX</span></div>
-    <div class="ptabs phoneonly" role="tablist"><button data-tab="mix" class="on">MIX</button><button data-tab="lib">LIBRARY</button></div>
     <div class="pill" id="midiPill" title="Controller status"><i></i><span>No controller</span></div>
-    <label class="hlabel" for="outSel">Output</label>
-    <select class="hsel" id="outSel"><option value="">Default output</option></select>
-    <span class="pill" id="chPill" title="How many output channels Chrome sees on this device. The FLX4 needs 4 for headphone cueing.">– ch</span>
+    <span class="pill" id="chPill" title="Cratebox plays on the system output (set it in Sound settings). This is how many channels Firefox sees on it; the FLX4 needs 4 for headphone cueing.">– ch</span>
     <label class="hlabel" for="hpSel">Headphones</label>
     <select class="hsel" id="hpSel">
       <option value="auto">Auto</option>
@@ -735,16 +551,14 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="lockSel"><option value="1">Locked (playing decks can't be loaded)</option><option value="0">Unlocked (loading stops the deck)</option></select>
           <label for="phraseSel">Phrases <small>Intro / Build / Drop… on the waveforms and decks</small></label>
           <select class="hsel" id="phraseSel"><option value="1">Show</option><option value="0">Hide</option></select>
-          <label for="wavqSel">Waveform detail <small>Light draws fewer pixels, for slow computers</small></label>
-          <select class="hsel" id="wavqSel"><option value="auto">Auto (drops to Light if drawing is slow)</option><option value="sharp">Sharp</option><option value="light">Light</option></select>
-          <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
-          <select class="hsel deskonly" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
-          <label for="recFmtSel" class="deskonly">Recording format</label>
-          <select class="hsel deskonly" id="recFmtSel"><option value="wav">WAV (lossless, ~600 MB per hour)</option><option value="mp3">MP3 320 kbps (~140 MB per hour)</option></select>
+          <label for="abufSel">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
+          <select class="hsel" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
+          <label for="recFmtSel">Recording format</label>
+          <select class="hsel" id="recFmtSel"><option value="wav">WAV (lossless, ~600 MB per hour)</option><option value="mp3">MP3 320 kbps (~140 MB per hour)</option></select>
           <label for="themeSel">Look</label>
           <select class="hsel" id="themeSel"><option value="booth">Booth (default)</option><option value="default">Cratebox classic</option></select>
-          <label for="uiSizeSel" class="deskonly">Interface size <small>Auto scales up on big screens</small></label>
-          <select class="hsel deskonly" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
+          <label for="uiSizeSel">Interface size <small>Auto scales up on big screens</small></label>
+          <select class="hsel" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
           <div id="ctlPanel" class="ctlpanel">
             <label for="ctlIn">Controller</label>
             <select class="hsel" id="ctlIn"></select>
@@ -761,16 +575,14 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.1</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.1 · Mac edition</span></div>
         </div>
       </div>
     <span id="status"></span>
     <span class="spacer"></span>
-    <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
-    <button class="hbtn deskonly" id="fourBtn" title="Show decks 3 and 4 (4-channel mixer)">4 DECKS</button>
+    <button class="hbtn" id="recBtn" title="Record your set (master output)">● REC</button>
+    <button class="hbtn" id="fourBtn" title="Show decks 3 and 4 (4-channel mixer)">4 DECKS</button>
     <div id="masterSlot"></div>
-    <button class="iconbtn phoneonly" id="fxOpen" aria-label="Beat FX">FX</button>
-    <button class="iconbtn phoneonly" id="setOpen" aria-label="Settings">⚙</button>
   </header>
   <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas><canvas id="lane2" class="ch34"></canvas><canvas id="lane3" class="ch34"></canvas></section>
   <section id="decks"></section>
@@ -779,15 +591,10 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
       <button class="hbtn" id="addFolder">Add music folder</button>
       <button class="hbtn" id="reconnect" hidden>Reconnect saved folder</button>
       <input type="file" id="folderInput" webkitdirectory multiple class="pick">
-      <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.wav,.flac,.ogg,.opus,.aif,.aiff" multiple class="pick">
-      <button class="hbtn phoneonly" id="treeBtn" title="Playlists and devices">☰</button>
       <b id="viewName" title="What the list is showing">Collection</b>
-      <button class="hbtn touchonly" id="load1Btn">◀ Load 1</button>
-      <button class="hbtn touchonly" id="load2Btn">Load 2 ▶</button>
       <button class="hbtn" id="addToBtn" title="Add the selected tracks to a playlist">Add to ▾</button>
       <button class="hbtn" id="plRemove" hidden title="Remove the selected tracks from this playlist (Delete key)">Remove from list</button>
       <input type="file" id="xmlInput" accept=".xml,text/xml,application/xml" class="pick">
-      <button class="hbtn" id="removeBtn" hidden title="Remove the selected imported track from this device">Remove</button>
       <input type="search" id="search" placeholder="Search title or artist">
       <button class="hbtn" id="browseBtn" title="Expand the library over the jogs and mixer (SHIFT + press BROWSE on the FLX4)">Expand library</button>
 
@@ -799,15 +606,12 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <div id="list"></div>
   </section>
 </div>
-<div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><span>Cratebox is laid out for landscape on a phone: both decks and the mixer on one screen.</span></div>
-<div id="toast"></div>
 <div id="learnBar" hidden><b>LEARN</b><span id="learnText"></span>
   <span class="learnlib">Library: <button class="hbtn" data-learn="browse">Browse knob</button><button class="hbtn" data-learn="browsePress">Browse press</button>
   <button class="hbtn" data-learn="load" data-deck="0">Load 1</button><button class="hbtn" data-learn="load" data-deck="1">Load 2</button>
   <button class="hbtn" data-learn="jogSide" data-deck="0">Jog side 1</button><button class="hbtn" data-learn="jogSide" data-deck="1">Jog side 2</button></span>
   <button class="hbtn" id="learnDone">Done</button></div>
 <div id="resume" hidden><button>Tap to resume audio</button></div>
-<div class="sheet" id="setSheet" hidden><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="setBody"></div></div></div>
 <div id="recPanel" hidden><div class="row"><b id="recTitle">RECORDING SAVED</b><span class="spacer"></span><button class="iconbtn" id="recClose" aria-label="Close">✕</button></div>
   <span class="ctlnote" id="recInfo"></span><pre id="recList"></pre>
   <div class="row"><button class="hbtn" id="recSaveAgain">Save recording again</button><button class="hbtn" id="recSaveList">Save tracklist</button></div></div>
@@ -825,13 +629,11 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
   </div>
 </div></div>
-<div class="sheet" id="fxSheet" hidden><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="fxBody"></div></div></div>
-<div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.1</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.1 · Mac edition</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
-    <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
+    <p id="startMidi">Plug in your controller first. Firefox asks to let this page use MIDI devices: allow it. If it offers MIDI with SysEx (system exclusive) access, take that one: it keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
     <button id="startBtn">Start</button>
   </div>
@@ -842,42 +644,23 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "1.1.1";
+const VERSION = "1.1.1-mac";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
 window.addEventListener("error", (e) => noteError(`${e.message} @${(e.filename || "").split("/").pop()}:${e.lineno}`));
 window.addEventListener("unhandledrejection", (e) => noteError("promise: " + (e.reason && e.reason.message || e.reason)));
 const $ = (s, r = document) => r.querySelector(s);
-// what this browser can do: iPhone/iPad Safari (and every iOS browser) has no Web MIDI, no folder
-// access and no output picking, so Cratebox switches to touch controls and imported files there
-const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-const CAN_PICK_FOLDER = !!window.showDirectoryPicker;
-const CAN_ROUTE = typeof AudioContext !== "undefined" && "setSinkId" in AudioContext.prototype;
-// iOS MIDI browser apps (MIDIWeb Browser and the like) add Web MIDI with injected script, sometimes
-// after the page has started, so this is checked again when Start is pressed (waitForMidi)
-let HAS_MIDI = !!navigator.requestMIDIAccess;
-document.documentElement.classList.toggle("nomidi", !HAS_MIDI);
-const emptyDeckHint = () => HAS_MIDI ? "Drop a file here, or press LOAD on your controller" : "Pick a track below and tap Load";
-async function waitForMidi() {
-  for (let k = 0; !navigator.requestMIDIAccess && IOS && k < 15; k++) await new Promise((r) => setTimeout(r, 100));
-  const had = HAS_MIDI;
-  HAS_MIDI = !!navigator.requestMIDIAccess;
-  document.documentElement.classList.toggle("nomidi", !HAS_MIDI);
-  if (had !== HAS_MIDI) for (const i of [0, 1]) if (ui[i] && !decks[i].track) ui[i].artist.textContent = emptyDeckHint();
-}
-document.documentElement.classList.toggle("touch", matchMedia("(pointer: coarse)").matches || IOS);
-document.documentElement.classList.toggle("noroute", !CAN_ROUTE);
-// phones get their own landscape layout (min screen side ≤ 500 CSS px: every iPhone, no iPad)
-// phones and tablets with no folder access copy picked tracks into the browser's storage instead
-const MOBILE_FILES = IOS || /Android/i.test(navigator.userAgent);
-const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(screen.width, screen.height) <= 500;
-// phones and tablets: Safari kills a tab that uses too much memory, so keep audio in 16 bit,
-// decode one track at a time and use bigger audio buffers
-// decks 3 and 4: on computers and tablets (phones keep two); shown when 4-deck mode is on
-const NDECKS = PHONE ? 2 : 4;
+// Mac edition: built for a 2017 MacBook Air running CachyOS and Firefox (1440 x 900, no touch screen),
+// so it's the desktop layout only. Firefox has no folder handles and can't send an AudioContext to a
+// chosen device: music folders and rekordbox USBs are read through the launcher (see "Launcher file
+// bridge"), and the master plays on the system's default output (pick the FLX4 in Sound settings).
+const HAS_MIDI = !!navigator.requestMIDIAccess;
+const emptyDeckHint = () => "Drop a file here, or press LOAD on your controller";
+// decks 3 and 4: shown when 4-deck mode is on
+const NDECKS = 4;
 let FOUR = false;
-try { FOUR = !PHONE && localStorage.getItem("cb.four") === "1"; } catch (e) {}
+try { FOUR = localStorage.getItem("cb.four") === "1"; } catch (e) {}
 document.documentElement.classList.toggle("four", FOUR);
 const deckActive = (i) => i < 2 || FOUR;
 // jog sensitivity: scales every jog movement (scratch, nudge, search) from the controller and the on-screen jog
@@ -892,7 +675,6 @@ try { audioBuffer = localStorage.getItem("cb.abuf") || "balanced"; } catch (e) {
 let UIZ = 1, uiSize = "auto";
 try { uiSize = localStorage.getItem("cb.uisize") || "auto"; } catch (e) {}
 function applyUiSize() {
-  if (PHONE) return;
   const auto = Math.min(innerWidth / 1600, innerHeight / 900);
   const z = uiSize === "auto" ? (auto >= 1.1 ? Math.min(auto, 1.75) : 1) : parseFloat(uiSize) || 1;
   UIZ = Math.round(z * 100) / 100;
@@ -900,9 +682,6 @@ function applyUiSize() {
   document.documentElement.classList.toggle("zoomed", UIZ !== 1);
 }
 applyUiSize();
-const LOWMEM = IOS || PHONE || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
-document.documentElement.classList.toggle("phone", PHONE);
-if (PHONE) document.documentElement.dataset.tab = "mix";
 const clamp = (x, a, b) => Math.min(b, Math.max(a, x));
 const dbToGain = (db) => Math.pow(10, db / 20);
 const fmtTime = (s) => {
@@ -916,12 +695,6 @@ function status(msg, ms = 4000) {
   el.textContent = msg;
   clearTimeout(statusTimer);
   if (ms) statusTimer = setTimeout(() => (el.textContent = ""), ms);
-  if (typeof PHONE !== "undefined" && PHONE) {
-    const t = $("#toast");
-    t.textContent = msg; t.classList.toggle("show", !!msg);
-    clearTimeout(status.tt);
-    status.tt = setTimeout(() => t.classList.remove("show"), Math.min(ms || 4000, 5000));
-  }
 }
 function h(tag, attrs = {}, ...kids) {
   const e = document.createElement(tag);
@@ -1964,12 +1737,6 @@ function phraseSpans(d) {
 function phraseAt(d, t) { return phraseSpans(d).find((p) => t >= p.start && t < p.end) || null; }
 let waveStyle = "rgb";
 try { if (localStorage.getItem("cb.wave") === "3band") waveStyle = "3band"; } catch (e) {}
-// waveform detail: "sharp" draws the waveform canvases at the screen's full pixel density, "light" at 1x
-// (a quarter of the pixels on a 2x screen). "auto" starts sharp and drops to light for the session if
-// drawing stays slow (see frame()).
-let wavQuality = "auto", wavLight = false;
-try { const q = localStorage.getItem("cb.wavq"); if (q === "sharp" || q === "light") wavQuality = q; } catch (e) {}
-wavLight = wavQuality === "light";
 // what draws the screen. A software renderer (SwiftShader, llvmpipe, Microsoft Basic Render) means
 // the browser isn't using the graphics card; shown in problem reports, since it explains slow drawing.
 const GPU = (() => {
@@ -2005,12 +1772,6 @@ function checkLastCrash() {
   if (!f) return "";
   badTracks.add(f.id); saveBad();
   return `Last time Cratebox stopped while reading "${f.title}" (probably too big for this device's memory). It won't be analysed automatically; load it onto a deck to try again.`;
-}
-// 16-bit copy of one channel: half the memory of the decoded float audio
-function toInt16(ch) {
-  const n = ch.length, out = new Int16Array(n);
-  for (let i = 0; i < n; i++) { const v = ch[i] * 32767; out[i] = v > 32767 ? 32767 : v < -32768 ? -32768 : v; }
-  return out;
 }
 const analyzeWaiters = new Map();
 
@@ -2060,7 +1821,7 @@ function biquad(type, freq, Q = 0.7071) {
 function chain(...nodes) { for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]); return nodes; }
 
 async function initAudio(ctxOverride) {
-  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: LOWMEM ? "playback" : audioBuffer }));
+  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: audioBuffer }));
   const url = URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" }));
   await ctx.audioWorklet.addModule(url);
   A.master = ctx.createGain();
@@ -2091,7 +1852,6 @@ async function initAudio(ctxOverride) {
   for (let i = 0; i < (FOUR ? NDECKS : 2); i++) A.decks.push(buildDeckChain(i));
   routeOutput("off");
   applyAllMixer();
-  A.currentSink = "";
 }
 
 function buildDeckChain(i) {
@@ -2399,9 +2159,9 @@ class Deck {
         try {
           const file = await track.getFile();
           let buf = await A.ctx.decodeAudioData(await file.arrayBuffer());
-          const m = monoFor(buf), w = LOWMEM ? null : monoFor(buf, 22050);
+          const m = monoFor(buf), w = monoFor(buf, 22050);
           const c0 = buf.getChannelData(0), c1 = buf.numberOfChannels > 1 ? buf.getChannelData(1) : c0;
-          const L = LOWMEM ? toInt16(c0) : c0.slice(), R = c1 === c0 ? (LOWMEM ? L.slice() : L.slice()) : LOWMEM ? toInt16(c1) : c1.slice();
+          const L = c0.slice(), R = c1 === c0 ? L.slice() : c1.slice();
           const out = { mono: m.mono, fs: m.fs, w, L, R, sr: buf.sampleRate, duration: buf.duration };
           buf = null;
           return out;
@@ -2787,87 +2547,121 @@ async function addFiles(entries) {
   applyView();
   runAnalysisQueue();
 }
-async function scanDir(dir, path = "") {
-  const out = [];
-  for await (const [name, handle] of dir.entries()) {
-    if (handle.kind === "file" && AUDIO_EXT.test(name)) out.push({ file: await handle.getFile(), rel: path + name, handle });
-    else if (handle.kind === "directory" && !name.startsWith(".")) out.push(...(await scanDir(handle, path + name + "/")));
-  }
-  return out;
+// =====================================================================================
+//  Launcher file bridge
+// =====================================================================================
+// Firefox can't open or remember a folder, so the launcher (cratebox.py) reads the music folder and
+// rekordbox USBs for the page, over http://localhost. BridgeDir and BridgeFile answer the same calls as
+// the browser's folder handles and Files (entries, getFile, getFileHandle, slice, arrayBuffer), so the
+// folder scan, the saved folder and the USB code work as they do in Chrome. Nothing is read until a
+// track is analysed or loaded; tags and rekordbox files are read in small byte ranges.
+const BX = { "X-Cratebox": "1" };
+async function bjson(op, q) {
+  const r = await fetch(`fs/${op}?${new URLSearchParams(q || {})}`, { headers: BX, cache: "no-store" });
+  const j = await r.json().catch(() => ({ error: r.statusText || String(r.status) }));
+  if (!r.ok || j.error) { const e = new Error(j.error || r.statusText); e.name = r.status === 404 ? "NotFoundError" : "Error"; throw e; }
+  return j;
 }
-async function pickFolder() {
-  if (!CAN_PICK_FOLDER && (MOBILE_FILES || !("webkitdirectory" in document.createElement("input")))) { $("#filesInput").click(); return; }
-  if (window.showDirectoryPicker) {
-    try {
-      const dir = await window.showDirectoryPicker({ id: "cratebox-music", mode: "read" });
-      await idbPut("settings", "folder", dir);
-      status("Scanning folder...", 0);
-      await addFiles(await scanDir(dir, dir.name + "/"));
-      return;
-    } catch (e) {
-      if (e.name === "AbortError") return;
+let bridgeOk = null;
+async function bridgeCheck() {
+  if (bridgeOk === null) { try { bridgeOk = (await bjson("hello")).app === "cratebox"; } catch (e) { bridgeOk = false; } }
+  return bridgeOk;
+}
+class BridgeFile {
+  constructor(path, name, size, lastModified, start = 0) {
+    this.path = path; this.name = name; this.size = size; this.lastModified = lastModified; this.type = ""; this.start = start;
+  }
+  slice(a = 0, b = this.size) {
+    a = clamp(a < 0 ? this.size + a : a, 0, this.size); b = clamp(b < 0 ? this.size + b : b, a, this.size);
+    return new BridgeFile(this.path, this.name, b - a, this.lastModified, this.start + a);
+  }
+  async arrayBuffer() {
+    if (!this.size) return new ArrayBuffer(0);
+    const r = await fetch("fs/file?" + new URLSearchParams({ path: this.path }),
+      { headers: { ...BX, Range: `bytes=${this.start}-${this.start + this.size - 1}` }, cache: "no-store" });
+    if (!r.ok) throw new Error(r.status === 404 ? `${this.name} isn't there any more` : `Couldn't read ${this.name} (${r.status})`);
+    return r.arrayBuffer();
+  }
+}
+class BridgeFileHandle {
+  constructor(path, e) { this.kind = "file"; this.path = path; this.name = path.split("/").pop(); this.size = e.size; this.mtime = e.mtime; }
+  async getFile() { return new BridgeFile(this.path, this.name, this.size, this.mtime); }
+}
+class BridgeDir {
+  constructor(path, name) { this.kind = "directory"; this.path = path; this.name = name || path.split("/").filter(Boolean).pop() || "/"; }
+  get rec() { return { bridge: 1, path: this.path, name: this.name }; }      // what's saved in IndexedDB
+  async *entries() {
+    for (const e of (await bjson("list", { path: this.path })).entries) {
+      const p = this.path + "/" + e.name;
+      yield [e.name, e.kind === "directory" ? new BridgeDir(p, e.name) : new BridgeFileHandle(p, e)];
     }
   }
-  $("#folderInput").click();
-}
-// Browsers without folder access (iPhone, iPad): imported files are copied into the browser's own
-// storage so the library is still there next time
-const IMPORT_DIR = "Imported/";
-async function importFiles(files) {
-  files = files.filter((f) => AUDIO_EXT.test(f.name) || /^audio\//.test(f.type));
-  if (!files.length) return;
-  try { if (navigator.storage && navigator.storage.persist) await navigator.storage.persist(); } catch (e) {}
-  let saved = 0;
-  for (const f of files) {
-    const rel = IMPORT_DIR + f.name;
-    const ok = await idbPut("files", `${rel}|${f.size}|${f.lastModified}`, { name: f.name, type: f.type, lastModified: f.lastModified, blob: f });
-    if (ok !== undefined) saved++;
+  async stat(name, kind) {
+    const e = await bjson("stat", { path: this.path + "/" + name });
+    if (e.kind !== kind) { const x = new Error(`${name} not found`); x.name = "NotFoundError"; throw x; }
+    return e;
   }
-  await addFiles(files.map((f) => ({ file: f, rel: IMPORT_DIR + f.name, stored: true })));
-  status(saved === files.length ? `Imported ${saved} track${saved === 1 ? "" : "s"} into Cratebox's storage on this device`
-    : `Imported ${files.length} tracks, but only ${saved} could be stored (device storage full?). The rest will be gone next time.`, 10000);
-  updateRemoveBtn();
+  async getDirectoryHandle(name) { const e = await this.stat(name, "directory"); return new BridgeDir(e.path, name); }
+  async getFileHandle(name) { const e = await this.stat(name, "file"); return new BridgeFileHandle(e.path, e); }
+  async exists() { try { return (await bjson("stat", { path: this.path })).kind === "directory"; } catch (e) { return false; } }
+  async queryPermission() { return "granted"; }
+  async requestPermission() { return "granted"; }
 }
-async function restoreImported() {
-  const recs = await idb("files", "readonly", (o) => o.getAll());
-  if (!recs || !recs.length) return;
-  await addFiles(recs.map((r) => ({ file: new File([r.blob], r.name, { type: r.type, lastModified: r.lastModified }), rel: IMPORT_DIR + r.name, stored: true })));
-  updateRemoveBtn();
+const bridgeDir = (rec) => new BridgeDir(rec.path, rec.name);
+// the launcher shows the desktop's own folder dialog (KDE or GNOME); without one, type the path
+async function bridgePick(kind) {
+  const r = await bjson("pick", { kind });
+  if (r.cancelled) return null;
+  if (r.path) return r;
+  const path = prompt(kind === "usb" ? "Path to the USB stick or SD card:" : "Path to your music folder:", r.suggest || "");
+  if (!path) return null;
+  try { const e = await bjson("stat", { path }); if (e.kind === "directory") return { path: e.path, name: e.path.split("/").filter(Boolean).pop() }; } catch (e) {}
+  status(`Couldn't open "${path}"`, 6000);
+  return null;
 }
-function updateRemoveBtn() { $("#removeBtn").hidden = !lib.tracks.some((t) => t.stored); }
-async function removeSelected() {
-  const t = lib.view[lib.sel];
-  if (!t || !t.stored) return status("Only imported tracks can be removed here");
-  if (decks.some((d) => d.track === t)) return status("Unload it from the deck first (load another track)");
-  await idb("files", "readwrite", (o) => o.delete(t.id));
-  await idb("analysis", "readwrite", (o) => o.delete(t.id));
-  lib.tracks = lib.tracks.filter((x) => x !== t);
-  applyView(true); updateRemoveBtn();
-  status(`Removed ${t.title}`);
+const NO_LAUNCHER = "Start Cratebox with its launcher (cratebox.py) so it can open and remember folders";
+async function scanDir(dir, path = "") {
+  // every audio file under the folder in one request: [path below the folder, size, modified ms]
+  const files = (await bjson("walk", { path: dir.path })).files;
+  return files.map(([rel, size, mtime]) => ({ file: new BridgeFile(dir.path + "/" + rel, rel.split("/").pop(), size, mtime), rel: path + rel }));
 }
-$("#filesInput").addEventListener("change", (e) => { importFiles([...e.target.files]); e.target.value = ""; });
-$("#removeBtn").addEventListener("click", removeSelected);
-$("#load1Btn").addEventListener("click", () => loadSelected(0));
-$("#load2Btn").addEventListener("click", () => loadSelected(1));
+async function addFolder(dir) {
+  status("Scanning folder...", 0);
+  try { await addFiles(await scanDir(dir, dir.name + "/")); }
+  catch (e) { status(`Couldn't read "${dir.name}": ${e.message}`, 9000); }
+}
+async function pickFolder() {
+  if (!(await bridgeCheck())) {
+    // opened some other way: the folder can still be read, just not remembered
+    status(NO_LAUNCHER + "; this folder won't be remembered.", 9000);
+    $("#folderInput").click();
+    return;
+  }
+  const r = await bridgePick("music");
+  if (!r) return;
+  const dir = bridgeDir(r);
+  await idbPut("settings", "folder", dir.rec);
+  await addFolder(dir);
+}
 $("#folderInput").addEventListener("change", (e) => {
   addFiles([...e.target.files].map((f) => ({ file: f, rel: f.webkitRelativePath || f.name })));
   e.target.value = "";
 });
 async function restoreFolder() {
-  const dir = await idbGet("settings", "folder");
-  if (!dir || !dir.queryPermission) return;
-  const btn = $("#reconnect");
+  const rec = await idbGet("settings", "folder");
+  if (!rec || !rec.bridge || !(await bridgeCheck())) return;
+  const dir = bridgeDir(rec), btn = $("#reconnect");
   const go = async () => {
-    if ((await dir.requestPermission({ mode: "read" })) === "granted") {
-      btn.hidden = true;
-      status("Scanning folder...", 0);
-      await addFiles(await scanDir(dir, dir.name + "/"));
+    // a folder on a drive that isn't plugged in (or mounted) yet: offer to try again
+    if (!(await dir.exists())) {
+      btn.textContent = `Reconnect "${dir.name}"`; btn.hidden = false; btn.onclick = go;
+      status(`"${dir.name}" isn't there right now (${dir.path}). Plug it in, then press Reconnect.`, 9000);
+      return;
     }
+    btn.hidden = true;
+    await addFolder(dir);
   };
-  if ((await dir.queryPermission({ mode: "read" })) === "granted") return go();
-  btn.textContent = `Reconnect "${dir.name}"`;
-  btn.hidden = false;
-  btn.onclick = go;
+  await go();
 }
 
 async function saveAnalysis(t) {
@@ -2877,14 +2671,13 @@ async function saveAnalysis(t) {
 async function runAnalysisQueue() {
   if (lib.running) return;
   lib.running = true;
-  // low-memory devices decode straight to 22 kHz for analysis (a quarter of the memory)
-  const off = new OfflineAudioContext(1, 1, LOWMEM ? 22050 : 44100);
+  const off = new OfflineAudioContext(1, 1, 44100);
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
   let done = 0;
   while (lib.queue.length) {
-    // deck loads go first; on phones, don't analyse while music is playing (keeps playback smooth)
-    while (deckLoads > 0 || (LOWMEM && decks.some((d) => d.playing))) {
-      $("#progress").textContent = deckLoads > 0 ? "Analysis waiting…" : "Analysis paused while playing";
+    // deck loads go first
+    while (deckLoads > 0) {
+      $("#progress").textContent = "Analysis waiting…";
       await sleep(1000);
     }
     // music playing: a breather between tracks, so analysis never competes with the decks for long
@@ -2919,7 +2712,7 @@ async function runAnalysisQueue() {
 }
 
 // ---- track list (virtualised) ----
-const ROW = typeof PHONE !== "undefined" && PHONE ? 50 : 26;
+const ROW = 26;
 const COLS = [["#", null], ["Title", "title"], ["Artist", "artist"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["Deck", null]];
 function applyView(keepSel) {
   const q = lib.query.toLowerCase();
@@ -2962,8 +2755,8 @@ function renderList(full) {
   const box = $("#list");
   if (full || !listInner) {
     box.innerHTML = "";
-    const hdr = h("div", { class: "hdr " + (PHONE ? "prow" : "cols") });
-    (PHONE ? [["Title", "title"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["", null], ["", null]] : COLS).forEach(([label, key]) => {
+    const hdr = h("div", { class: "hdr cols" });
+    COLS.forEach(([label, key]) => {
       const c = h("div", { class: lib.sort === key && key ? "sorted" : "" }, label + (lib.sort === key && key ? (lib.dir > 0 ? " ▴" : " ▾") : ""));
       if (key) c.onclick = () => { lib.dir = lib.sort === key ? -lib.dir : 1; lib.sort = key; applyView(true); };
       else if (label === "#") { c.title = "Back to the list's own order"; c.onclick = () => { lib.sort = null; applyView(true); }; }
@@ -2987,20 +2780,6 @@ function renderList(full) {
   for (let i = first; i < Math.min(lib.view.length, first + count); i++) {
     const t = lib.view[i];
     const onDeck = decks.findIndex((d) => d.track && d.track.id === t.id);
-    if (PHONE) {
-      const ld = (k) => { const b = h("button", { class: "ld", "data-d": k }, String(k + 1)); b.onclick = (e) => { e.stopPropagation(); lib.sel = i; loadSelected(k); }; return b; };
-      const row = h("div", { class: `trow prow${i === lib.sel ? " sel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}`, style: `top:${i * ROW}px;height:${ROW}px` },
-        h("div", { class: "tt" }, h("b", {}, t.title), h("span", {}, t.artist || "")),
-        h("div", { class: "num" + (t.gridManual ? " manual" : "") }, t.bpm ? t.bpm.toFixed(t.bpm % 1 ? 2 : 0) : t.bpm === 0 ? "?" : "…"),
-        keyCell(t, ref),
-        h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
-        ld(0), ld(1));
-      if (t.missing) row.classList.add("missing");
-      if (lib.selIds.has(t.id)) row.classList.add("msel");
-      row.onclick = (e) => selectRow(i, e);
-      listInner.append(row);
-      continue;
-    }
     const row = h("div", { class: `trow cols${i === lib.sel ? " sel" : ""}${lib.selIds.has(t.id) && i !== lib.sel ? " msel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}${t.missing ? " missing" : ""}`,
       style: `top:${i * ROW}px`, draggable: "true", title: t.missing ? "Not in a connected folder right now" : "" },
       h("div", { class: "n" }, String((lib.viewPos[i] != null ? lib.viewPos[i] : i) + 1)),
@@ -3052,7 +2831,7 @@ function setBrowse(on) {
 $("#setBtn").addEventListener("click", (e) => {
   e.stopPropagation();
   const p = $("#setPanel"); p.hidden = !p.hidden; $("#setBtn").setAttribute("aria-expanded", String(!p.hidden));
-  if (!p.hidden && !PHONE) {
+  if (!p.hidden) {
     // under the button, kept inside the window (positions in the app's own units: the interface zoom divided out)
     const r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1;
     p.style.top = (r.bottom + 6) / z + "px";
@@ -3076,13 +2855,6 @@ $("#phraseSel").value = showPhrases ? "1" : "0";
 $("#phraseSel").addEventListener("change", (e) => {
   showPhrases = e.target.value !== "0";
   try { localStorage.setItem("cb.phrases", showPhrases ? "1" : "0"); } catch (err) {}
-  overviewBase.fill(null);
-});
-$("#wavqSel").value = wavQuality;
-$("#wavqSel").addEventListener("change", (e) => {
-  wavQuality = e.target.value;
-  try { localStorage.setItem("cb.wavq", wavQuality); } catch (err) {}
-  wavLight = wavQuality === "light";
   overviewBase.fill(null);
 });
 // scrolling waveforms: drag to move through the track (audio follows the hand while playing, like
@@ -3504,7 +3276,6 @@ function setView(v) {
   lib.selIds = new Set(); lib.sel = lib.anchor = 0;
   if (v.kind === "pl") lib.sort = null;          // a playlist opens in its own order (so it can be rearranged)
   $("#list").scrollTop = 0;
-  $("#library").classList.remove("treeopen");
   applyView(); renderTree();
   const name = viewName(v);
   $("#viewName").textContent = name;
@@ -3533,7 +3304,7 @@ function viewTracks() {
 }
 function isOwnPlaylistView() { return PL.view.kind === "pl" && !lib.sort && !lib.query; }
 
-// ---- the tree (sidebar on desktop, sheet on phones) ----
+// ---- the tree (sidebar) ----
 function treeRows() {
   const rows = [{ kind: "all", depth: 0, label: "Collection", count: lib.tracks.filter((t) => !t.device).length }];
   rows.push({ kind: "head", label: "Playlists", what: "pl" });
@@ -3595,7 +3366,7 @@ function renderTree() {
         head.addEventListener("dragover", (e) => { if (PL.dragList) { e.preventDefault(); head.classList.add("drop"); } });
         head.addEventListener("dragleave", () => head.classList.remove("drop"));
         head.addEventListener("drop", (e) => { head.classList.remove("drop"); if (PL.dragList) { e.preventDefault(); movePlaylist(PL.dragList, null); } });
-      } else if (CAN_PICK_FOLDER) {
+      } else {
         head.append(h("button", { class: "ticon wide", title: "Open a rekordbox USB stick or SD card (read-only)", onclick: openDevice }, "+ USB"));
       }
       box.append(head);
@@ -3610,9 +3381,7 @@ function renderTree() {
     el.addEventListener("click", () => { PL.treeSel = i; openRow(r); });
     if (r.kind === "pl" || r.kind === "folder") {
       el.addEventListener("dblclick", () => startRename(plGet(r.id)));
-      if (TOUCH_UI) el.append(h("button", { class: "tx", title: "Rename or delete", onclick: (e) => { e.stopPropagation();
-        popMenu(e.currentTarget, [["Rename", () => startRename(plGet(r.id))], ["Delete…", () => confirmDelete(el, plGet(r.id))]]); } }, "⋯"));
-      else el.append(h("button", { class: "tx", title: "Delete", onclick: (e) => { e.stopPropagation(); confirmDelete(el, plGet(r.id)); } }, "×"));
+      el.append(h("button", { class: "tx", title: "Delete", onclick: (e) => { e.stopPropagation(); confirmDelete(el, plGet(r.id)); } }, "×"));
       el.draggable = true;
       el.addEventListener("dragstart", (e) => { PL.dragList = r.id; e.dataTransfer.setData("text/cratebox-pl", r.id); e.dataTransfer.effectAllowed = "move"; });
       el.addEventListener("dragend", () => { PL.dragList = null; });
@@ -3636,7 +3405,6 @@ function renderTree() {
     box.append(el);
   });
 }
-const TOUCH_UI = document.documentElement.classList.contains("touch");
 // FLX4 browse: press to jump between the tree and the track list, turn to move in whichever has focus
 function treeMove(n) {
   const rows = PL.treeRows.length ? PL.treeRows : treeRows();
@@ -3722,7 +3490,7 @@ function selectedTracks() {
   const ids = lib.selIds && lib.selIds.size ? lib.selIds : new Set(lib.view[lib.sel] ? [lib.view[lib.sel].id] : []);
   return lib.view.filter((t) => ids.has(t.id));
 }
-// "Add to playlist" menu (toolbar button; also how phones add tracks)
+// "Add to playlist" menu (toolbar button)
 function addToMenu(btn) {
   const tracks = selectedTracks();
   if (!tracks.length) return status("Select a track first");
@@ -3767,11 +3535,16 @@ function removeFromPlaylist() {
 }
 
 // ---- rekordbox USB / SD ----
+// + USB: opens every plugged-in drive with a rekordbox export (the launcher looks under /run/media);
+// if there's none, or they're all open already, the folder dialog picks one
 async function openDevice() {
-  let dir;
-  try { dir = await window.showDirectoryPicker({ id: "cratebox-usb", mode: "read" }); }
-  catch (e) { return; }
-  await mountDevice(dir, true);
+  if (!(await bridgeCheck())) return status(NO_LAUNCHER, 9000);
+  let drives = [];
+  try { drives = (await bjson("drives")).drives; } catch (e) {}
+  const fresh = drives.filter((d) => !PL.devices.some((x) => x.id === "usb-" + d.name));
+  if (fresh.length) { for (const d of fresh) await mountDevice(bridgeDir(d), true); return; }
+  const r = await bridgePick("usb");
+  if (r) await mountDevice(bridgeDir(r), true);
 }
 async function subHandle(dir, path, kind) {
   const parts = path.split("/").filter(Boolean);
@@ -3818,7 +3591,7 @@ async function mountDevice(dir, remember) {
   PL.open.add("dev:" + id);
   if (remember) {
     const saved = (await idbGet("settings", "devices")) || [];
-    await idbPut("settings", "devices", saved.filter((d) => d.name !== dir.name).concat([dir]));
+    await idbPut("settings", "devices", saved.filter((d) => d.name !== dir.name).concat([dir.rec]));
   }
   renderTree(); applyView(true);
   status(`${dir.name}: ${db.tracks.length} tracks, ${db.playlists.filter((p) => !p.folder).length} playlists (read-only)`);
@@ -3834,8 +3607,11 @@ function closeDevice(id, quiet) {
 }
 async function restoreDevices() {
   const saved = (await idbGet("settings", "devices")) || [];
-  for (const dir of saved) {
-    try { if ((await dir.queryPermission({ mode: "read" })) === "granted") await mountDevice(dir, false); } catch (e) {}
+  if (!saved.length || !(await bridgeCheck())) return;
+  // drives that are still plugged in come back; the others stay saved for next time
+  for (const rec of saved) {
+    const dir = rec && rec.bridge ? bridgeDir(rec) : null;
+    try { if (dir && (await dir.exists())) await mountDevice(dir, false); } catch (e) {}
   }
 }
 // rekordbox's own analysis for a device track: grid, phrases, hot cues and the memory cue
@@ -4006,10 +3782,6 @@ function exportXml() {
 $("#addToBtn").addEventListener("click", (e) => addToMenu(e.currentTarget));
 $("#plRemove").addEventListener("click", removeFromPlaylist);
 $("#xmlInput").addEventListener("change", (e) => { const f = e.target.files[0]; e.target.value = ""; if (f) importXml(f); });
-$("#treeBtn").addEventListener("click", (e) => { e.stopPropagation(); $("#library").classList.toggle("treeopen"); });
-document.addEventListener("pointerdown", (e) => {
-  if ($("#library").classList.contains("treeopen") && !e.target.closest("#tree, #treeBtn, .popmenu")) $("#library").classList.remove("treeopen");
-});
 $("#tree").addEventListener("pointerdown", () => { if (PL.focus !== "tree") return; PL.focus = "list"; });
 
 
@@ -4202,15 +3974,10 @@ function buildDeck(i) {
   const pads = h("div", { class: "pads" });
   for (let p = 0; p < 8; p++) {
     const b = h("button", { class: "pad" }, "");
-    let holdT = 0;
     b.addEventListener("pointerdown", (e) => {
       padPress(i, p, e.shiftKey || e.button === 2);
-      // touch screens have no SHIFT: hold a hot cue pad for a second to delete it
-      clearTimeout(holdT);
-      if (e.pointerType === "touch") holdT = setTimeout(() => { if (decks[i].padMode === "hotcue") padPress(i, p, true); }, 900);
     });
     for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => {
-      clearTimeout(holdT);
       const m = decks[i].padMode;
       if (m === "padfx" || m === "padfx2") pfxUp(i, m, p);           // PAD FX: momentary
     });
@@ -4483,7 +4250,7 @@ function applyTheme(t, chosen = false) {
   THEME = t === "default" ? "default" : "booth";
   if (chosen) try { localStorage.setItem("cb.theme", THEME); localStorage.setItem("cb.themeChosen", "1"); } catch (e) {}
   document.documentElement.dataset.theme = THEME;
-  const own = THEME === "booth" && !PHONE;          // phones keep their layout and take the colours only
+  const own = THEME === "booth";
   document.documentElement.classList.toggle("ownlanes", own);
   for (let i = 0; i < NDECKS; i++) (own ? ui[i].lanehost : $("#waves")).append($("#lane" + i));
   $("#themeSel").value = THEME;
@@ -4493,7 +4260,6 @@ function applyTheme(t, chosen = false) {
 }
 // does the layout fit the window? If not (decks taller than the window leaves room for), let the page scroll
 function fitApp() {
-  if (PHONE) return;
   const html = document.documentElement;
   html.classList.remove("tallapp");
   if (innerWidth <= 1100) return;                   // the stacked layout scrolls anyway
@@ -4504,9 +4270,8 @@ function fitApp() {
     if (short) renderList(true);
   });
 }
-// 2 / 4 decks (computers and tablets)
+// 2 / 4 decks
 function setFour(on) {
-  if (PHONE) return;
   // the music never stops: decks 3/4 can't be hidden while they play
   const busy = !on && decks.slice(2).find((d) => d.playing);
   if (busy) { status(`Deck ${busy.i + 1} is playing: stop it (or fade it out) before going back to 2 decks`, 6000); return; }
@@ -4642,10 +4407,8 @@ function ctx2d(cv, opaque) {
   return cv._g;
 }
 function fitCanvas(cv) {
-  // phones: 2x is plenty for waveforms, and 3x makes Safari push 2.25x the pixels every frame
-  // (UIZ: the interface size zoom, so canvases stay sharp when the app is scaled up)
-  // Light waveform detail: 1x, so a 2x screen draws a quarter of the pixels
-  const dpr = (wavLight ? 1 : Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3)) * UIZ;
+  // the Air's screen is 1x; capped at 2x for a HiDPI monitor (UIZ: the interface zoom, so canvases stay sharp)
+  const dpr = Math.min(window.devicePixelRatio || 1, 2) * UIZ;
   const w = Math.round(cv.clientWidth * dpr), hh = Math.round(cv.clientHeight * dpr);
   if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; cv._key = null; }
   return [w, hh, dpr];
@@ -5013,11 +4776,11 @@ function useProfile(p, portName) {
   return p;
 }
 async function initMIDI() {
-  if (!navigator.requestMIDIAccess) { setMidiPill(false, IOS ? "Touch mode" : "Web MIDI needs Chrome or Edge"); return; }
+  if (!navigator.requestMIDIAccess) { setMidiPill(false, "No Web MIDI in this browser"); return; }
   try { MIDI.access = await navigator.requestMIDIAccess({ sysex: true }); MIDI.sysex = true; }
   catch (e) {
     try { MIDI.access = await navigator.requestMIDIAccess(); }
-    catch (e2) { setMidiPill(false, "MIDI blocked"); status("MIDI access was refused. Allow it in Chrome's site settings and reload.", 9000); return; }
+    catch (e2) { setMidiPill(false, "MIDI blocked"); status("MIDI access was refused. In Firefox, click the icon left of the address and allow MIDI (or reinstall the site permission add-on), then reload.", 12000); return; }
   }
   MIDI.access.onstatechange = () => bindMIDI();
   bindMIDI();
@@ -5333,44 +5096,35 @@ function renderControllerPanel(ports) {
 const pref = (k, d) => { try { return localStorage.getItem(k) ?? d; } catch (e) { return d; } };
 const setPref = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 let hpWanted = pref("cb.hp", "auto");
-let outDevs = [];
-
-async function listOutputs() {
-  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
-  outDevs = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audiooutput" && d.deviceId !== "default" && d.deviceId !== "communications");
-  const fill = (sel, first) => {
-    const cur = sel.value;
-    sel.innerHTML = "";
-    sel.append(h("option", { value: "" }, first));
-    outDevs.forEach((d, k) => sel.append(h("option", { value: d.deviceId }, d.label || `Output ${k + 1}`)));
-    if (outDevs.some((d) => !d.label)) sel.append(h("option", { value: "__labels" }, "Show device names…"));
-    if ([...sel.options].some((o) => o.value === cur)) sel.value = cur;
-  };
-  fill($("#outSel"), "Default output");
-  fill($("#hpDev"), "Default output");
-  if ([...$("#hpDev").options].some((o) => o.value === pref("cb.hpDev", ""))) $("#hpDev").value = pref("cb.hpDev", "");
-  // pick the saved output, or the FLX4 the first time it shows up
-  const saved = pref("cb.out", null);
-  const flx = outDevs.find((d) => /FLX4|DDJ/i.test(d.label));
-  const target = saved && outDevs.some((d) => d.deviceId === saved) ? saved : flx ? flx.deviceId : null;
-  if (target && A.ctx && A.ctx.setSinkId && A.currentSink !== target) { $("#outSel").value = target; await setOutput(target); }
-  else applyHeadphones(false);
+// Firefox can't send an AudioContext to a chosen device, so the master plays on the system's default
+// output (pick the FLX4 in Sound settings before pressing Start). The FLX4's headphone jack works when
+// that output has 4 channels; "Another device" plays the cue mix through an <audio> element on a device
+// chosen in Firefox's own speaker picker.
+let hpDevName = pref("cb.hpDevName", "");
+function fillHpDev() {
+  const sel = $("#hpDev"), id = pref("cb.hpDev", "");
+  sel.innerHTML = "";
+  sel.append(h("option", { value: "" }, "System output"));
+  if (id) sel.append(h("option", { value: id }, hpDevName || "Chosen device"));
+  sel.append(h("option", { value: "__choose" }, "Choose a device…"));
+  sel.value = id;
 }
-async function revealLabels() {
-  // device names are hidden until the page has had some media permission
-  try { const s = await navigator.mediaDevices.getUserMedia({ audio: true }); s.getTracks().forEach((t) => t.stop()); } catch (e) {}
-  await listOutputs();
-}
-async function setOutput(id) {
-  if (id === "__labels") { $("#outSel").value = A.currentSink || ""; return revealLabels(); }
-  if (!A.ctx || !A.ctx.setSinkId) { status("This browser can't choose an output device. Use Chrome 110 or newer."); return; }
+async function chooseHpDevice() {
+  const md = navigator.mediaDevices;
+  if (!md || !md.selectAudioOutput) { status("This Firefox can't pick a second output (needs Firefox 116 or newer)", 8000); fillHpDev(); return false; }
   try {
-    await A.ctx.setSinkId(id || "");
-    A.currentSink = id || "";
-    setPref("cb.out", id || "");
-    applyHeadphones(true);
-  } catch (e) { status("Couldn't switch output: " + e.message, 8000); }
+    const d = await md.selectAudioOutput();
+    setPref("cb.hpDev", d.deviceId);
+    setPref("cb.hpDevName", (hpDevName = d.label || "Chosen device"));
+    fillHpDev();
+    return true;
+  } catch (e) {
+    if (e.name !== "AbortError" && e.name !== "NotAllowedError") status("Couldn't choose a device: " + e.message, 8000);
+    fillHpDev();
+    return false;
+  }
 }
+function listOutputs() { fillHpDev(); applyHeadphones(false); }
 
 function stopHpDevice() {
   if (A.hpAudio) { A.hpAudio.pause(); A.hpAudio.srcObject = null; }
@@ -5382,7 +5136,8 @@ function startHpDevice(id) {
   if (!A.hpAudio) A.hpAudio = new Audio();
   A.hpAudio.srcObject = A.hpStream.stream;
   const go = () => A.hpAudio.play().catch(() => status("Click anywhere to start headphone audio"));
-  if (A.hpAudio.setSinkId) A.hpAudio.setSinkId(id || "").then(go, (e) => status("Couldn't open that headphone device: " + e.message, 8000));
+  // Firefox only lets a page use a device chosen in its picker this session: after a restart, pick it again
+  if (id && A.hpAudio.setSinkId) A.hpAudio.setSinkId(id).then(go, () => { status(`Choose the headphone device again: Headphones → Choose a device… (Firefox asks once per session)`, 12000); go(); });
   else go();
 }
 function applyHeadphones(announce) {
@@ -5391,7 +5146,6 @@ function applyHeadphones(announce) {
   const pill = $("#chPill");
   pill.textContent = `${chs} ch`;
   pill.classList.toggle("on", chs >= 4);
-  const outName = $("#outSel").selectedOptions[0] ? $("#outSel").selectedOptions[0].textContent : "this output";
   $("#hpSel").value = hpWanted;
   $("#hpDev").hidden = hpWanted !== "device";
   stopHpDevice();
@@ -5400,44 +5154,29 @@ function applyHeadphones(announce) {
   if (mode === "device") {
     routeOutput("off");
     startHpDevice($("#hpDev").value);
-    msg = `Master on ${outName}; headphones on ${$("#hpDev").selectedOptions[0] ? $("#hpDev").selectedOptions[0].textContent : "the other device"}`;
+    msg = `Master on the system output; headphones on ${$("#hpDev").value ? hpDevName || "the other device" : "the system output too"}`;
   } else if (mode === "quad" && !routeOutput("quad")) {
     routeOutput("off");
-    msg = `${outName} shows Chrome only ${chs} channels, so the FLX4 headphone jack (channels 3–4) can't be reached. See "Fixing headphone cueing" in the README.`;
+    msg = `Firefox sees only ${chs} channels on the system output, so the FLX4 headphone jack (channels 3–4) can't be reached. Make the FLX4 the output in Sound settings with a 4-channel profile, then reload. See the README.`;
     announce = true;
   } else {
     routeOutput(mode);
-    msg = mode === "quad" ? `Master on channels 1–2, headphones on 3–4 of ${outName}`
+    msg = mode === "quad" ? "Master on channels 1–2, headphones on 3–4 of the system output"
       : mode === "split" ? "Split cue: mono master in the left channel, mono cue in the right"
-      : hpWanted === "auto" ? `${outName} has ${chs} channels: master only. Pick "Another device" to cue on a second output.`
+      : hpWanted === "auto" ? `The system output has ${chs} channels: master only. Pick "Another device" to cue on a second output.`
       : "Headphone cue off";
   }
   if (announce) status(msg, 12000);
 }
-if (!CAN_PICK_FOLDER && MOBILE_FILES) {
-  // phones and tablets: the real file input sits on top of the button, so the tap lands on it directly.
-  // In-app browsers (iOS MIDI browsers) can ignore a file input opened from script with .click().
-  const btn = $("#addFolder"), inp = $("#filesInput"), wrap = h("span", { class: "tapfile" });
-  btn.textContent = "Add music";
-  btn.replaceWith(wrap);
-  wrap.append(btn, inp);
-  inp.classList.add("over");
-  inp.setAttribute("aria-label", "Add music");
-}
-if (!CAN_ROUTE) {
-  // no output choice here: only the modes that work on a single stereo output
-  for (const v of ["quad", "device"]) { const o = $(`#hpSel option[value=${v}]`); if (o) o.remove(); }
-}
-$("#outSel").addEventListener("change", (e) => setOutput(e.target.value));
-$("#hpSel").addEventListener("change", (e) => {
+$("#hpSel").addEventListener("change", async (e) => {
   hpWanted = e.target.value;
   setPref("cb.hp", hpWanted);
-  if (hpWanted === "device" && outDevs.some((d) => !d.label)) revealLabels();
+  if (hpWanted === "device" && !pref("cb.hpDev", "")) await chooseHpDevice();
   applyHeadphones(true);
 });
-$("#hpDev").addEventListener("change", (e) => {
-  if (e.target.value === "__labels") { e.target.value = ""; return revealLabels(); }
-  setPref("cb.hpDev", e.target.value);
+$("#hpDev").addEventListener("change", async (e) => {
+  if (e.target.value === "__choose") await chooseHpDevice();
+  else setPref("cb.hpDev", e.target.value);
   applyHeadphones(true);
 });
 $("#cueTest").addEventListener("click", () => {
@@ -5599,11 +5338,11 @@ function reportDiagnostics() {
   const lines = [
     `Cratebox: v${VERSION}`,
     `Browser: ${browser} (${ua})`,
-    `Layout: ${PHONE ? "phone" : document.documentElement.classList.contains("touch") ? "touch" : "desktop"}, window ${innerWidth}x${innerHeight}, screen ${screen.width}x${screen.height} @${devicePixelRatio}x`,
+    `Edition: Mac (Firefox, CachyOS), window ${innerWidth}x${innerHeight}, screen ${screen.width}x${screen.height} @${devicePixelRatio}x`,
     `Web MIDI: ${HAS_MIDI ? "yes" : "no"}, controller: ${MIDI.name || "none"}${MIDI.profile ? ` (mapping ${MIDI.profile.id})` : ""}`,
-    `Audio: ${A.ctx ? `${A.ctx.sampleRate} Hz, ${A.ctx.destination.maxChannelCount} ch, state ${A.ctx.state}` : "not started"}`,
-    `Graphics: ${GPU.name}${GPU.soft ? " (software, no graphics card acceleration)" : ""}, waveform detail ${wavQuality}${wavLight ? " (light)" : ""}, draw ${drawCost.toFixed(1)} ms/frame`,
-    `Library: ${lib.tracks.length} tracks, files ${CAN_PICK_FOLDER ? "folder access" : MOBILE_FILES ? "imported" : "file picker"}`,
+    `Audio: ${A.ctx ? `${A.ctx.sampleRate} Hz, ${A.ctx.destination.maxChannelCount} ch, state ${A.ctx.state}, buffer ${audioBuffer}, latency ${Math.round(((A.ctx.baseLatency || 0) + (A.ctx.outputLatency || 0)) * 1000)} ms` : "not started"}`,
+    `Graphics: ${GPU.name}${GPU.soft ? " (software, no graphics card acceleration)" : ""}, draw ${drawCost.toFixed(1)} ms/frame`,
+    `Library: ${lib.tracks.length} tracks, files ${bridgeOk ? "launcher" : "file picker"}`,
     `Decks: ${[0, 1].map((i) => d(i) && d(i).loaded ? `${i + 1}: ${d(i).effBpm ? d(i).effBpm().toFixed(2) : "?"} BPM${d(i).playing ? " playing" : ""}${d(i).sync ? " sync" : ""}` : `${i + 1}: empty`).join(", ")}`,
   ];
   if (RECENT_ERRORS.length) lines.push("Recent errors:", ...RECENT_ERRORS.map((e) => "  " + e));
@@ -5618,7 +5357,7 @@ function reportText() {
 }
 function reportRefresh() { $("#reportPreview").textContent = $("#reportDiag").checked ? reportDiagnostics() : ""; }
 function openReport() {
-  $("#setPanel").hidden = true; $("#setSheet").hidden = true;
+  $("#setPanel").hidden = true;
   $("#reportNote").textContent = "No GitHub account? Copy it and send it to the developer.";
   reportRefresh();
   $("#reportSheet").hidden = false;
@@ -5651,7 +5390,7 @@ $("#reportCopy").addEventListener("click", async () => {
   }
   $("#reportNote").textContent = ok ? "Copied. Paste it in a message or comment to the developer." : "Couldn't copy here: select the details above and copy them by hand.";
 });
-$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; $("#setSheet").hidden = true; startLearn(); });
+$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; startLearn(); });
 $("#learnDone").addEventListener("click", stopLearn);
 $("#ctlClear").addEventListener("click", clearLearned);
 $("#ctlExport").addEventListener("click", exportMapping);
@@ -5664,63 +5403,6 @@ $("#ctlProfile").addEventListener("change", (e) => {
 });
 $("#ctlIn").addEventListener("change", (e) => { setPref("cb.midiIn", e.target.value); if (MIDI.access) bindMIDI(); });
 
-// Phone layout: same controls, rearranged. Loops, beat jump and the grid editor move into a
-// per-deck sheet (⋯), output/headphone options into the settings sheet (⚙).
-function phoneize() {
-  const openSheet = (id) => { $(id).hidden = false; };
-  for (const sh of document.querySelectorAll(".sheet")) {
-    sh.addEventListener("pointerdown", (e) => { if (e.target === sh || e.target.closest("[data-close]")) sh.hidden = true; });
-  }
-  // tabs
-  for (const b of document.querySelectorAll(".ptabs button")) b.addEventListener("click", () => {
-    document.documentElement.dataset.tab = b.dataset.tab;
-    for (const x of document.querySelectorAll(".ptabs button")) x.classList.toggle("on", x === b);
-    if (b.dataset.tab === "lib") requestAnimationFrame(() => renderList(true));
-  });
-  // settings sheet: headphones, test cue, master level, then the usual settings
-  const body = $("#setBody");
-  const field = (label, ...els) => h("div", { style: "display:grid;gap:6px" }, h("label", {}, label), ...els);
-  $("#masterSlot").querySelector(".knob").style.flexDirection = "row";
-  body.append(
-    field("Headphones", $("#hpSel")),
-    h("div", { class: "row" }, $("#cueTest"), $("#masterSlot")),
-    $("#setPanel"));
-  $("#cueTest").classList.add("sq");
-  $("#setOpen").addEventListener("click", () => openSheet("#setSheet"));
-  // Beat FX: its own sheet (the phone mixer has no room)
-  $("#fxBody").append($("#mixer .beatfx"));
-  $("#fxOpen").addEventListener("click", () => openSheet("#fxSheet"));
-  // decks
-  for (const i of [0, 1]) {
-    const u = ui[i], d = decks[i], el = document.querySelector(`.deck[data-i="${i}"]`);
-    const ctrl = el.querySelector(".ctrl");
-    const more = h("button", { class: "sq", "aria-label": "More" }, "⋯");
-    more.addEventListener("click", () => {
-      $("#deckSheetTitle").firstChild.textContent = `DECK ${i + 1}`;
-      const db = $("#deckBody"); db.innerHTML = "";
-      db.append(u.sheetParts);
-      u.gridBar.hidden = false;
-      $("#deckSheet").hidden = false;
-    });
-    const btns = h("div", { class: "pbtns" }, u.syncBtn, u.mtBtn, u.qtag, more);
-    ctrl.prepend(btns);
-    // everything else goes into the deck sheet
-    const loopRow = ctrl.querySelector(".row"), jumpRow = ctrl.querySelectorAll(".row")[1];
-    u.sheetParts = h("div", { class: "sheetgrid" },
-      h("div", { class: "scol" }, h("label", {}, "Loop"), loopRow, h("label", {}, "Beat jump"), jumpRow,
-        h("label", {}, "Tempo range"), h("div", { class: "row" }, u.range)),
-      h("div", { class: "scol" }, h("label", {}, "Beat grid"), u.gridBar));
-    u.range.classList.add("sq");
-    loopRow.style.display = jumpRow.style.display = "flex";
-  }
-  // mixer: CUE buttons under the faders, channel meters next to the master meter
-  const mx = $("#mixer"), fcols = mx.querySelectorAll(".faders > .fcol");
-  fcols[0].append(ui[0].pfl); fcols[2].append(ui[1].pfl);
-  const mm = h("div", { class: "mmeters" }, ui[0].meter, A.masterMeterCanvas, ui[1].meter);
-  mx.querySelector(".mcenter").append(mm);
-  mx.querySelector(".mcenter > .slabel").remove();
-}
-
 // =====================================================================================
 //  Build UI + main loop
 // =====================================================================================
@@ -5729,7 +5411,6 @@ for (let i = 2; i < NDECKS; i++) deckEls.push(buildDeck(i));
 $("#decks").append(...deckEls);
 $("#fourBtn").addEventListener("click", () => setFour(!FOUR));
 $("#masterSlot").append(knob("master", "Master", M.master, (v) => { M.master = v; applyMaster(); }, { size: 30 }));
-if (PHONE) phoneize();
 tagLearnables();
 useProfile("ddj-flx4");
 for (let i = 0; i < NDECKS; i++) refreshDeckUI(i);
@@ -5750,7 +5431,7 @@ $("#rangeSel").addEventListener("change", (e) => {
 renderList(true);
 
 let lastUi = 0, lastLed = 0;
-// keep the screen on while anything plays, and recover from iOS audio interruptions (calls, Siri)
+// keep the screen on while anything plays, and get the audio going again after the laptop sleeps
 let wakeLock = null, wakePending = false;
 function updateWakeLock() {
   if (!navigator.wakeLock) return;
@@ -5773,7 +5454,7 @@ document.addEventListener("visibilitychange", () => {
 });
 let lastWake = 0;
 // audio first: sync and beat lock run on a 20 ms timer of their own. Screen drawing (requestAnimationFrame)
-// stops when the tab is hidden and slows down when the computer is busy; this doesn't (Chrome doesn't
+// stops when the tab is hidden and slows down when the computer is busy; this doesn't (browsers don't
 // throttle timers in a tab that's playing sound), and nothing in drawing can stop it.
 let controlTimer = 0, lastRecTick = 0;
 function controlTick() {
@@ -5848,18 +5529,7 @@ function frame(ts) {
   if (ts - lastLed > 50) { lastLed = ts; updateLeds(); }
   if (ts - lastUi < 20) { const rk = refKey(); if (rk !== lastRef) { lastRef = rk; renderList(); } }
   drawCost = drawCost * 0.9 + (performance.now() - t0) * 0.1;
-  // Auto waveform detail: if drawing has stayed slow for 3 seconds, draw the waveforms at 1x for the
-  // rest of the session (a weak computer, or a browser drawing without the graphics card)
-  if (wavQuality === "auto" && !wavLight) {
-    if (drawCost < 8) slowSince = 0;
-    else if (!slowSince) slowSince = ts;
-    else if (ts - slowSince > 3000) {
-      wavLight = true; overviewBase.fill(null);
-      status("Drawing was slow, so waveforms are now drawn in Light detail (Settings → Waveform detail)", 8000);
-    }
-  }
 }
-let slowSince = 0;
 
 window.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT") return;
@@ -5871,6 +5541,8 @@ window.addEventListener("keydown", (e) => {
   else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(FOUR && (e.ctrlKey || e.metaKey) ? 3 : 1);
 });
 window.addEventListener("resize", () => { applyUiSize(); overviewBase.fill(null); renderList(true); fitApp(); });
+// the fonts change the decks' height a little: decide whether the layout fits once they're in
+if (document.fonts) { document.fonts.ready.then(fitApp); document.fonts.addEventListener("loadingdone", fitApp); }
 $("#uiSizeSel").value = uiSize;
 $("#uiSizeSel").addEventListener("change", (e) => {
   uiSize = e.target.value;
@@ -5886,15 +5558,12 @@ window.addEventListener("beforeunload", () => {
   const note = $("#startNote");
   const say = (t) => { note.hidden = false; note.textContent = t; };
   if (!window.isSecureContext) say("This page needs to be opened over https:// (or via the launcher on this computer). Without it the browser blocks the audio engine.");
-  if (!HAS_MIDI) $("#startMidi").textContent = IOS
-    ? "Safari (and every iPhone/iPad browser) has no MIDI, so here everything works by touch. To use the FLX4 on an iPhone or iPad, open this page in the free MIDIWeb Browser app from the App Store, with the controller plugged in through a USB-C cable or adapter."
-    : "This browser has no Web MIDI, so the FLX4 won't respond. Use Chrome or Edge for the controller; touch and mouse controls still work.";
-  if ("serviceWorker" in navigator && window.isSecureContext && location.protocol !== "file:") navigator.serviceWorker.register("sw.js").catch(() => {});
+  if (!HAS_MIDI) $("#startMidi").textContent = "This browser has no Web MIDI, so the FLX4 won't respond. Use Firefox 108 or newer; mouse controls still work.";
+  // no offline cache here (it's served from this computer): clear one an older Cratebox may have left
+  try { navigator.serviceWorker && navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()), () => {}); } catch (e) {}
 })();
 $("#startBtn").addEventListener("click", async () => {
   $("#startBtn").textContent = "Starting…";
-  // iOS: play through the ringer/silent switch like a music app
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (e) {}
   try {
     await initAudio();
   } catch (e) {
@@ -5908,8 +5577,8 @@ $("#startBtn").addEventListener("click", async () => {
   await plLoad();
   restoreDevices();
   restoreFolder();
-  restoreImported().then(() => { if (crashMsg) status(crashMsg, 12000); });
-  waitForMidi().then(initMIDI);
+  if (crashMsg) status(crashMsg, 12000);
+  initMIDI();
   listOutputs();
   navigator.mediaDevices && navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener("devicechange", listOutputs);
   startControl();
@@ -5918,7 +5587,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, openDevice, pickFolder, restoreFolder, restoreDevices, bridgeCheck, BridgeDir, BridgeFile, scanDir, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

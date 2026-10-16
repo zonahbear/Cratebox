@@ -10,7 +10,6 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_cratebox as T  # noqa: E402
-import test_ios as I  # noqa: E402
 from test_fourdeck import load_all  # noqa: E402
 
 
@@ -62,19 +61,6 @@ def main():
         check("deck 3's waveform shows it", page.is_visible('#lane2') and page.evaluate('cratebox.decks[2].barShown') == "4.2", page.evaluate('cratebox.decks[2].barShown'))
         ctx.close()
 
-        # phone layout keeps it in the deck's info row
-        ctx = b.new_context(viewport={"width": 956, "height": 440}, screen={"width": 440, "height": 956}, is_mobile=True, has_touch=True, user_agent=I.IPHONE_UA, device_scale_factor=3)
-        ctx.add_init_script(I.STRIP)
-        page = ctx.new_page()
-        page.on("pageerror", lambda e: errors.append(str(e)))
-        page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
-        page.click("#startBtn")
-        page.wait_for_function("window.cratebox && cratebox.A.ctx")
-        load_all(page, 2)
-        page.evaluate("(() => { const d = cratebox.decks[0]; d.seek(d.timeOfBeat(2.5)); })()")
-        page.wait_for_timeout(300)
-        check("phone: shown on the waveform", page.is_visible('#lane0') and page.evaluate('cratebox.decks[0].barShown') == "1.3")
-        ctx.close()
         b.close()
     srv.shutdown()
     check("no JavaScript errors", not errors, "; ".join(errors[:3]))

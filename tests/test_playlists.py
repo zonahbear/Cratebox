@@ -3,7 +3,7 @@
 Builds playlists with the mouse (new, rename, add by menu and by drag, reorder, remove, folders, delete),
 checks they survive a reload, imports and exports rekordbox XML, mounts a real rekordbox USB export
 (tests/fixtures/rekordbox_usb) through a stand-in for the browser's folder picker, loads a track off
-it, drives the tree with the FLX4's browse knob, and uses the tree on a phone.
+it, and drives the tree with the FLX4's browse knob.
 
     python tests/test_playlists.py
 """
@@ -16,7 +16,6 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_cratebox as T  # noqa: E402
-import test_ios as I  # noqa: E402
 
 MUSIC = os.path.join(T.ROOT, "tests", "music")
 NAMES = sorted(os.listdir(MUSIC))
@@ -278,31 +277,6 @@ def main():
               res["focus1"] == "tree" and res["focus2"] == "list" and res["listSel"] == 1 and res["treeKept"] and res["names"][-2:] == ["Wobbles", "Warmup"], str(res))
         ctx.close()
 
-        # ---- phone: the tree is a slide-out, Add to works by tap
-        pctx = b.new_context(viewport={"width": 956, "height": 440}, screen={"width": 440, "height": 956},
-                             is_mobile=True, has_touch=True, user_agent=I.IPHONE_UA, device_scale_factor=3)
-        pctx.add_init_script(I.STRIP)
-        ph = pctx.new_page()
-        ph.on("pageerror", lambda e: errors.append(str(e)))
-        start(ph, NAMES[:2])
-        ph.tap(".ptabs button[data-tab=lib]")
-        check("phone: tree hidden until ☰", ph.is_hidden("#tree") and ph.is_visible("#treeBtn"))
-        ph.tap("#treeBtn")
-        check("phone: ☰ slides the tree out", ph.is_visible("#tree"))
-        ph.tap("#tree .thead button[title='New playlist']")
-        ph.keyboard.press("Control+A"); ph.keyboard.type("Phone set"); ph.keyboard.press("Enter")
-        check("phone: new playlist opens and the tree tucks away", ph.inner_text("#viewName") == "Phone set" and ph.is_hidden("#tree"), ph.inner_text("#viewName"))
-        ph.tap("#treeBtn"); ph.tap("#tree .trow2 >> text=Collection")
-        ph.tap("#list .trow >> nth=1")
-        ph.tap("#addToBtn"); ph.tap(".popmenu button >> text=Phone set")
-        ph.tap("#treeBtn"); ph.tap("#tree .trow2 >> text=Phone set")
-        check("phone: Add to ▾ by tap", len(view_titles(ph)) == 1, str(view_titles(ph)))
-        lay = ph.evaluate("(() => { const r = (s) => document.querySelector(s).getBoundingClientRect(); return { tool: r('.ltool').height, scroll: document.documentElement.scrollWidth, W: innerWidth }; })()")
-        check("phone: library toolbar still fits", lay["scroll"] <= lay["W"], str(lay))
-        if len(sys.argv) > 1:
-            ph.tap("#treeBtn")
-            ph.screenshot(path=sys.argv[1] + "-phone-tree.png")
-        pctx.close()
         b.close()
     srv.shutdown()
     check("no JavaScript errors", not errors, "; ".join(errors[:3]))

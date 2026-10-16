@@ -2,6 +2,29 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.1-mac (2026-10-16): Mac edition
+
+A build of 1.1.1 for one machine: a 2017 MacBook Air running CachyOS, played in Firefox. Lives in the `mac-air` branch; the regular Cratebox on `main` is unchanged.
+
+### Added
+- **Launcher file bridge** (`cratebox.py`): Firefox can't open or remember folders, so the launcher reads the music folder and rekordbox USB sticks for the page. The folder is picked in KDE's or GNOME's own folder dialog (or typed when there's none) and opened again by itself at Start; a folder on a drive that isn't there yet gets **Reconnect**. Read-only; answers only this computer, only Cratebox's own page (other sites and other host names are refused), and only paths under your home folder and `/run/media`, `/media`, `/mnt`.
+- **rekordbox USB on Firefox**: **+ USB** opens every plugged-in stick with a rekordbox export under `/run/media`, and sticks that were open come back at Start when they're plugged in.
+- `python3 cratebox.py --install` adds Cratebox to the app menu; the launcher opens Firefox.
+- Problem reports say which edition it is and include the audio buffer and latency.
+- `tests/test_mac.py`: the launcher and bridge end to end, including the refusals.
+
+### Changed
+- **Headphone cueing works in Firefox.** The FLX4 jack (channels 3–4) and **Another device** were switched off in browsers without `AudioContext.setSinkId`, which includes Firefox. The jack works whenever the system output has 4 channels; Another device uses Firefox's own speaker picker (`selectAudioOutput`).
+- The master plays on the system's sound output (Firefox can't pick one from the page), so the **Output** menu is gone; the ch pill stays.
+- Fonts (Barlow, Barlow Condensed, IBM Plex Mono; SIL OFL) are bundled in `fonts/`: no requests to Google Fonts, and the same look offline.
+- The layout check (does it fit, or should the page scroll) runs again once the fonts have loaded.
+- MIDI messages and the start screen talk about Firefox (and its MIDI site permission) instead of Chrome.
+
+### Removed
+- Everything for phones and tablets: the phone layout and its sheets and tabs, touch-only buttons and gestures, the imported-files library (iPhone/iPad), the iOS MIDI-browser workarounds, the low-memory mode, the "turn your phone" screen, and their tests (`test_ios.py`, `test_ios_midi.py`, `test_android.py`) and layout sizes.
+- The service worker and web app manifest (it's served from this computer), the Windows launcher, the Chrome launcher and `filetest.html`.
+- Settings → Waveform detail: the Air's screen is 1x, where Light and Sharp are the same.
+
 ## 1.1.1 (2026-10-16)
 
 ### Changed

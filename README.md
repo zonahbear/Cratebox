@@ -1,45 +1,61 @@
-# Cratebox
+# Cratebox: Mac edition
 
-Version 1.1.1. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.1-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
 
-A lightweight DJ app (2 or 4 decks) that runs in Chrome, built around the Pioneer DDJ-FLX4.
+A lightweight DJ app (2 or 4 decks) for the Pioneer DDJ-FLX4, in this edition built for one machine: a **2017 MacBook Air running CachyOS, played in Firefox**. It's the full desktop Cratebox with the phone and tablet parts taken out, set up for Firefox and Linux, and it runs entirely from this folder: no internet needed, nothing is uploaded.
 
-## Start it (Windows)
+What's different from the regular Cratebox:
 
-1. Plug in the FLX4.
-2. Double-click **Start Cratebox.bat**. Chrome opens Cratebox. Keep the black window open while you play.
-3. Click **Start**. When Chrome asks about MIDI devices, allow it (including "control and reprogram", which keeps the FLX4's lights awake).
-4. Click **Add music folder** and pick the folder you DJ from. Nothing is copied or uploaded; tracks are read in place, and the folder is remembered next time.
+- **Firefox, not Chrome.** Firefox can't open or remember folders and can't send audio to a chosen device, so the launcher reads your music folder and rekordbox USB sticks for the page, and the master plays on the system's sound output.
+- **Desktop only.** No phone layout, touch controls, imported-files mode or install-as-app (service worker). Less code, nothing that doesn't apply to a laptop.
+- **Fonts are in the folder** (`fonts/`), so it looks the same offline and makes no network requests.
+- Drawing is the low-end version from 1.1: waveforms are painted once and slid by the graphics card, and nothing repaints when it hasn't changed.
 
-Mac/Linux: run `python3 start_cratebox.py`.
+## Start it
 
-It has to run through the launcher (a tiny local web server) rather than by double-clicking the HTML: Chrome only allows MIDI controllers, folder access and the audio engine on `http://localhost`. The launcher always uses port 8611, so your library, BPMs and cue points persist.
+You need Python 3 and Firefox (both normally come with CachyOS; if `python3` is missing: `sudo pacman -S python`).
+
+1. Unzip this folder somewhere it can stay, for example `~/Cratebox`.
+2. Once: open a terminal in the folder and run `python3 cratebox.py --install`. Cratebox is now in the app menu (Multimedia, or search "Cratebox").
+3. Plug in the FLX4 and make it the sound output (next section), then start **Cratebox** from the menu. Firefox opens it.
+4. Click **Start**. Firefox asks about MIDI devices: allow it (see below).
+5. Click **Add music folder** and pick the folder you DJ from in the folder dialog. Tracks are read in place, and the folder is opened again by itself next time.
+
+Without installing: `python3 cratebox.py` in the folder does the same. It always uses `http://localhost:8611`, so your library, BPMs, cue points, settings and Firefox's MIDI permission are kept. Closing the Cratebox tab is enough when you're done; the launcher stays running quietly in the background and uses no CPU (it stops when you log out, or with `pkill -f cratebox.py`). `python3 cratebox.py --uninstall` removes the menu entry.
+
+**Full screen:** press **F11** in Firefox to get the whole 1440 x 900 screen (both waveforms and more of the library fit).
+
+The folder dialog is KDE's (`kdialog`) or GNOME's (`zenity`). If neither is installed, Cratebox asks you to type the folder's path instead (`sudo pacman -S kdialog` adds the dialog on KDE).
+
+### Firefox and MIDI
+
+Firefox lets a page use MIDI devices through a small "site permission" add-on it installs for that page the first time you allow it. When it asks, allow it. If it offers MIDI **with SysEx** (system exclusive) access, take that one: it keeps the FLX4's lights awake. Without SysEx everything works, but the controller's lights may go to sleep. If you said no by mistake: `about:addons` → *Site permissions*, remove the one for localhost, and reload.
 
 ## Sound
 
 Wire it like rekordbox: speakers on the FLX4's rear MASTER outputs, headphones in the front jack.
 
-- **Output**: the DDJ-FLX4 is picked automatically once Chrome shows device names (choose "Show device names" if they're hidden). Your choice is remembered.
-- The **ch pill** next to it shows how many output channels Chrome sees on that device. The FLX4 has 4: 1–2 are master, 3–4 are the headphone jack.
+- **Output**: Cratebox plays on the system's sound output. Make the FLX4 the default *before* clicking Start: **System Settings → Sound**, and under *Playback Devices* make **DDJ-FLX4** the default. Firefox can't switch the output from inside the page.
+- **Headphone cueing on the FLX4 needs 4 channels.** The FLX4 has 4 outputs: 1–2 are master, 3–4 the headphone jack. In **System Settings → Sound**, set the DDJ-FLX4's **Profile** to a 4-channel one: **Analog Surround 4.0 Output** if it's listed, otherwise **Pro Audio**. Then reload Cratebox. The **ch pill** in the header shows how many channels Firefox sees on the output: it should say **4 ch**.
 - **Headphones**:
   - **Auto** (default): uses the FLX4 jack whenever the output has 4 channels.
   - **FLX4 jack (channels 3–4)**: the rekordbox setup.
-  - **Another device**: cue mix on a second sound output (for example your laptop's headphone jack), master stays on the FLX4.
+  - **Another device**: the cue mix on a second sound output (for example the Air's own headphone jack), master stays on the FLX4. Firefox shows its own speaker picker, and asks again after Firefox restarts.
   - **Split**: mono master left, mono cue right, for a single output and a splitter cable.
 - **Test cue** beeps three times in the headphone mix only. If you also hear it from the speakers, cue isn't separated yet.
-- The **CUE/MST** knob (and the FLX4's HEADPHONES MIX knob) blends cue and master in the headphones. It starts fully on **CUE**: the headphones are silent until you press a channel's **CUE**. From fully left up to 12 o'clock it's cue only, with no master at all; past 12 o'clock the master fades in, and fully right is master only. So the master is only in your headphones when you turn past the middle or press MASTER CUE.
+- The **CUE/MST** knob (and the FLX4's HEADPHONES MIX knob) blends cue and master in the headphones. It starts fully on **CUE**: the headphones are silent until you press a channel's **CUE**. From fully left up to 12 o'clock it's cue only, with no master at all; past 12 o'clock the master fades in, and fully right is master only.
 - **MASTER CUE**: the FLX4's own MASTER CUE button puts the master in the headphones in the controller's hardware. On other setups (Split, another device), the **MST** button under the CUE/MST knob does the same in Cratebox (also learnable on a controller).
 - HEADPHONES LEVEL and MASTER LEVEL on the FLX4 are analog and always work.
 
-### Fixing headphone cueing (pill says "2 ch")
+### If the pill says "2 ch"
 
-Chrome can only reach the headphone jack if Windows presents the FLX4 as a 4-channel device:
+Firefox only sees what the system output offers. Check that the FLX4 is the default output and its profile is a 4-channel one (above), then close the Cratebox tab and start it again: Firefox reads the channel count when the audio starts. If no 4-channel profile is offered, use **Another device** and plug your headphones into the Air.
 
-1. Windows Settings → System → Sound → **More sound settings** → **Playback** tab.
-2. Select the **DDJ-FLX4** device → **Configure**. If **Quadraphonic** is listed, pick it → Next → Finish.
-3. Close the Cratebox tab and start it again. The pill should now say **4 ch**, and Auto switches to the FLX4 jack. Press **Test cue**.
+### Smooth playback on the Air
 
-If Configure only offers Stereo, Windows is exposing the FLX4 as a 2-channel device. The FLX4 is class compliant, so it also works without Pioneer's driver: try with the driver uninstalled (Windows' built-in USB audio driver), or reinstalled, and check Configure again. If neither gives you 4 channels, use **Another device** and plug your headphones into the laptop.
+- Plug in the charger, and pick the **Performance** power profile (battery menu) while you play, so the CPU doesn't slow down mid-mix.
+- **Audio buffer** (Settings): Medium is the default. If you hear crackles, pick Large and reload.
+- Settings → **Report a problem…** shows what Firefox draws with ("Graphics:") and how long each frame takes. A renderer called *llvmpipe* or *software* means Firefox isn't using the graphics chip: check `about:support` → *Compositing* (it should say *WebRender*, not *WebRender (Software)*).
 
 ## Controllers
 
@@ -90,7 +106,7 @@ Not mapped yet: Beat FX, sampler, Pad FX, key shift, and the SMART CFX/keyboard 
 
 ## 4 decks
 
-**4 DECKS** in the header (computers and tablets) adds decks 3 and 4 under decks 1 and 2, a fourth and fifth waveform, and a 4-channel mixer in the order **3 1 2 4**. The crossfader sends 1 and 3 left, 2 and 4 right. **2 DECKS** goes back (once decks 3 and 4 are stopped: a playing deck is never cut off). Your choice is remembered.
+**4 DECKS** in the header adds decks 3 and 4 under decks 1 and 2, a fourth and fifth waveform, and a 4-channel mixer in the order **3 1 2 4**. The crossfader sends 1 and 3 left, 2 and 4 right. **2 DECKS** goes back (once decks 3 and 4 are stopped: a playing deck is never cut off). Your choice is remembered.
 
 - Decks 3 and 4 start **compact**: title, waveform, CUE, PLAY, SYNC, a 4-beat loop and ± tempo. **⤢** opens the full deck.
 - Load them by dragging a track onto them, or with Ctrl+Shift+← / → (Shift+← / → loads decks 1 and 2).
@@ -107,8 +123,8 @@ Not mapped yet: Beat FX, sampler, Pad FX, key shift, and the SMART CFX/keyboard 
 
 ## Looks and screen size
 
-- **Look** (Settings): **Booth** (the default), a club-player style: each deck becomes its own player with a black screen holding its scrolling waveform, and the controls are drawn like hardware (rubber pads, LED rings, fader caps). Phones take Booth's colours and keep their own layout. **Cratebox classic** is the original look, with shared waveforms across the top.
-- **Interface size** (Settings, computers): **Auto** scales the whole app up on big screens, so a 1440p or 4K monitor is filled the way a laptop is (Auto treats the window as about 1600 x 900). Or pick 100–175% yourself.
+- **Look** (Settings): **Booth** (the default), a club-player style: each deck becomes its own player with a black screen holding its scrolling waveform, and the controls are drawn like hardware (rubber pads, LED rings, fader caps). **Cratebox classic** is the original look, with shared waveforms across the top.
+- **Interface size** (Settings): **Auto** scales the whole app up on big screens, so a 1440p or 4K monitor is filled the way a laptop is (Auto treats the window as about 1600 x 900). Or pick 100–175% yourself.
 
 ## Audio first
 
@@ -141,7 +157,7 @@ Settings → **Report a problem…**: describe what happened; device details (br
 
 ## Beat FX and Pad FX
 
-**Beat FX** (the strip at the bottom of the mixer; **FX** in the header on phones; the FLX4's BEAT FX section):
+**Beat FX** (the strip at the bottom of the mixer; the FLX4's BEAT FX section):
 
 - **Effect**: ECHO, DELAY, PING PONG, REVERB, FLANGER, FILTER (a sweep), TRANS (a gate), ROLL, HPF, LPF. Click to go to the next, Shift-click or right-click for the previous (FX SELECT / SHIFT + FX SELECT on the FLX4).
 - **◀ ▶ beats**: the effect's timing, locked to the beat grid of the deck it's on (on MASTER: the deck the mix follows). ECHO 1/2 at 140 BPM repeats every 0.214 s, TRANS gates on the beat, ROLL repeats the slice of the grid you're in. Each effect remembers its own setting. REVERB, HPF and LPF have none.
@@ -199,7 +215,7 @@ Edits are saved with the track, re-analysis never overwrites them, and the libra
 - New tracks are analyzed in the background: BPM, beat grid, key and a 3-band waveform (blue = lows, orange = mids, white = highs). Results are cached.
 - **BPM range** (default 88–175) decides whether half/double-time tracks read as, say, 140 or 70. Change it and every track is re-folded instantly.
 - Titles and artists come from MP3 ID3 tags, otherwise from "Artist - Title" file names.
-- Drag a row onto a deck, double-click it, press LOAD, or use Shift+← / Shift+→. Drop any audio file from Explorer straight onto a deck too.
+- Drag a row onto a deck, double-click it, press LOAD, or use Shift+← / Shift+→. Drop any audio file from Dolphin (or any file manager) straight onto a deck too.
 - Hot cues and cue points are saved per track.
 - Ctrl-click and Shift-click select several rows; Ctrl+A selects the whole list. Click the **#** header to go back to the list's own order.
 
@@ -210,71 +226,32 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 - **+** makes a playlist, **▤** a folder. Type a name and press Enter. Double-click to rename; hover and click **×** to delete (it asks first).
 - Add tracks by dragging rows onto a playlist in the tree, or select them and use **Add to ▾**. Drag a playlist onto a folder to file it there, or onto the PLAYLISTS heading to take it back out.
 - Inside a playlist, drag rows up and down to rearrange them, and press **Delete** (or **Remove from list**) to take them out. That only removes them from the playlist, never from your folder.
-- Playlists are kept in the browser. A track whose folder isn't connected shows greyed out, and comes back by itself once you reconnect the folder (matched by file name and size).
+- Playlists are kept in Firefox, for this Cratebox on this computer. A track whose folder isn't connected shows greyed out, and comes back by itself once you reconnect the folder (matched by file name and size).
 - **FLX4:** press the BROWSE knob to jump to the tree, turn it to walk the playlists (the list follows as you go), press again to go back to the tracks. LOAD still loads.
-- **Phone:** tap **☰** in the library for the tree, **⋯** on a playlist to rename or delete it, and **Add to ▾** to add the selected track.
 
 ## rekordbox
 
-**USB sticks and SD cards** (desktop Chrome/Edge): click **+ USB** under DEVICES and pick the drive itself (the folder that holds `PIONEER`). Cratebox reads the rekordbox export on it: every track, the playlist tree, and for each track you load, rekordbox's own beat grid, phrases, hot cues A–H and first memory cue. These replace Cratebox's own analysis for that track, until you edit the grid or set cues yourself. Your edits stay on this computer.
+**USB sticks and SD cards**: plug it in (CachyOS mounts it under `/run/media/<you>/`), then click **+ USB** under DEVICES. Every plugged-in drive with a rekordbox export opens; if there's none (or they're all open already), the folder dialog asks for the drive itself (the folder that holds `PIONEER`). Cratebox reads the rekordbox export on it: every track, the playlist tree, and for each track you load, rekordbox's own beat grid, phrases, hot cues A–H and first memory cue. These replace Cratebox's own analysis for that track, until you edit the grid or set cues yourself. Your edits stay on this computer.
 
 - **Read-only.** Cratebox never writes to the stick, so it can't damage a set you've prepared for the club.
 - **⧉** on a device playlist copies it into your own playlists. Those tracks still play from the stick, so they show greyed out when it's not plugged in.
-- **×** on the device closes it. The browser remembers the drive, and it opens again by itself when it's plugged in and Chrome still has permission.
+- **×** on the device closes it. Cratebox remembers the drive, and opens it again by itself at Start when it's plugged in.
 
 **rekordbox XML** (the **⋯** next to PLAYLISTS):
 
 - **Import:** in rekordbox, *File → Export Collection in xml format*, then pick that file. Your playlists arrive in a folder called "rekordbox (date)". For tracks Cratebox can find in your music folder (matched by file name and size), it takes rekordbox's beat grid, key, hot cues and memory cue. Tracks it can't find appear greyed out in their playlists.
-- **Export:** writes `cratebox-rekordbox.xml` with every track, its grid, key and cues, and all your playlists. rekordbox needs full file paths, so the first time it asks where your music folder is on this computer (for example `C:\Users\jonah\Music`). Change it later under *Music folder path for export*. In rekordbox: *Preferences → Advanced*, set **Imported Library** (under rekordbox xml) to the file, tick **rekordbox xml** under *Preferences → View → Layout*, and the playlists show in the rekordbox xml tree (hit its reload button after re-exporting).
-
-## iPhone and iPad
-
-Cratebox runs on iOS by touch. Safari has no Web MIDI (and every iOS browser is Safari underneath), so **for the FLX4 on an iPhone or iPad, open Cratebox in the free [MIDIWeb Browser](https://apps.apple.com/us/app/midiweb-browser/id6757226617) app** instead, with the FLX4 plugged in through a USB-C cable (or Apple's Lightning to USB 3 Camera Adapter on older phones). Cratebox picks up the Web MIDI that app adds, even if it arrives a moment after the page loads.
-
-- The older *Web MIDI Browser* app hasn't been updated since 2016 and can't pick files, so you can't add music in it; use MIDIWeb Browser.
-- If **Add music** does nothing in a MIDI browser app, open `filetest.html` (next to `cratebox.html`) in that app: it tries four ways of picking files and shows which ones the app allows.
-- Each app keeps its own storage: tracks added in Safari aren't visible in MIDIWeb Browser. Add your music inside the app you DJ from.
-- The FLX4 takes its power from the phone over USB. If it doesn't show up, try a powered USB-C hub.
-
-What works: both decks, mixer, sync, loops, hot cues (hold a pad to delete one), master tempo, keys, phrases, grid editing. Sound goes to whatever the phone or iPad is plugged into; for headphone cueing use **Split** (master in one ear, cue in the other) with a splitter cable.
-
-**On an iPhone, turn it sideways.** The phone layout is landscape: both waveforms on top, then deck 1, the mixer and deck 2 on one screen with no scrolling (sized for an iPhone 16 Pro Max, and it scales down to smaller iPhones and to Safari with its toolbar showing).
-- **MIX / LIBRARY** tabs at the top. In the library, tap **1** or **2** on a row to load it.
-- **⋯** on a deck: loops, beat jump, tempo range and the grid editor.
-- **⚙**: headphones (Split), test cue, master level, BPM range, waveform style, jog sensitivity, backspin.
-- The screen stays on while a track plays. If a call or Siri cuts the audio, a **Tap to resume audio** button appears.
-
-An iPad gets the full desktop layout, by touch.
-
-**Getting it onto the phone.** iOS only allows the audio engine on a secure (https) site, so Cratebox needs hosting once. The free, stable way is GitHub Pages:
-
-1. Make a free GitHub account, then a new **public** repository called `cratebox`.
-2. **Add file → Upload files**: `cratebox.html`, `index.html`, `sw.js`, `manifest.webmanifest`, `icon-180.png`, `icon-512.png`. Commit.
-3. **Settings → Pages**: Source **Deploy from a branch**, branch **main**, folder **/ (root)**, Save. After a minute it's live at `https://YOUR-NAME.github.io/cratebox/`.
-4. Open that in Safari on the iPhone/iPad → **Share → Add to Home Screen**. Launch it from the icon: full screen, and it works offline after the first visit.
-
-Only the app goes on GitHub, never your music.
-
-**Your music on iOS.** Tap **Add music** and pick tracks in the Files app (iCloud Drive, On My iPhone, a USB drive...). They're copied into Cratebox's own storage on the device, so the library is still there next time; **Remove** deletes the selected one. Keep it on the Home Screen: Safari may clear storage for sites you haven't opened in a while, but not for Home Screen apps. Long tracks use a lot of memory; older phones may struggle with two 8-minute tracks loaded.
-
-## Android
-
-Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work on an Android phone or tablet**, unlike on iPhone.
-
-- Host it on https first (the GitHub Pages steps above; open the link in Chrome on Android, then ⋮ → **Add to Home screen**). Chrome asks once for permission to use MIDI devices: allow it.
-- **Cabling:** the FLX4 can't run off the phone's power. Plug a USB power adapter or power bank into the FLX4's **power** USB port, and the phone into its **device** USB port (a USB-C to USB-C cable). That's Pioneer's own setup for rekordbox on Android.
-- On a phone you get the same landscape layout as on iPhone. The controller is picked up by name. **⚙** has the controller and mapping pickers and Learn.
-- **Music:** Android Chrome can't open a folder, so **Add music** copies the tracks you pick into Cratebox's storage, like on iPhone.
-- **Sound:** Android usually sends all audio to a USB audio device once it's plugged in, so the master comes out of the FLX4. Headphone cueing on the FLX4's own headphone socket is untested; **Split** (master one ear, cue the other) always works.
+- **Export:** writes `cratebox-rekordbox.xml` with every track, its grid, key and cues, and all your playlists. rekordbox needs full file paths, so the first time it asks where your music folder is on this computer (for example `/home/jonah/Music`). Change it later under *Music folder path for export*. In rekordbox: *Preferences → Advanced*, set **Imported Library** (under rekordbox xml) to the file, tick **rekordbox xml** under *Preferences → View → Layout*, and the playlists show in the rekordbox xml tree (hit its reload button after re-exporting).
 
 ## Limits
 
 - No key shift.
 - rekordbox: USB/SD exports in the classic `export.pdb` format, which every rekordbox 5/6/7 USB export still includes. Device Library Plus (`exportLibrary.db`) alone isn't read. Playlists on a stick are read-only, and Cratebox doesn't read rekordbox 6/7's own encrypted `master.db` on your PC: use the XML export for that.
 - rekordbox beat grids with tempo changes come in as one tempo (the most common one).
-- Audio files must be something Chrome can decode: MP3, WAV, FLAC, AAC/M4A, OGG/Opus. Not AIFF.
+- Audio files must be something Firefox can decode: MP3, WAV, FLAC, OGG/Opus, and AAC/M4A (through the system's ffmpeg). Not AIFF.
 - Beat grids assume a steady tempo. Live-drummed tracks will drift.
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_ios_midi.py` runs an iPhone inside a MIDI browser app (Web MIDI added late, stand-in FLX4), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given; `CB_THEME=booth` and `CB_FOUR=1` audit the Booth look and 4-deck mode), `python tests/test_fourdeck.py` covers 4-deck mode and the big-screen zoom, `python tests/test_record.py` records WAV and MP3 sets and checks the files and tracklist, `python tests/test_audio_first.py` checks that playback and sync never depend on the screen, `python tests/test_report.py` covers Report a problem, `python tests/test_barcounter.py` checks the bar counter, `python tests/test_theme.py` checks the default look, `python tests/test_jog.py` checks jog sensitivity, `python tests/test_headphones.py` measures the headphone mix (cue, master cue, mix knob), `python tests/test_fx.py` renders every effect offline on test signals and measures it (echo timing and decay, tails, ping pong sides, reverb, trans gating, roll repeats, filters, CPU) and drives the Beat FX and Pad FX controls on screen and from the FLX4, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+The tests live in the repository's `mac-air` branch, not in the release zip. `python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections. `python tests/test_mac.py` runs the real launcher with a temporary home folder and checks the file bridge end to end: the folder dialog (and typing a path when there's no dialog program), the folder and a rekordbox USB in `/run/media` coming back after a restart, loading tracks off both, and that the bridge refuses other sites, other host names and paths outside home and the mount points; also that no request leaves the computer, and that nothing needs a Chrome-only feature.
+
+The rest is the regular Cratebox suite at desktop sizes: `test_cratebox.py` (analysis, playback, FLX4 MIDI, LEDs, sync, loops, cues), `test_controllers.py`, `test_sync.py`, `test_layout.py [folder]` (the Air's screen full screen and windowed, a smaller window and external monitors; `CB_THEME=booth` and `CB_FOUR=1` for the Booth look and 4-deck mode), `test_fourdeck.py`, `test_record.py`, `test_audio_first.py`, `test_report.py`, `test_barcounter.py`, `test_theme.py`, `test_jog.py`, `test_headphones.py`, `test_fx.py`, `test_phrases.py` and `test_playlists.py`, plus `node tests/test_rekordbox.js` for the rekordbox file readers (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence). They run in headless Chromium and need `pip install playwright` and `playwright install chromium`.

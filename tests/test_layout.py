@@ -1,8 +1,8 @@
-"""Layout audit across devices: phones (landscape), tablets, laptops and big screens.
+"""Layout audit for the Mac edition: the 2017 MacBook Air's 1440 x 900 screen (full screen, and the
+Firefox window with KDE's panel and Firefox's own toolbars), a smaller window, and external monitors.
 
-For each size: nothing sticks out sideways, no controls overlap, button text isn't cut off, touch
-targets are big enough on touch screens, the decks and mixer fit without scrolling where the
-layout promises it. Screenshots go to the folder given as the first argument (optional).
+For each size: nothing sticks out sideways, no controls overlap, button text isn't cut off.
+Screenshots go to the folder given as the first argument (optional).
 
     python tests/test_layout.py [screenshot-folder]
     CB_THEME=booth CB_FOUR=1 python tests/test_layout.py      (the Booth look, 4-deck mode)
@@ -14,40 +14,23 @@ from playwright.sync_api import sync_playwright
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_cratebox as T  # noqa: E402
-import test_ios as I  # noqa: E402
 
-ANDROID_UA = "Mozilla/5.0 (Linux; Android 15; Pixel 9 Pro) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Mobile Safari/537.36"
-ANDROID_TAB_UA = "Mozilla/5.0 (Linux; Android 14; SM-X810) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
-# (name, viewport w, h, screen short side, kind)  kind: iphone / android / ipad / atab / desktop
+# (name, viewport w, h)
 DEVICES = [
-    ("iPhone SE", 667, 375, 375, "iphone"),
-    ("iPhone 13 mini", 812, 375, 375, "iphone"),
-    ("iPhone 15", 852, 393, 393, "iphone"),
-    ("iPhone 16 Pro Max", 956, 440, 440, "iphone"),
-    ("iPhone 16 Pro Max (Safari bars)", 956, 380, 440, "iphone"),
-    ("Galaxy A (small)", 780, 360, 360, "android"),
-    ("Pixel 9 Pro", 915, 412, 412, "android"),
-    ("Galaxy S24 Ultra", 932, 430, 430, "android"),
-    ("iPad mini landscape", 1133, 744, 744, "ipad"),
-    ("iPad mini portrait", 744, 1133, 744, "ipad"),
-    ("iPad Air landscape", 1180, 820, 820, "ipad"),
-    ("iPad Pro 13 landscape", 1366, 1024, 1024, "ipad"),
-    ("Android tablet", 1280, 800, 800, "atab"),
-    ("Laptop 1280x720", 1280, 720, 0, "desktop"),
-    ("Laptop 1366x768", 1366, 768, 0, "desktop"),
-    ("Laptop 1440x900", 1440, 900, 0, "desktop"),
-    ("Small window 1024x700", 1024, 700, 0, "desktop"),
-    ("Full HD", 1920, 1080, 0, "desktop"),
-    ("1440p", 2560, 1440, 0, "desktop"),
+    ("Air full screen (F11)", 1440, 900),
+    ("Air Firefox window", 1440, 790),
+    ("Air Firefox window + KDE panel", 1440, 744),
+    ("Half-screen window", 1280, 720),
+    ("Small window", 1024, 700),
+    ("External Full HD", 1920, 1080),
+    ("External 1440p", 2560, 1440),
 ]
 
 AUDIT = """(() => {
   const W = innerWidth, H = innerHeight, r = (e) => e.getBoundingClientRect();
   const vis = (e) => { const b = r(e); const s = getComputedStyle(e); return b.width > 0 && b.height > 0 && s.visibility !== 'hidden'; };
-  const phone = document.documentElement.classList.contains('phone');
-  const touch = document.documentElement.classList.contains('touch');
   const ctl = [...document.querySelectorAll('#decks button, #decks .vslider, #decks .hslider, #decks .knob svg, #decks .jog, #decks .overview, #waves canvas, header button, .ltool button, .ltool input')].filter(vis);
-  const outside = ctl.filter((e) => { const b = r(e); return b.left < -1 || b.right > W + 1 || (phone && (b.top < -1 || b.bottom > H + 1)); })
+  const outside = ctl.filter((e) => { const b = r(e); return b.left < -1 || b.right > W + 1; })
     .map((e) => (e.className || e.tagName) + ':' + (e.textContent || '').trim().slice(0, 12));
   // overlapping controls (each pair once; a knob's svg sits inside its .knob, buttons inside rows)
   const boxes = ctl.map((e) => [e, r(e)]);
@@ -59,14 +42,11 @@ AUDIT = """(() => {
     if (ix > 2 && iy > 2) over.push(`${(ea.className || ea.tagName)}:${(ea.textContent || '').trim().slice(0, 8)} / ${(eb.className || eb.tagName)}:${(eb.textContent || '').trim().slice(0, 8)}`);
   }
   // button text cut off
-  const clipped = [...document.querySelectorAll('#decks button, header button, .ltool button, .pbtns button, .modes button')].filter(vis)
+  const clipped = [...document.querySelectorAll('#decks button, header button, .ltool button, .modes button')].filter(vis)
     .filter((e) => e.scrollWidth > e.clientWidth + 1 || e.scrollHeight > e.clientHeight + 2).map((e) => (e.textContent || '').trim().slice(0, 14));
-  // touch targets
-  const small = touch ? ctl.filter((e) => e.tagName === 'BUTTON' || e.classList.contains('vslider') || e.tagName === 'svg')
-    .filter((e) => { const b = r(e); return Math.min(b.width, b.height) < (phone ? 24 : 28); }).map((e) => `${(e.textContent || e.className.baseVal || e.className || '').toString().trim().slice(0, 10)} ${Math.round(r(e).width)}x${Math.round(r(e).height)}`) : [];
   const knob = document.querySelector('#mixer .strip .knob svg'), pad = document.querySelector('.deck .pad'), jog = document.querySelector('.deck .jog');
-  return { phone, touch, W, H, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight, outside, over: over.slice(0, 12), nOver: over.length,
-    clipped, small: small.slice(0, 10), nSmall: small.length,
+  return { W, H, sw: document.documentElement.scrollWidth, sh: document.documentElement.scrollHeight, outside, over: over.slice(0, 12), nOver: over.length,
+    clipped,
     sizes: { knob: knob ? Math.round(r(knob).width) : 0, pad: pad ? `${Math.round(r(pad).width)}x${Math.round(r(pad).height)}` : '', jog: jog ? Math.round(r(jog).width) : 0,
       fader: Math.round(r(document.querySelector('#mixer .faders .vslider')).height), lib: Math.round(r(document.querySelector('#list')).height) } };
 })()"""
@@ -83,20 +63,12 @@ def main():
     names = sorted(n for n in os.listdir(music) if n.endswith(("126.wav", "140.wav")))
     with sync_playwright() as p:
         b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
-        for name, w, h, short, kind in DEVICES:
+        for name, w, h in DEVICES:
             if only and only.lower() not in name.lower():
                 continue
-            opts = {"viewport": {"width": w, "height": h}}
-            if kind != "desktop":
-                ua = {"iphone": I.IPHONE_UA, "ipad": I.IPAD_UA, "android": ANDROID_UA, "atab": ANDROID_TAB_UA}[kind]
-                long_ = max(w, h)
-                opts.update(is_mobile=kind in ("iphone", "android"), has_touch=True, user_agent=ua, device_scale_factor=3 if kind == "iphone" else 2,
-                            screen={"width": short, "height": long_} if h < w else {"width": short, "height": long_})
-            ctx = b.new_context(**opts)
+            ctx = b.new_context(viewport={"width": w, "height": h})
             # CB_THEME=booth / CB_FOUR=1: audit the Booth look and 4-deck mode too
             ctx.add_init_script(f"localStorage.setItem('cb.theme', '{os.environ.get('CB_THEME', 'booth')}'); localStorage.setItem('cb.themeChosen', '1'); localStorage.setItem('cb.four', '{os.environ.get('CB_FOUR', '0')}');")
-            if kind in ("iphone", "ipad"):
-                ctx.add_init_script(I.STRIP)
             page = ctx.new_page()
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
@@ -116,14 +88,12 @@ def main():
             label = f"{name} {w}x{h}"
             problems = []
             if a["sw"] > w + 1: problems.append(f"page {a['sw']}px wide")
-            if a["phone"] and a["sh"] > h + 1: problems.append(f"page {a['sh']}px tall")
             if a["outside"]: problems.append(f"off screen: {a['outside'][:5]}")
             if a["nOver"]: problems.append(f"{a['nOver']} overlaps: {a['over'][:4]}")
             if a["clipped"]: problems.append(f"cut-off text: {a['clipped'][:6]}")
-            if a["nSmall"]: problems.append(f"{a['nSmall']} small touch targets: {a['small'][:5]}")
-            check(f"{label}: {'phone' if a['phone'] else 'touch' if a['touch'] else 'desktop'} layout clean", not problems, "; ".join(problems) or str(a["sizes"]))
+            check(f"{label}: layout clean", not problems, "; ".join(problems) or str(a["sizes"]))
             if shots:
-                page.screenshot(path=os.path.join(shots, f"{name.replace(' ', '_').replace('(', '').replace(')', '')}.png"), full_page=not a["phone"])
+                page.screenshot(path=os.path.join(shots, f"{name.replace(' ', '_').replace('(', '').replace(')', '')}.png"), full_page=True)
             ctx.close()
         b.close()
     srv.shutdown()
