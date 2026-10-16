@@ -84,6 +84,8 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel small { color: var(--muted); margin-left: 4px; }
 .setpanel .hsel { max-width: none; width: 100%; }
 .setpanel { width: 330px; }
+/* Settings sits in the header: its panel drops down over the app */
+header .setpanel { position: fixed; bottom: auto; top: 48px; left: auto; max-height: calc(var(--vh, 100vh) - 64px); overflow-y: auto; z-index: 40; }
 .ctlpanel { display: grid; gap: 4px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .ctlnote { margin: 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
 .ctlrow { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -668,6 +670,40 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     </select>
     <select class="hsel" id="hpDev" hidden></select>
     <button class="hbtn" id="cueTest" title="Beep in the headphones only">Test cue</button>
+    <div class="setwrap">
+        <button class="hbtn" id="setBtn" aria-expanded="false">Settings ▾</button>
+        <div class="setpanel" id="setPanel" hidden>
+          <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
+          <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
+          <label for="waveSel">Waveform</label>
+          <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
+          <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
+          <select class="hsel deskonly" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
+          <label for="recFmtSel" class="deskonly">Recording format</label>
+          <select class="hsel deskonly" id="recFmtSel"><option value="wav">WAV (lossless, ~600 MB per hour)</option><option value="mp3">MP3 320 kbps (~140 MB per hour)</option></select>
+          <label for="themeSel">Look</label>
+          <select class="hsel" id="themeSel"><option value="booth">Booth (default)</option><option value="default">Cratebox classic</option></select>
+          <label for="uiSizeSel" class="deskonly">Interface size <small>Auto scales up on big screens</small></label>
+          <select class="hsel deskonly" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
+          <div id="ctlPanel" class="ctlpanel">
+            <label for="ctlIn">Controller</label>
+            <select class="hsel" id="ctlIn"></select>
+            <label for="ctlProfile">Mapping</label>
+            <select class="hsel" id="ctlProfile"></select>
+            <p id="ctlNote" class="ctlnote"></p>
+            <div class="ctlrow"><button class="hbtn" id="ctlLearn">Learn…</button><button class="hbtn" id="ctlClear">Clear learned</button>
+              <button class="hbtn" id="ctlExport">Export</button><button class="hbtn" id="ctlImport">Import</button>
+              <input type="file" id="ctlImportFile" accept=".json,application/json" class="pick"></div>
+          </div>
+          <label for="jogSensSel">Jog sensitivity <small>how far the track moves per turn of the jog (controller and on screen)</small></label>
+          <select class="hsel" id="jogSensSel"><option value="0.25">25%</option><option value="0.5">50%</option><option value="0.75">75%</option><option value="1">100% (like a record)</option><option value="1.25">125%</option><option value="1.5">150%</option><option value="2">200%</option></select>
+          <label for="spinSel">Backspin <small>spin time after a fling</small></label>
+          <select class="hsel" id="spinSel">
+            <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
+          </select>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.0</span></div>
+        </div>
+      </div>
     <span id="status"></span>
     <span class="spacer"></span>
     <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
@@ -693,38 +729,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
       <button class="hbtn" id="removeBtn" hidden title="Remove the selected imported track from this device">Remove</button>
       <input type="search" id="search" placeholder="Search title or artist">
       <button class="hbtn" id="browseBtn" title="Expand the library over the jogs and mixer (SHIFT + press BROWSE on the FLX4)">Expand library</button>
-      <div class="setwrap">
-        <button class="hbtn" id="setBtn" aria-expanded="false">Settings ▾</button>
-        <div class="setpanel" id="setPanel" hidden>
-          <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
-          <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
-          <label for="waveSel">Waveform</label>
-          <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
-          <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
-          <select class="hsel deskonly" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
-          <label for="recFmtSel" class="deskonly">Recording format</label>
-          <select class="hsel deskonly" id="recFmtSel"><option value="wav">WAV (lossless, ~600 MB per hour)</option><option value="mp3">MP3 320 kbps (~140 MB per hour)</option></select>
-          <label for="themeSel">Look</label>
-          <select class="hsel" id="themeSel"><option value="default">Cratebox (default)</option><option value="booth">Booth (club-player style)</option></select>
-          <label for="uiSizeSel" class="deskonly">Interface size <small>Auto scales up on big screens</small></label>
-          <select class="hsel deskonly" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
-          <div id="ctlPanel" class="ctlpanel">
-            <label for="ctlIn">Controller</label>
-            <select class="hsel" id="ctlIn"></select>
-            <label for="ctlProfile">Mapping</label>
-            <select class="hsel" id="ctlProfile"></select>
-            <p id="ctlNote" class="ctlnote"></p>
-            <div class="ctlrow"><button class="hbtn" id="ctlLearn">Learn…</button><button class="hbtn" id="ctlClear">Clear learned</button>
-              <button class="hbtn" id="ctlExport">Export</button><button class="hbtn" id="ctlImport">Import</button>
-              <input type="file" id="ctlImportFile" accept=".json,application/json" class="pick"></div>
-          </div>
-          <label for="spinSel">Backspin <small>spin time after a fling</small></label>
-          <select class="hsel" id="spinSel">
-            <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
-          </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v0.10.2</span></div>
-        </div>
-      </div>
+
       <span id="progress"></span>
       <span class="spacer"></span>
       <span class="hlabel">Browse knob scrolls · press it for playlists · drag rows onto a deck or a playlist</span>
@@ -762,7 +767,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.10.2</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.0</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -775,7 +780,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "0.10.2";
+const VERSION = "1.0.0";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
@@ -813,6 +818,9 @@ let FOUR = false;
 try { FOUR = !PHONE && localStorage.getItem("cb.four") === "1"; } catch (e) {}
 document.documentElement.classList.toggle("four", FOUR);
 const deckActive = (i) => i < 2 || FOUR;
+// jog sensitivity: scales every jog movement (scratch, nudge, search) from the controller and the on-screen jog
+let jogSens = 1;
+try { jogSens = parseFloat(localStorage.getItem("cb.jogsens")) || 1; } catch (e) {}
 // audio buffer: "balanced" by default (a dropout is worse than a few ms of latency); "interactive" for the
 // tightest jog feel on a strong computer; "playback" for the safest
 let audioBuffer = "balanced";
@@ -2282,8 +2290,9 @@ class Deck {
     if (!on && !noCoast) { this.coasting = true; this.coastHold = performance.now() + 120; } else this.coasting = false;
     this.post({ t: "scratch", v: on, noCoast: !!noCoast });
   }
-  jogTicks(ticks, kind) {
+  jogTicks(ticks, kind, raw = false) {
     if (!this.loaded) return;
+    if (!raw) ticks *= jogSens;     // Settings → Jog sensitivity (the waveform drag stays 1:1 with the hand)
     const tickSec = 1.8 / 720;      // 33 1/3 RPM platter, 720 ticks per revolution
     if (kind === "scratch" && this.touch) this.post({ t: "jog", v: ticks * tickSec * this.sr });
     else if (this.coasting) return;
@@ -2741,6 +2750,12 @@ function setBrowse(on) {
 $("#setBtn").addEventListener("click", (e) => {
   e.stopPropagation();
   const p = $("#setPanel"); p.hidden = !p.hidden; $("#setBtn").setAttribute("aria-expanded", String(!p.hidden));
+  if (!p.hidden && !PHONE) {
+    // under the button, kept inside the window (positions in the app's own units: the interface zoom divided out)
+    const r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1;
+    p.style.top = (r.bottom + 6) / z + "px";
+    p.style.left = Math.max(8, Math.min(innerWidth - p.offsetWidth * z - 8, r.left)) / z + "px";
+  }
 });
 document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".setwrap")) $("#setPanel").hidden = true; });
 $("#waveSel").value = waveStyle;
@@ -2770,7 +2785,7 @@ for (let i = 0; i < NDECKS; i++) {
       if (g.scratch) d.jogTouch(true);
     }
     const dt = -dx / ppsCss();                       // drag left = later in the track
-    if (g.scratch) d.jogTicks(dt / (1.8 / 720), "scratch");
+    if (g.scratch) d.jogTicks(dt / (1.8 / 720), "scratch", true);
     else d.seek(clamp(d.now() + dt, 0, d.duration));
   };
   cv.addEventListener("pointermove", (e) => { if (g && cv.hasPointerCapture(e.pointerId)) drag(e); });
@@ -2791,6 +2806,12 @@ for (let i = 0; i < NDECKS; i++) $("#lane" + i).addEventListener("wheel", (e) =>
   e.preventDefault();
   zoomSecs = clamp(zoomSecs * (e.deltaY > 0 ? 1.15 : 1 / 1.15), 1, 32);
 }, { passive: false });
+$("#jogSensSel").value = String(jogSens);
+if (!$("#jogSensSel").value) { jogSens = 1; $("#jogSensSel").value = "1"; }
+$("#jogSensSel").addEventListener("change", (e) => {
+  jogSens = parseFloat(e.target.value) || 1;
+  try { localStorage.setItem("cb.jogsens", String(jogSens)); } catch (err) {}
+});
 $("#spinSel").value = String(spinSecs);
 if (!$("#spinSel").value) $("#spinSel").value = "2.5";
 $("#spinSel").addEventListener("change", (e) => {
@@ -3977,11 +3998,13 @@ function refreshMixerUI() {
   for (let i = 0; i < NDECKS; i++) ui[i].pfl.classList.toggle("lit", M.pfl[i]);
 }
 // looks: "default" and "booth" (club-player style: every deck its own player with a screen and waveform)
-let THEME = "default";
-try { THEME = localStorage.getItem("cb.theme") || "default"; } catch (e) {}
-function applyTheme(t) {
-  THEME = t === "booth" ? "booth" : "default";
-  try { localStorage.setItem("cb.theme", THEME); } catch (e) {}
+// Booth is the default; a look only sticks once it has been picked in Settings (cb.themeChosen), so
+// everyone who never chose one gets the current default
+let THEME = "booth";
+try { if (localStorage.getItem("cb.themeChosen") === "1") THEME = localStorage.getItem("cb.theme") || "booth"; } catch (e) {}
+function applyTheme(t, chosen = false) {
+  THEME = t === "default" ? "default" : "booth";
+  if (chosen) try { localStorage.setItem("cb.theme", THEME); localStorage.setItem("cb.themeChosen", "1"); } catch (e) {}
   document.documentElement.dataset.theme = THEME;
   const own = THEME === "booth" && !PHONE;          // phones keep their layout and take the colours only
   document.documentElement.classList.toggle("ownlanes", own);
@@ -5137,7 +5160,7 @@ for (let i = 0; i < NDECKS; i++) refreshDeckUI(i);
 refreshMixerUI();
 applyTheme(THEME);
 setFour(FOUR);
-$("#themeSel").addEventListener("change", (e) => applyTheme(e.target.value));
+$("#themeSel").addEventListener("change", (e) => applyTheme(e.target.value, true));
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
 $("#rangeSel").addEventListener("change", (e) => {
@@ -5306,7 +5329,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

@@ -1,6 +1,17 @@
 # Changelog
 
-All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`; 1.0 comes once it has been road-tested on real sets.
+All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
+
+## 1.0.0 (2026-10-16)
+
+### Changed
+- **Booth is the default look.** The original look is still in Settings as **Cratebox classic**. A look now only sticks once you pick it in Settings, so everyone who never chose one gets Booth (0.10.x saved "default" without being asked).
+- **Settings** moved up to the header, next to Test cue; its panel drops down from there.
+### Added
+- **Jog sensitivity** (Settings, 25–200%): how far the track moves per turn of the jog, for the controller's platter (scratch, nudge, search) and the on-screen jog. Dragging the waveform stays 1:1 with your hand.
+
+### Notes
+- First 1.0 release.
 
 ## 0.10.2 (2026-10-16)
 

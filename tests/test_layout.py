@@ -94,7 +94,7 @@ def main():
                             screen={"width": short, "height": long_} if h < w else {"width": short, "height": long_})
             ctx = b.new_context(**opts)
             # CB_THEME=booth / CB_FOUR=1: audit the Booth look and 4-deck mode too
-            ctx.add_init_script(f"localStorage.setItem('cb.theme', '{os.environ.get('CB_THEME', 'default')}'); localStorage.setItem('cb.four', '{os.environ.get('CB_FOUR', '0')}');")
+            ctx.add_init_script(f"localStorage.setItem('cb.theme', '{os.environ.get('CB_THEME', 'booth')}'); localStorage.setItem('cb.themeChosen', '1'); localStorage.setItem('cb.four', '{os.environ.get('CB_FOUR', '0')}');")
             if kind in ("iphone", "ipad"):
                 ctx.add_init_script(I.STRIP)
             page = ctx.new_page()
