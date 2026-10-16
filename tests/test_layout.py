@@ -108,6 +108,9 @@ def main():
             page.wait_for_function("cratebox.lib.tracks.length === 2")
             page.evaluate("cratebox.lib.sel = 0; cratebox.loadSelected(0); cratebox.lib.sel = 1; cratebox.loadSelected(1)")
             page.wait_for_function("cratebox.decks.slice(0, 2).every(d => d.loaded)", timeout=60000)
+            # deck 2 on PAD FX bank 2 (the longest pad labels), so those get audited too
+            page.evaluate("cratebox.decks[1].padMode = 'padfx2'; document.querySelector('.deck[data-i=\"1\"] .modes button').click(); cratebox.decks[1].padMode = 'padfx2'")
+            page.evaluate("(() => { const b = document.querySelectorAll('.deck[data-i=\"1\"] .modes button')[3]; b.click(); b.click(); })()")
             page.wait_for_timeout(400)
             a = page.evaluate(AUDIT)
             label = f"{name} {w}x{h}"

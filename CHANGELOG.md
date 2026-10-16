@@ -2,6 +2,17 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.0 (2026-10-16)
+
+### Added
+- **Beat FX**: ECHO, DELAY, PING PONG, REVERB, FLANGER, FILTER, TRANS, ROLL, HPF, LPF, timed to the beat grid. Effect select, BEAT ◀ ▶, channel (1, 2, 3, 4 or MASTER), level, ON. Strip at the bottom of the mixer; its own sheet on phones (FX in the header). Echo, delay and reverb ring out when switched off.
+- **Pad FX**: a PAD FX pad mode with two banks of 8 momentary effects (hold a pad, let go to stop).
+- **DDJ-FLX4**: the BEAT FX section (FX SELECT and SHIFT, BEAT ◀ ▶, CH SELECT lever incl. MASTER, LEVEL/DEPTH, ON/OFF and SHIFT = all off, with its light) and PAD FX1 / PAD FX2 pads with their lights. Messages from Mixxx's DDJ-FLX4 mapping. Beat FX controls can also be learned on other controllers.
+- `tests/test_fx.py`: renders every effect offline and measures it, and drives the controls on screen and over MIDI.
+
+### Changed
+- Pad mode buttons show short labels (CUES, LOOP, JUMP, FX) unless the deck is wide.
+
 ## 1.0.2 (2026-10-16)
 
 ### Fixed
