@@ -1,6 +1,6 @@
 # Cratebox: Mac edition
 
-Version 1.1.1-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.2-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
 
 A lightweight DJ app (2 or 4 decks) for the Pioneer DDJ-FLX4, in this edition built for one machine: a **2017 MacBook Air running CachyOS, played in Firefox**. It's the full desktop Cratebox with the phone and tablet parts taken out, set up for Firefox and Linux, and it runs entirely from this folder: no internet needed, nothing is uploaded.
 
@@ -70,7 +70,7 @@ Cratebox picks a mapping from the controller's name. **Settings → Controller**
 | CDJ-3000, other CDJ / XDJ players in MIDI mode | The CDJ-2000 layout |
 | Anything else that speaks MIDI, including DJM mixers | Learn |
 
-Only the FLX4 has been tested on real hardware. The others come from published community mappings or from the product line's shared layout: the main controls (play, cue, sync, jog, tempo, faders, EQ, pads, browse, load) should work, details may not. Four-deck controllers drive decks 1/2 from their deck 3/4 layers too, since Cratebox has two decks. CDJs and XDJs need their MIDI (or "PC/DJ software") mode switched on and each player on its own MIDI channel (1 and 2).
+Only the FLX4 has been tested on real hardware. The others come from published community mappings or from the product line's shared layout: the main controls (play, cue, sync, jog, tempo, faders, EQ, pads, browse, load) should work, details may not. Four-deck controllers drive decks 1/2 from their deck 3/4 layers too; in 4-deck mode, the **deck layer** toggles (see 4 decks) put either side on deck 3 or 4. CDJs and XDJs need their MIDI (or "PC/DJ software") mode switched on and each player on its own MIDI channel (1 and 2).
 
 **Learn:** Settings → Controller → **Learn…**, click a control on screen (it gets a yellow outline), then press, move or turn the real one. Faders and knobs pick up Pioneer-style 14-bit fine control automatically. For the jog, touch the platter then turn it. The library buttons (browse knob, load, jog side for nudging) are in the yellow bar. What you learn overrides the built-in mapping, is saved per mapping, and can be exported to a file and imported on another computer. **Clear learned** goes back to the built-in mapping.
 
@@ -111,7 +111,9 @@ Not mapped yet: Beat FX, sampler, Pad FX, key shift, and the SMART CFX/keyboard 
 - Decks 3 and 4 start **compact**: title, waveform, CUE, PLAY, SYNC, a 4-beat loop and ± tempo. **⤢** opens the full deck.
 - Load them by dragging a track onto them, or with Ctrl+Shift+← / → (Shift+← / → loads decks 1 and 2).
 - With four decks, SYNC follows the deck that isn't synced itself and is playing (the one playing longest, if there are several).
-- The FLX4 has two channels, so decks 3 and 4 are on screen only; a 4-channel controller can be mapped to them with **Learn**.
+- **Deck layers** (playing decks 3 and 4 from a 2-channel controller like the FLX4): the toggles at the top of the mixer pick which deck each side of the controller plays. **1 | 3** on the left, **2 | 4** on the right; click to switch. Everything on that side follows: PLAY, CUE, SYNC, the jog, pads, loops, LOAD, the tempo fader, and that channel's fader, EQ, TRIM, CFX and CUE, plus the lights and the VU meter. The decks the controller is playing have an outline in their colour. The BEAT FX CH SELECT lever follows the side it points at.
+- **No jumps when you switch:** after switching, a fader or knob only takes over once you move it to (or past) the new deck's setting, so deck 3's tempo or volume never jumps to where deck 1's was (soft takeover). Until then, moving it does nothing.
+- The toggles can be learned onto spare buttons (Settings → Controller → **Learn…**, click a toggle, press the button). Going back to **2 DECKS** puts the controller on decks 1 and 2 again.
 
 ## Recording
 

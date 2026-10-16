@@ -29,7 +29,7 @@ def main():
         page.click("#reportOpen")
         check("Report a problem opens from settings", page.is_visible("#reportSheet") and page.is_hidden("#setPanel"))
         pre = page.inner_text("#reportPreview")
-        check("device details: version, browser, edition, MIDI, audio, library", all(k in pre for k in ("Cratebox: v1.1.1-mac", "Browser: ", "Edition: Mac", "Web MIDI:", "Audio: ", "Graphics: ", "Library: ")), pre[:300])
+        check("device details: version, browser, edition, MIDI, audio, library", all(k in pre for k in ("Cratebox: v1.1.2-mac", "Browser: ", "Edition: Mac", "Web MIDI:", "Audio: ", "Graphics: ", "Library: ")), pre[:300])
         # typing doesn't trigger deck shortcuts or the library keys
         page.fill("#reportWhat", "SYNC jumped ahead")
         page.press("#reportWhat", "ArrowDown")

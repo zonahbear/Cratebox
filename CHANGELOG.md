@@ -2,6 +2,15 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.2-mac (2026-10-16)
+
+The Mac edition with deck layers from `main`.
+
+### Added
+- **Deck layers: play decks 3 and 4 from the FLX4** (or any 2-channel controller). In 4-deck mode, toggles at the top of the mixer switch the controller's left side between decks 1 and 3 and its right side between 2 and 4. Every control on that side follows (transport, jog, pads, loops, LOAD, tempo, the channel's fader, EQ, TRIM, CFX and CUE), and so do the lights, the VU meter and the BEAT FX CH SELECT lever. The decks being played get an outline in their colour.
+- **Soft takeover** after a switch: faders and knobs only take over once they reach the new deck's setting, so nothing jumps.
+- The toggles are learnable onto hardware buttons. 2 DECKS puts the controller back on decks 1 and 2.
+- `tests/test_layers.py`.
 ## 1.1.1-mac (2026-10-16): Mac edition
 
 A build of 1.1.1 for one machine: a 2017 MacBook Air running CachyOS, played in Firefox. Lives in the `mac-air` branch; the regular Cratebox on `main` is unchanged.
