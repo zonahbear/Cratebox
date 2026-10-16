@@ -1,4 +1,5 @@
-"""Bar counter (bar.beat like rekordbox): 1.1 1.2 1.3 1.4 2.1 ... on every deck, on screen and on phones.
+"""Bar counter (bar.beat like rekordbox): 1.1 1.2 1.3 1.4 2.1 ..., drawn on each deck's waveform beside the
+playhead. The drawing records what it showed in deck.barShown, which is what's checked on screen here.
 
     python tests/test_barcounter.py
 """
@@ -39,10 +40,10 @@ def main():
         # on screen: follows playback
         page.evaluate("(() => { const d = cratebox.decks[0]; d.seek(d.timeOfBeat(8.2)); })()")
         page.wait_for_timeout(300)
-        check("deck shows the counter (bar 3 beat 1 at beat 8)", page.inner_text('.deck[data-i="0"] .bartag') == "3.1", page.inner_text('.deck[data-i="0"] .bartag'))
+        check("waveform shows the counter (bar 3 beat 1 at beat 8)", page.evaluate('cratebox.decks[0].barShown') == "3.1", page.evaluate('cratebox.decks[0].barShown'))
         page.evaluate("cratebox.decks[0].togglePlay()")
         page.wait_for_timeout(1500)
-        t = page.inner_text('.deck[data-i="0"] .bartag')
+        t = page.evaluate('cratebox.decks[0].barShown')
         page.evaluate("cratebox.decks[0].togglePlay()")
         check("...and moves on while playing", t not in ("", "3.1"), t)
 
@@ -52,13 +53,13 @@ def main():
         page.evaluate("cratebox.decks[1].downbeatHere()")
         page.wait_for_timeout(300)
         # bars count from the start of the track (like rekordbox), so the playhead becomes the first beat of *a* bar
-        check("BAR 1 HERE: the playhead becomes a downbeat (x.1)", page.inner_text('.deck[data-i="1"] .bartag').endswith(".1"), page.inner_text('.deck[data-i="1"] .bartag'))
+        check("BAR 1 HERE: the playhead becomes a downbeat (x.1)", page.evaluate('cratebox.decks[1].barShown').endswith(".1"), page.evaluate('cratebox.decks[1].barShown'))
         # compact decks show it too
         page.click("#fourBtn")
         load_all(page, 4)
         page.evaluate("(() => { const d = cratebox.decks[2]; d.seek(d.timeOfBeat(13.5)); })()")
         page.wait_for_timeout(300)
-        check("compact deck 3 shows it", page.is_visible('.deck[data-i="2"] .bartag') and page.inner_text('.deck[data-i="2"] .bartag') == "4.2", page.inner_text('.deck[data-i="2"] .bartag'))
+        check("deck 3's waveform shows it", page.is_visible('#lane2') and page.evaluate('cratebox.decks[2].barShown') == "4.2", page.evaluate('cratebox.decks[2].barShown'))
         ctx.close()
 
         # phone layout keeps it in the deck's info row
@@ -72,7 +73,7 @@ def main():
         load_all(page, 2)
         page.evaluate("(() => { const d = cratebox.decks[0]; d.seek(d.timeOfBeat(2.5)); })()")
         page.wait_for_timeout(300)
-        check("phone: counter visible", page.is_visible('.deck[data-i="0"] .bartag') and page.inner_text('.deck[data-i="0"] .bartag') == "1.3")
+        check("phone: shown on the waveform", page.is_visible('#lane0') and page.evaluate('cratebox.decks[0].barShown') == "1.3")
         ctx.close()
         b.close()
     srv.shutdown()

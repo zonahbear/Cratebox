@@ -2,6 +2,11 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`; 1.0 comes once it has been road-tested on real sets.
 
+## 0.10.2 (2026-10-16)
+
+### Changed
+- The bar counter is now drawn on each deck's scrolling waveform, right beside the red playhead line (like rekordbox and club players), in the deck's colour, instead of in the deck's info row.
+
 ## 0.10.1 (2026-10-15)
 
 ### Added

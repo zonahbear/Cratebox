@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 0.10.1 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+Version 0.10.2 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
 
 A lightweight DJ app (2 or 4 decks) that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -139,7 +139,7 @@ Settings → **Report a problem…**: describe what happened; device details (br
 
 ## Bar counter
 
-Each deck shows where you are as **bar.beat**, like rekordbox: 1.1, 1.2, 1.3, 1.4, 2.1 and so on, counted on the beat grid from the track's first downbeat. If the count is a beat off, the grid's downbeat is: pause on the "1" and press **BAR 1 HERE** in GRID.
+Each deck's waveform shows where you are as **bar.beat** beside the red playhead line, like rekordbox: 1.1, 1.2, 1.3, 1.4, 2.1 and so on, counted on the beat grid from the track's first downbeat. If the count is a beat off, the grid's downbeat is: pause on the "1" and press **BAR 1 HERE** in GRID.
 
 ## Phrases
 
