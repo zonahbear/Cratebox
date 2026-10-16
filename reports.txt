@@ -3,3 +3,24 @@ Cratebox problem reports
 Reports sent from the app (Settings → Report a problem… → Send on GitHub) are added below
 automatically. Reports people copied and sent some other way can be pasted in by hand.
 
+==================================================================
+#1  2026-10-16T04:25:25Z  from zonahbear
+[Report] Hello world
+https://github.com/zonahbear/Cratebox/issues/1
+------------------------------------------------------------------
+What happened:
+Hello world
+
+Expected:
+this is a test
+
+Device details:
+Cratebox: v0.10.0
+Browser: Chrome (Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36)
+Layout: desktop, window 1323x814, screen 2048x1152 @1.25x
+Web MIDI: yes, controller: DDJ-FLX4 (mapping ddj-flx4)
+Audio: 48000 Hz, 4 ch, state running
+Library: 550 tracks, files folder access
+Decks: 1: 140.00 BPM, 2: 140.00 BPM
+
+
