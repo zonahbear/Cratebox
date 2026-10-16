@@ -731,6 +731,10 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
+          <label for="lockSel">Load lock <small>stops a track loading onto a deck that's playing</small></label>
+          <select class="hsel" id="lockSel"><option value="1">Locked (playing decks can't be loaded)</option><option value="0">Unlocked (loading stops the deck)</option></select>
+          <label for="phraseSel">Phrases <small>Intro / Build / Drop… on the waveforms and decks</small></label>
+          <select class="hsel" id="phraseSel"><option value="1">Show</option><option value="0">Hide</option></select>
           <label for="wavqSel">Waveform detail <small>Light draws fewer pixels, for slow computers</small></label>
           <select class="hsel" id="wavqSel"><option value="auto">Auto (drops to Light if drawing is slow)</option><option value="sharp">Sharp</option><option value="light">Light</option></select>
           <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
@@ -1945,9 +1949,15 @@ function keysMatch(a, b) {
 }
 const PHRASE_COLORS = { Intro: "#4cc9f0", Build: "#ffd23f", Drop: "#ff4d6d", Breakdown: "#9b7bff", Groove: "#3ddc84", Outro: "#5b7cfa" };
 // phrases with their end times on the current grid
+// Settings → Load lock: on (the default), a playing deck refuses a new track; off, loading stops it first
+let loadLock = true;
+try { loadLock = localStorage.getItem("cb.loadlock") !== "0"; } catch (e) {}
+// Settings → Phrases: Hide takes them off the waveforms, the overview and the deck readout
+let showPhrases = true;
+try { showPhrases = localStorage.getItem("cb.phrases") !== "0"; } catch (e) {}
 function phraseSpans(d) {
   const a = d.ana;
-  if (!a || !a.phrases || !a.phrases.length || !a.bpm) return [];
+  if (!showPhrases || !a || !a.phrases || !a.phrases.length || !a.bpm) return [];
   const barLen = 240 / a.bpm;
   return a.phrases.map((p) => ({ ...p, end: p.start + p.bars * barLen, barLen }));
 }
@@ -2371,7 +2381,8 @@ class Deck {
   async load(track) {
     if (!A.ctx) return status("Press Start first");
     if (!deckActive(this.i) || !this.chain) return status(`Deck ${this.i + 1} is hidden: turn on 4 DECKS first`);
-    if (this.playing) return status(`Deck ${this.i + 1} is playing. Stop it before loading.`);
+    if (this.playing && loadLock) return status(`Deck ${this.i + 1} is playing. Stop it before loading (or Settings → Load lock: Unlocked).`);
+    if (this.playing) { this.previewing = false; this.setPlaying(false); }
     this.loading = true;
     this.track = track;
     refreshDeckUI(this.i);
@@ -2417,6 +2428,9 @@ class Deck {
       track.phrases = ana.phrases || [];
       ana.overview = buildOverview(ana);
       this.ana = ana;
+      // no phrases to show (a rekordbox track analysed without rekordbox's phrase analysis, or one whose
+      // .EXT file has none): work them out ourselves on rekordbox's grid, in the background
+      if (!ana.phrases || !ana.phrases.length) this.rephrase();
       track.bpm = ana.bpm; track.duration = buf.duration; track.firstBeat = ana.firstBeat; track.key = ana.key; track.ver = ANALYSIS_VER;
       saveAnalysis(track);
       let saved = loadCues(track);
@@ -3050,6 +3064,18 @@ $("#waveSel").value = waveStyle;
 $("#waveSel").addEventListener("change", (e) => {
   waveStyle = e.target.value;
   try { localStorage.setItem("cb.wave", waveStyle); } catch (err) {}
+  overviewBase.fill(null);
+});
+$("#lockSel").value = loadLock ? "1" : "0";
+$("#lockSel").addEventListener("change", (e) => {
+  loadLock = e.target.value !== "0";
+  try { localStorage.setItem("cb.loadlock", loadLock ? "1" : "0"); } catch (err) {}
+  status(loadLock ? "Load lock on: playing decks won't take a new track" : "Load lock off: loading onto a playing deck stops it", 4000);
+});
+$("#phraseSel").value = showPhrases ? "1" : "0";
+$("#phraseSel").addEventListener("change", (e) => {
+  showPhrases = e.target.value !== "0";
+  try { localStorage.setItem("cb.phrases", showPhrases ? "1" : "0"); } catch (err) {}
   overviewBase.fill(null);
 });
 $("#wavqSel").value = wavQuality;
@@ -4732,8 +4758,9 @@ function drawLane(i) {
   const key = ready
     ? `${t}|${pps}|${d.cue}|${d.hot.join()}|${d.loop.a}|${d.loop.b}|${d.loop.on}|${d.spb}|${d.ana.firstBeat}|${d.effBpm()}|${waveStyle}|${DECK_COL[i]}|${document.fonts ? document.fonts.status : ""}`
     : `${d.loading}|${DECK_COL[i]}|${document.fonts ? document.fonts.status : ""}`;
-  if (cv._key === key && cv._ana === d.ana) return;
-  cv._key = key; cv._ana = d.ana;
+  const ph = ready && showPhrases ? d.ana.phrases : null;
+  if (cv._key === key && cv._ana === d.ana && cv._ph === ph) return;
+  cv._key = key; cv._ana = d.ana; cv._ph = ph;
   g.fillStyle = "#050608"; g.fillRect(0, 0, W, H);
   g.fillStyle = DECK_COL[i];
   g.fillRect(0, 0, 4 * dpr, H);
@@ -5891,7 +5918,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

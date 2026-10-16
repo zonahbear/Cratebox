@@ -10,7 +10,13 @@ All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MIN
 
 ### Added
 - **Settings → Waveform detail**: Auto, Sharp or Light. Light draws the waveforms at 1x (a quarter of the pixels on a 2x screen). Auto starts sharp and switches to Light for the session if drawing stays slow for 3 seconds.
+- **Settings → Load lock**: Locked (the default, as before: a playing deck won't take a new track) or Unlocked (loading onto a playing deck stops it and loads the new track).
+- **Settings → Phrases**: Show or Hide the phrase strips and labels on the waveforms, the overview and the deck's phrase readout.
 - Problem reports include the graphics renderer (and whether the browser is drawing without the graphics card), the waveform detail and the drawing time per frame.
+
+### Fixed
+- **Phrases on rekordbox library tracks.** A rekordbox track that came without rekordbox's own phrase analysis (no phrases in its .EXT file) showed no phrases at all. Cratebox now works them out itself, on rekordbox's beat grid, when the track loads, and keeps them. rekordbox's own phrases are still used when it has them.
+- A paused deck's waveform now redraws when its phrases change (they're worked out again in the background after a grid edit); since the faster drawing it kept showing the old ones until you pressed play.
 
 ## 1.1.0 (2026-10-16)
 
