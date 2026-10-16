@@ -67,7 +67,7 @@ def main():
         check("start screen explains there's no MIDI in Safari and names a MIDI browser app", "has no MIDI" in start_txt and "MIDIWeb Browser" in start_txt)
         check("phone layout switched on", page.evaluate("document.documentElement.classList.contains('phone')"))
         page.tap("#startBtn")
-        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length === 2")
+        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length >= 2")
         st = page.evaluate("""({ session: navigator.audioSession.type, add: document.querySelector('#addFolder').textContent,
             hp: [...document.querySelectorAll('#hpSel option')].map(o => o.value) })""")
         check("audio plays through the silent switch (audio session = playback)", st["session"] == "playback")

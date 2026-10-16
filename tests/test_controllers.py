@@ -38,7 +38,7 @@ def main():
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
         page.click("#startBtn")
-        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length === 2")
+        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length >= 2")
         page.evaluate("cratebox.MIDI.outputs = [{ send() {} }]")
         page.evaluate("""async (names) => {
             const files = [];
@@ -46,7 +46,7 @@ def main():
             await cratebox.addFiles(files); }""", names)
         page.wait_for_function("cratebox.lib.tracks.length === 2 && cratebox.lib.tracks.every(t => t.bpm)", timeout=120000)
         page.evaluate("cratebox.lib.sel = 0; cratebox.loadSelected(0); cratebox.lib.sel = 1; cratebox.loadSelected(1)")
-        page.wait_for_function("cratebox.decks.every(d => d.loaded)", timeout=60000)
+        page.wait_for_function("cratebox.decks.slice(0, 2).every(d => d.loaded)", timeout=60000)
 
         got = page.evaluate("(names) => Object.fromEntries(names.map(n => [n, cratebox.profileFor(n).id]))", list(NAMES))
         wrong = {n: (got[n], w) for n, w in NAMES.items() if got[n] != w}

@@ -80,7 +80,7 @@ def tree_row(page, name):
 def start(page, names=NAMES):
     page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
     page.click("#startBtn")
-    page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length === 2")
+    page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length >= 2")
     page.evaluate(ADD, names)
     page.wait_for_function(f"cratebox.lib.tracks.length >= {len(names)}")
 

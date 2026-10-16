@@ -1,0 +1,5 @@
+Cratebox problem reports
+========================
+Reports sent from the app (Settings → Report a problem… → Send on GitHub) are added below
+automatically. Reports people copied and sent some other way can be pasted in by hand.
+

@@ -49,7 +49,8 @@ def main():
         # ---- the beat lock: knock deck 2 15 ms out of phase while playing; it pulls back without a jump
         page.wait_for_timeout(500)
         page.evaluate("(() => { const d = cratebox.decks[1]; d.seek(d.now() + 0.015); })()")
-        page.wait_for_timeout(150)
+        # read the slip once the deck has reported its new position (up to a second)
+        page.wait_for_function("Math.abs(cratebox.decks[1].phaseErr || 0) > 0.008", timeout=1000)
         before = page.evaluate("cratebox.decks[1].phaseErr")
         page.wait_for_timeout(4000)
         after = page.evaluate("cratebox.decks[1].phaseErr")

@@ -53,7 +53,7 @@ def main():
         page.on("console", lambda m: m.type == "error" and "ERR_TUNNEL" not in m.text and "404" not in m.text and errors.append(m.text))
         page.goto(f"http://127.0.0.1:{PORT}/cratebox.html")
         page.click("#startBtn")
-        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length === 2")
+        page.wait_for_function("window.cratebox.A.ctx && window.cratebox.A.decks.length >= 2")
         # pretend an FLX4 output is attached so LED messages are generated and logged
         page.evaluate("cratebox.MIDI.outputs = [{ send() {} }]")
         names = sorted(os.listdir(os.path.join(ROOT, "tests", "music")))
@@ -96,7 +96,7 @@ def main():
         midi(0xB6, 0x40, 0x01)                    # -> row 3 (140)
         midi(0x96, 0x47, 0x7F)                    # LOAD deck 2
         page.wait_for_function("cratebox.decks[1].loaded && cratebox.decks[1].ana", timeout=30000)
-        st = page.evaluate("cratebox.decks.map(d => ({t: d.track.title, bpm: d.bpm, cue: d.cue, first: d.ana.firstBeat}))")
+        st = page.evaluate("cratebox.decks.slice(0, 2).map(d => ({t: d.track.title, bpm: d.bpm, cue: d.cue, first: d.ana.firstBeat}))")
         check("browse knob + LOAD buttons load the right tracks", "126" in st[0]["t"] and "140" in st[1]["t"], f"{st[0]['t']} / {st[1]['t']}")
         check("cue point defaults to the first beat", abs(st[0]["cue"] - st[0]["first"]) < 0.01)
 

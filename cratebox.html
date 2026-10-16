@@ -19,7 +19,7 @@
 :root {
   --bg: #0b0d10; --panel: #13161b; --raise: #1b1f26; --line: #272c35; --line2: #343a45;
   --fg: #e6e9ee; --muted: #8a93a2; --dim: #586070;
-  --d0: #39a7ff; --d1: #ff8a3d; --hot: #ff3b55; --ok: #3ddc84; --cue: #ffb020; --loop: #f5d64a;
+  --d0: #39a7ff; --d1: #ff8a3d; --d2: #2fd3c0; --d3: #e15bd2; --hot: #ff3b55; --ok: #3ddc84; --cue: #ffb020; --loop: #f5d64a;
   --f-disp: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
   --f-ui: "Barlow", system-ui, "Segoe UI", sans-serif;
   --f-mono: "IBM Plex Mono", Consolas, "Courier New", monospace;
@@ -57,7 +57,7 @@ header { min-width: 0; overflow: hidden; }
 /* decks + mixer */
 #decks { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr); gap: 8px; padding: 8px; background: var(--bg); }
 .deck { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 4px; padding: 10px; display: grid; gap: 8px; min-width: 0; }
-.deck[data-i="0"] { --c: var(--d0); } .deck[data-i="1"] { --c: var(--d1); }
+.deck[data-i="0"] { --c: var(--d0); } .deck[data-i="1"] { --c: var(--d1); } .deck[data-i="2"] { --c: var(--d2); } .deck[data-i="3"] { --c: var(--d3); }
 .dhead { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; min-width: 0; }
 .dnum { font-family: var(--f-disp); font-weight: 700; font-size: 34px; color: var(--c); line-height: 1; text-align: center; }
 .dtitle { min-width: 0; }
@@ -143,10 +143,13 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .sval { font-family: var(--f-mono); font-size: 11px; color: var(--fg); }
 .knob { display: flex; flex-direction: column; align-items: center; gap: 1px; }
 .knob svg { display: block; cursor: ns-resize; touch-action: none; }
+.knob .kcap { fill: var(--knob-cap, #252a32); stroke: var(--knob-edge, #3a414c); }
+.knob .ktrack { stroke: var(--knob-track, #2a2f38); }
+.knob .kline { stroke: var(--knob-line, #f2f4f7); }
 
 #mixer { background: var(--panel); border: 1px solid var(--line); border-radius: 4px; padding: 10px; display: grid; grid-template-columns: 1fr 34px 1fr; grid-template-rows: auto auto auto; gap: 8px 6px; }
 .strip { display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.strip[data-i="0"] { --c: var(--d0); } .strip[data-i="1"] { --c: var(--d1); }
+.strip[data-i="0"] { --c: var(--d0); } .strip[data-i="1"] { --c: var(--d1); } .strip[data-i="2"] { --c: var(--d2); } .strip[data-i="3"] { --c: var(--d3); }
 .mcenter { display: flex; flex-direction: column; align-items: center; gap: 6px; }
 .meter { width: 8px; height: 126px; display: block; }
 .cuebtn { width: 56px; height: 26px; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 13px; letter-spacing: .05em; }
@@ -184,7 +187,7 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .trow div { padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .trow .n, .trow .num { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .trow.sel { background: #24364d; }
-.trow.on0 .t { color: var(--d0); } .trow.on1 .t { color: var(--d1); }
+.trow.on0 .t { color: var(--d0); } .trow.on1 .t { color: var(--d1); } .trow.on2 .t { color: var(--d2); } .trow.on3 .t { color: var(--d3); }
 .trow:hover { background: #1a1e25; } .trow.sel:hover { background: #2a3f59; }
 /* playlist / device tree */
 #tree { overflow-y: auto; min-height: 0; border-right: 1px solid var(--line); background: #101318; padding: 4px 0 10px; font-size: 13px; user-select: none; }
@@ -327,6 +330,11 @@ html.phone #mixer .fcol .slabel { display: none; }
 .sheet .sq { height: 36px; padding: 0 12px; font-size: 14px; border-radius: 8px; }
 .sheet .gridbar { display: flex !important; background: transparent; border: 0; padding: 0; gap: 6px; }
 .sheet .gridbar > .slabel { display: none; }
+.sheet .report label { font-size: 13px; color: var(--fg); }
+.sheet .report small { color: var(--muted); }
+.sheet .report textarea { width: 100%; background: #07080a; border: 1px solid var(--line2); border-radius: 6px; color: var(--fg); padding: 8px; font: 15px/1.4 var(--f-ui); resize: vertical; user-select: text; -webkit-user-select: text; }
+.sheet .report pre { margin: 0; max-height: 140px; overflow: auto; padding: 8px; background: #07080a; border: 1px solid var(--line); border-radius: 6px; font: 11px/1.45 var(--f-mono); color: var(--muted); white-space: pre-wrap; }
+.sheet .report pre:empty { display: none; }
 .sheetgrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
 .sheetgrid .scol { display: grid; gap: 8px; align-content: start; }
 .sheetgrid .row { flex-wrap: wrap; }
@@ -411,6 +419,7 @@ html:not(.phone) #waves { --lane: clamp(50px, calc((100vh - 590px) / 2), 74px); 
 .ctrl { grid-template-columns: minmax(0, 1fr); }
 /* short laptop screens (720-820 px tall): tighter decks so both waveforms and some library still fit */
 @media (max-height: 820px) and (min-width: 1101px) {
+  html.four:not(.phone) #waves { --lane4: 30px; }
   html:not(.phone) .deck { padding: 7px 10px 8px; gap: 6px; --jog: clamp(96px, min(30cqw, calc(100vh - 600px)), 150px); }
   html:not(.phone) .dnum { font-size: 28px; }
   html:not(.phone) .dbpm b { font-size: 21px; }
@@ -470,6 +479,174 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
   html.phone .pad { height: clamp(24px, calc((100dvh - 300px) / 2), 40px); }
   html.phone .pbtns .sq, html.phone .pbtns .tag { height: 26px; }
 }
+/* ---- 4-deck mode (computers and tablets): decks 3 and 4 under 1 and 2, mixer channels 3 1 2 4 ---- */
+html:not(.four) .ch34 { display: none !important; }
+/* set recording */
+#recBtn { font-weight: 600; }
+#recBtn.on { background: #b3202f; border-color: #e0364a; color: #fff; animation: recblink 1.2s steps(2, start) infinite; }
+@keyframes recblink { 50% { background: #7a1620; } }
+#recPanel { position: fixed; right: 16px; bottom: 16px; z-index: 60; width: min(360px, calc(100vw - 32px)); display: grid; gap: 8px; padding: 14px; background: var(--raise); border: 1px solid var(--line2); border-radius: 8px; box-shadow: 0 10px 30px #000c; }
+#recPanel[hidden] { display: none; }
+#recPanel b { font-family: var(--f-disp); letter-spacing: .06em; }
+#recPanel .row { gap: 6px; }
+#recPanel pre { margin: 0; max-height: 160px; overflow: auto; font: 11px/1.5 var(--f-mono); color: var(--muted); white-space: pre-wrap; user-select: text; }
+/* interface size zoom (big screens) */
+html.zoomed:not(.phone) #app { zoom: var(--uiz); height: calc(100vh / var(--uiz)); min-width: 0; }
+#fourBtn.on { background: var(--d0); border-color: var(--d0); color: var(--bg); }
+html.four #waves { --lane4: clamp(30px, calc(var(--lane) * .6), 46px); grid-template-rows: repeat(4, var(--lane4)); min-height: calc(4 * var(--lane4) + 6px); }
+#waves { min-height: calc(2 * var(--lane) + 2px); }
+html.four #waves canvas { height: var(--lane4); }
+@media (min-width: 1101px) {
+  html.four:not(.phone) #decks { grid-template-columns: minmax(0, 1fr) clamp(340px, 30vw, 420px) minmax(0, 1fr); grid-template-rows: auto auto; align-items: start; }
+  html.four:not(.phone) #decks > .deck[data-i="0"] { grid-column: 1; grid-row: 1; }
+  html.four:not(.phone) #decks > #mixer { grid-column: 2; grid-row: 1 / span 2; align-self: stretch; }
+  html.four:not(.phone) #decks > .deck[data-i="1"] { grid-column: 3; grid-row: 1; }
+  html.four:not(.phone) #decks > .deck[data-i="2"] { grid-column: 1; grid-row: 2; }
+  html.four:not(.phone) #decks > .deck[data-i="3"] { grid-column: 3; grid-row: 2; }
+}
+html.four #mixer { grid-template-columns: 1fr 1fr 44px 1fr 1fr; }
+html.four #mixer > .strip.s2 { grid-column: 1; grid-row: 1; }
+html.four #mixer > .strip[data-i="0"] { grid-column: 2; grid-row: 1; }
+html.four #mixer > .mcenter { grid-column: 3; grid-row: 1; }
+html.four #mixer > .strip[data-i="1"] { grid-column: 4; grid-row: 1; }
+html.four #mixer > .strip.s3 { grid-column: 5; grid-row: 1; }
+html.four #mixer .faders { grid-template-columns: 1fr 1fr 44px 1fr 1fr; }
+html.four #mixer .faders > .f2 { grid-column: 1; grid-row: 1; }
+html.four #mixer .faders > .fcol:first-child { grid-column: 2; grid-row: 1; }
+html.four #mixer .faders > .mcol { grid-column: 3; grid-row: 1; gap: 3px !important; }
+html.four #mixer .faders > .fcol:nth-child(3) { grid-column: 4; grid-row: 1; }
+html.four #mixer .faders > .f3 { grid-column: 5; grid-row: 1; }
+html.four #mixer .mcol .meter { width: 7px; }
+/* narrower screens: smaller knobs so four channel strips fit the mixer column */
+@media (max-width: 1399px) {
+  html.four:not(.phone) #mixer .strip .knob svg { width: 26px; height: 26px; }
+  html.four.touch:not(.phone) #mixer .strip .knob svg { width: 28px; height: 28px; }
+}
+/* 4 decks: the mixer spans both deck rows, so it has height to spare: knobs stay in one column (never paired) */
+html.four:not(.phone) #mixer .strip { display: flex !important; flex-direction: column; align-items: center; gap: 1px; }
+@container deck (max-width: 420px) {
+  .deck .mini { gap: 4px; }
+  .deck .mini .sq { padding: 0 6px; font-size: 12px; }
+  .deck .mini .mpitch { min-width: 40px; font-size: 11px; }
+}
+/* a layout that can't fit the window (a short screen in 4-deck mode, decks 3/4 expanded): the page scrolls
+   down to the library instead of cutting it off */
+html.tallapp:not(.phone) body { overflow: auto; }
+html.tallapp:not(.phone) #app { height: auto; grid-template-rows: 42px auto auto 360px; }
+html.tallapp.ownlanes:not(.phone) #app { grid-template-rows: 42px auto 360px; }
+@media (max-width: 1399px) {
+  html.four:not(.phone) #mixer { padding-left: 6px; padding-right: 6px; column-gap: 4px; }
+}
+html.four #mixer .cuebtn { width: 100%; max-width: 56px; }
+/* compact deck: header, overview and one row of essentials */
+.deck .mini { display: none; }
+.deck.compact .dbody, .deck.compact .gridbar, .deck.compact .dinfo > :not(.remain):not(.keytag):not(.phrasetag):not(.mastertag):not(.phasetag):not(.spacer) { display: none !important; }
+.deck.compact { gap: 5px; padding-bottom: 8px; }
+.deck.compact .dnum { font-size: 24px; }
+.deck.compact .dtitle b { font-size: 13px; }
+.deck.compact .dbpm b { font-size: 18px; }
+.deck.compact .overview { height: 26px !important; }
+.deck.compact .mini { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+.deck .mini .sq { height: 28px; padding: 0 9px; }
+.deck .mini .mplay.lit { border-color: var(--ok); color: var(--ok); }
+.deck .mini .mcue.lit { border-color: var(--cue); color: var(--cue); }
+.deck .mini .sq.lit.msync { background: var(--c); color: var(--bg); border-color: var(--c); }
+.deck .mini .mpitch { font-family: var(--f-mono); font-size: 12px; color: var(--muted); min-width: 48px; text-align: center; }
+.dhead .expand { margin-left: 6px; font-size: 14px; padding: 0 7px; }
+.dhead:has(.expand) { grid-template-columns: 34px 1fr auto auto; }
+/* ---- decks' "screen" wrapper and lane host (used by the Booth look) ---- */
+.screen { display: contents; }
+.lanehost { display: none; }
+html.ownlanes #waves { display: none; }
+html.ownlanes:not(.phone) #app { grid-template-rows: 42px auto minmax(120px, 1fr); }
+html.ownlanes .deck .screen { display: grid; gap: 6px; min-width: 0; }
+html.ownlanes .lanehost { display: block; min-width: 0; }
+html.ownlanes .lanehost canvas { display: block; width: 100%; height: var(--blane); touch-action: none; cursor: grab; border-radius: 3px; }
+/* --vh: the window height in the app's own units (the interface size zoom divided out) */
+:root { --uiz: 1; --vh: calc(100vh / var(--uiz)); }
+html.ownlanes .deck { --blane: clamp(70px, calc((var(--vh) - 560px) / 1.7), 150px); }
+html.ownlanes .deck.compact { --blane: 40px; }
+html.ownlanes.four .deck:not(.compact) { --blane: clamp(56px, calc((var(--vh) - 700px) / 1.5), 110px); }
+html.ownlanes:not(.phone) #mixer .faders .vslider { height: clamp(112px, calc(var(--vh) - 720px), 190px) !important; }
+html.ownlanes.four:not(.phone) #mixer .faders .vslider { height: clamp(112px, calc(var(--vh) - 760px), 170px) !important; }
+@media (max-width: 1100px) {
+  html.ownlanes:not(.phone) #app { grid-template-rows: auto auto minmax(320px, auto); }
+}
+
+/* ---- Booth look: an original club-player style. Black glass screens, brushed panels, rubber pads, LED rings ---- */
+html[data-theme="booth"] {
+  --bg: #000; --panel: #101215; --raise: #1d2025; --line: #23262c; --line2: #33373f;
+  --fg: #eef1f5; --muted: #8d96a5; --dim: #5a6271;
+  --d0: #2f9dff; --d1: #ff7b2e; --d2: #22d6b8; --d3: #e553c8;
+  --hot: #ff2d4b; --ok: #24e07a; --cue: #ffaa00; --loop: #ffd21f;
+  --knob-cap: #1a1c20; --knob-edge: #4a4f58; --knob-track: #26292f; --knob-line: #ffffff;
+  --screen: #030405;
+}
+html[data-theme="booth"] header { background: linear-gradient(#17191d, #0b0c0e); border-bottom: 1px solid #000; box-shadow: 0 1px 0 #24272d; }
+html[data-theme="booth"] .logo { letter-spacing: .14em; }
+html[data-theme="booth"] #decks { background: radial-gradient(120% 80% at 50% 0%, #15171b 0%, #050506 70%); }
+html[data-theme="booth"] .deck, html[data-theme="booth"] #mixer {
+  background: linear-gradient(180deg, #1b1e23 0%, #121418 38%, #0d0f12 100%);
+  border: 1px solid #000; border-top: 1px solid #2c3037; border-radius: 10px;
+  box-shadow: inset 0 1px 0 #ffffff10, 0 6px 18px #000c;
+}
+html[data-theme="booth"] .deck { border-top: 1px solid #2c3037; }
+html[data-theme="booth"]:not(.phone) .deck { padding: 10px; }
+/* the screen: black glass with the deck colour as a thin status bar */
+html.ownlanes[data-theme="booth"] .deck .screen {
+  background: var(--screen); border: 1px solid #000; border-radius: 7px; padding: 8px 10px 10px;
+  box-shadow: inset 0 0 0 1px #1d2026, inset 0 10px 24px #ffffff06, 0 0 0 3px #08090b;
+  border-top: 3px solid var(--c);
+}
+html[data-theme="booth"]:not(.phone) .dnum { font-size: 30px; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+html[data-theme="booth"]:not(.phone) .dtitle b { font-size: 16px; letter-spacing: .01em; }
+html[data-theme="booth"]:not(.phone) .dbpm b { font-family: var(--f-mono); font-size: 26px; color: #fff; padding: 2px 8px; border: 1px solid #2a2e35; border-radius: 4px; background: #0a0c0e; display: inline-block; }
+html[data-theme="booth"]:not(.phone) .dinfo .remain { font-size: 20px; color: #fff; font-weight: 500; }
+html[data-theme="booth"] .dinfo { color: #9aa3b2; }
+html[data-theme="booth"] .beats i { height: 7px; border-radius: 0; background: #1e2126; }
+html[data-theme="booth"] .beats i.on { background: var(--c); box-shadow: 0 0 8px var(--c); }
+html[data-theme="booth"] .overview { background: #000; border: 1px solid #1a1d22; }
+html[data-theme="booth"] .tag { border-radius: 3px; border-color: #3a3f48; color: #9aa3b2; background: #0d0f12; }
+html[data-theme="booth"] .tag.on { color: #000; background: var(--c); border-color: var(--c); box-shadow: 0 0 10px color-mix(in srgb, var(--c) 60%, transparent); }
+html[data-theme="booth"] .keytag { background: #0a0b0d; }
+/* hardware buttons */
+html[data-theme="booth"] .sq, html[data-theme="booth"] .modes button, html[data-theme="booth"] .cuebtn {
+  background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; border-radius: 5px;
+  box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; color: #d7dce4;
+}
+html[data-theme="booth"] .sq:active, html[data-theme="booth"] .pad:active { transform: translateY(1px); box-shadow: inset 0 1px 0 #ffffff08; }
+html[data-theme="booth"] .sq.lit { color: var(--c); border-color: #050506; box-shadow: inset 0 0 0 1px var(--c), 0 0 10px color-mix(in srgb, var(--c) 45%, transparent); }
+html[data-theme="booth"] .sq.sync.lit, html[data-theme="booth"] .deck .mini .sq.lit.msync { background: var(--c); color: #000; }
+html[data-theme="booth"] .modes button.on { color: var(--c); box-shadow: inset 0 -2px 0 var(--c), inset 0 1px 0 #ffffff14; }
+html[data-theme="booth"] .cuebtn.lit { background: var(--cue); color: #000; box-shadow: 0 0 12px #ffaa0088; }
+/* round transport with LED rings */
+html[data-theme="booth"] .round { background: radial-gradient(circle at 50% 35%, #2b2f36, #121418 70%); border: 3px solid #2c3036; box-shadow: 0 3px 0 #000, inset 0 1px 0 #ffffff18; color: #cfd5de; }
+html[data-theme="booth"] .round.cue.lit { border-color: var(--cue); color: var(--cue); box-shadow: 0 0 16px #ffaa0088, inset 0 0 10px #ffaa0033; }
+html[data-theme="booth"] .round.play.lit { border-color: var(--ok); color: var(--ok); box-shadow: 0 0 16px #24e07a88, inset 0 0 10px #24e07a33; }
+/* rubber performance pads */
+html[data-theme="booth"]:not(.phone) .pads { gap: 6px; }
+html[data-theme="booth"] .pad { background: radial-gradient(120% 120% at 50% 20%, #24272c, #15171a); border: 1px solid #050506; border-radius: 7px; box-shadow: inset 0 1px 0 #ffffff12, 0 2px 0 #000; color: #6b7381; }
+html[data-theme="booth"] .pad.set { background: radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--ok) 30%, #1a1d21), #121417); color: #fff; box-shadow: inset 0 0 0 2px var(--ok), 0 0 14px color-mix(in srgb, var(--ok) 45%, transparent); }
+html[data-theme="booth"] .pad.on { background: radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--loop) 32%, #1a1d21), #121417); color: #fff; box-shadow: inset 0 0 0 2px var(--loop), 0 0 14px color-mix(in srgb, var(--loop) 45%, transparent); }
+/* fader caps and tracks */
+html[data-theme="booth"] .vslider::before, html[data-theme="booth"] .hslider::before { background: #000; border-color: #2d3138; }
+html[data-theme="booth"] .vslider .thumb { background: linear-gradient(#3a3e46, #1d2025 45%, #2a2e35); border: 1px solid #000; box-shadow: 0 2px 4px #000; }
+html[data-theme="booth"] .vslider .thumb::after { background: #fff; height: 2px; }
+html[data-theme="booth"] .hslider .thumb { background: linear-gradient(90deg, #3a3e46, #1d2025 45%, #2a2e35); border: 1px solid #000; }
+html[data-theme="booth"] .hslider .thumb::after { content: ""; position: absolute; top: 3px; bottom: 3px; left: 50%; width: 2px; margin-left: -1px; background: #fff; }
+/* jog: a platter with an LED ring (drawn on canvas; the frame here) */
+html[data-theme="booth"] .jog { filter: drop-shadow(0 4px 8px #000); }
+/* mixer */
+html[data-theme="booth"] #mixer .strip { background: linear-gradient(#ffffff05, transparent); border-radius: 6px; }
+html[data-theme="booth"] .slabel { color: #a3acba; }
+/* library: black rows, a deck-coloured bar on the selection */
+html[data-theme="booth"] #library, html[data-theme="booth"] .ltool { background: #08090a; }
+html[data-theme="booth"] #tree { background: #050607; }
+html[data-theme="booth"] #list .hdr { background: #15171b; }
+html[data-theme="booth"] .trow { border-bottom-color: #121418; }
+html[data-theme="booth"] .trow:nth-child(even) { background: #0b0c0e; }
+html[data-theme="booth"] .trow.sel { background: #10233a; box-shadow: inset 3px 0 0 var(--d0); }
+html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme="booth"] .ltool input[type=search] { background: #15171b; border-color: #2c3037; }
 </style>
 </head>
 <body>
@@ -493,10 +670,12 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
     <button class="hbtn" id="cueTest" title="Beep in the headphones only">Test cue</button>
     <span id="status"></span>
     <span class="spacer"></span>
+    <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
+    <button class="hbtn deskonly" id="fourBtn" title="Show decks 3 and 4 (4-channel mixer)">4 DECKS</button>
     <div id="masterSlot"></div>
     <button class="iconbtn phoneonly" id="setOpen" aria-label="Settings">⚙</button>
   </header>
-  <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas></section>
+  <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas><canvas id="lane2" class="ch34"></canvas><canvas id="lane3" class="ch34"></canvas></section>
   <section id="decks"></section>
   <section id="library">
     <div class="ltool">
@@ -521,6 +700,14 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
+          <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
+          <select class="hsel deskonly" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
+          <label for="recFmtSel" class="deskonly">Recording format</label>
+          <select class="hsel deskonly" id="recFmtSel"><option value="wav">WAV (lossless, ~600 MB per hour)</option><option value="mp3">MP3 320 kbps (~140 MB per hour)</option></select>
+          <label for="themeSel">Look</label>
+          <select class="hsel" id="themeSel"><option value="default">Cratebox (default)</option><option value="booth">Booth (club-player style)</option></select>
+          <label for="uiSizeSel" class="deskonly">Interface size <small>Auto scales up on big screens</small></label>
+          <select class="hsel deskonly" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
           <div id="ctlPanel" class="ctlpanel">
             <label for="ctlIn">Controller</label>
             <select class="hsel" id="ctlIn"></select>
@@ -535,7 +722,7 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <p class="ctlnote" style="margin-top:10px">Cratebox v0.9.3</p>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v0.10.0</span></div>
         </div>
       </div>
       <span id="progress"></span>
@@ -555,10 +742,27 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
   <button class="hbtn" id="learnDone">Done</button></div>
 <div id="resume" hidden><button>Tap to resume audio</button></div>
 <div class="sheet" id="setSheet" hidden><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="setBody"></div></div></div>
+<div id="recPanel" hidden><div class="row"><b id="recTitle">RECORDING SAVED</b><span class="spacer"></span><button class="iconbtn" id="recClose" aria-label="Close">✕</button></div>
+  <span class="ctlnote" id="recInfo"></span><pre id="recList"></pre>
+  <div class="row"><button class="hbtn" id="recSaveAgain">Save recording again</button><button class="hbtn" id="recSaveList">Save tracklist</button></div></div>
+<div class="sheet" id="reportSheet" hidden><div class="panel report">
+  <h3>REPORT A PROBLEM<span class="spacer"></span><button class="iconbtn" id="reportClose" aria-label="Close">✕</button></h3>
+  <label for="reportWhat">What happened? What did you do just before?</label>
+  <textarea id="reportWhat" rows="4" placeholder="e.g. Pressed SYNC on deck 2 and the track jumped ahead"></textarea>
+  <label for="reportWant">What did you expect instead? <small>(optional)</small></label>
+  <textarea id="reportWant" rows="2"></textarea>
+  <label><input type="checkbox" id="reportDiag" checked> Include device details <small>(browser, screen, controller, version; no personal info or track names)</small></label>
+  <pre id="reportPreview"></pre>
+  <div class="row">
+    <button class="sq" id="reportGitHub">Send on GitHub</button>
+    <button class="sq" id="reportCopy">Copy report</button>
+    <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
+  </div>
+</div></div>
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.9.3</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.10.0</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -571,7 +775,12 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "0.9.3";
+const VERSION = "0.10.0";
+// the last few errors, for problem reports
+const RECENT_ERRORS = [];
+const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
+window.addEventListener("error", (e) => noteError(`${e.message} @${(e.filename || "").split("/").pop()}:${e.lineno}`));
+window.addEventListener("unhandledrejection", (e) => noteError("promise: " + (e.reason && e.reason.message || e.reason)));
 const $ = (s, r = document) => r.querySelector(s);
 // what this browser can do: iPhone/iPad Safari (and every iOS browser) has no Web MIDI, no folder
 // access and no output picking, so Cratebox switches to touch controls and imported files there
@@ -598,6 +807,29 @@ const MOBILE_FILES = IOS || /Android/i.test(navigator.userAgent);
 const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(screen.width, screen.height) <= 500;
 // phones and tablets: Safari kills a tab that uses too much memory, so keep audio in 16 bit,
 // decode one track at a time and use bigger audio buffers
+// decks 3 and 4: on computers and tablets (phones keep two); shown when 4-deck mode is on
+const NDECKS = PHONE ? 2 : 4;
+let FOUR = false;
+try { FOUR = !PHONE && localStorage.getItem("cb.four") === "1"; } catch (e) {}
+document.documentElement.classList.toggle("four", FOUR);
+const deckActive = (i) => i < 2 || FOUR;
+// audio buffer: "balanced" by default (a dropout is worse than a few ms of latency); "interactive" for the
+// tightest jog feel on a strong computer; "playback" for the safest
+let audioBuffer = "balanced";
+try { audioBuffer = localStorage.getItem("cb.abuf") || "balanced"; } catch (e) {}
+// interface size: big screens (1440p, 4K) get the whole app scaled up, so it fills the screen the way it
+// fills a laptop. Auto = as if the window were about 1600 x 900.
+let UIZ = 1, uiSize = "auto";
+try { uiSize = localStorage.getItem("cb.uisize") || "auto"; } catch (e) {}
+function applyUiSize() {
+  if (PHONE) return;
+  const auto = Math.min(innerWidth / 1600, innerHeight / 900);
+  const z = uiSize === "auto" ? (auto >= 1.1 ? Math.min(auto, 1.75) : 1) : parseFloat(uiSize) || 1;
+  UIZ = Math.round(z * 100) / 100;
+  document.documentElement.style.setProperty("--uiz", String(UIZ));
+  document.documentElement.classList.toggle("zoomed", UIZ !== 1);
+}
+applyUiSize();
 const LOWMEM = IOS || PHONE || (navigator.deviceMemory > 0 && navigator.deviceMemory <= 4);
 document.documentElement.classList.toggle("phone", PHONE);
 if (PHONE) document.documentElement.dataset.tab = "mix";
@@ -738,6 +970,12 @@ class DeckPlayer extends AudioWorkletProcessor {
   process(inputs, outputs) {
     const out = outputs[0], oL = out[0], oR = out[1] || out[0], N = oL.length;
     if (!this.L) return true;
+    // stopped and silent: nothing to compute (outputs are already zero). Report now and then so the
+    // page still knows where the deck is.
+    if (!this.playing && !this.scratching && !this.coast && this.amp === 0) {
+      if ((++this.n & 31) === 0) this.port.postMessage({ pos: this.pos, playing: false, ended: this.ended, speed: 0, coast: false, t: currentTime, seq: this.seq || 0 });
+      return true;
+    }
     const L = this.L, R = this.R, len = this.len, sr = sampleRate;
     let pos = this.pos, vel = this.vel, amp = this.amp;
     const follow = 1 / (0.012 * sr);     // scratch: catch up with the hand in about 12 ms
@@ -803,6 +1041,37 @@ class DeckPlayer extends AudioWorkletProcessor {
   }
 }
 registerProcessor("deck-player", DeckPlayer);
+// set recording: copies the master output (after the limiter) to the main thread in 4096-frame blocks.
+// No input (output re-routed for a moment) still counts as time, as silence, so the recording stays in step.
+class RecTap extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    // buffers go to the page and come back (transferred, not copied): no allocation once it's running
+    this.pool = []; for (let k = 0; k < 8; k++) this.pool.push([new Float32Array(4096), new Float32Array(4096)]);
+    this.n = 0; [this.L, this.R] = this.pool.pop();
+    this.port.onmessage = (e) => {
+      if (e.data === "flush") { this.flush(); this.port.postMessage({ flushed: true }); }
+      else if (e.data && e.data.ret) this.pool.push(e.data.ret);
+      else if (e.data === "pool") this.port.postMessage({ pool: this.pool.length });
+    };
+  }
+  flush() {
+    if (!this.n) return;
+    const L = this.L, R = this.R, n = this.n;
+    this.port.postMessage({ L, R, n }, [L.buffer, R.buffer]);
+    [this.L, this.R] = this.pool.pop() || [new Float32Array(4096), new Float32Array(4096)];
+    this.n = 0;
+  }
+  process(inputs) {
+    const inp = inputs[0], l = inp && inp[0], r = inp && (inp[1] || inp[0]);
+    for (let k = 0; k < 128; k++) {
+      this.L[this.n] = l ? l[k] : 0; this.R[this.n] = r ? r[k] : 0;
+      if (++this.n === 4096) this.flush();
+    }
+    return true;
+  }
+}
+registerProcessor("rec-tap", RecTap);
 `;
 
 // BPM, beat grid and waveform analysis, off the main thread.
@@ -1498,7 +1767,7 @@ function biquad(type, freq, Q = 0.7071) {
 function chain(...nodes) { for (let i = 0; i < nodes.length - 1; i++) nodes[i].connect(nodes[i + 1]); return nodes; }
 
 async function initAudio(ctxOverride) {
-  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: LOWMEM ? "playback" : "interactive" }));
+  const ctx = (A.ctx = ctxOverride || new AudioContext({ latencyHint: LOWMEM ? "playback" : audioBuffer }));
   const url = URL.createObjectURL(new Blob([WORKLET], { type: "text/javascript" }));
   await ctx.audioWorklet.addModule(url);
   A.master = ctx.createGain();
@@ -1521,7 +1790,7 @@ async function initAudio(ctxOverride) {
   const sp = ctx.createChannelSplitter(2);
   A.limiter.connect(sp);
   sp.connect(A.masterMeterL, 0); sp.connect(A.masterMeterR, 1);
-  for (let i = 0; i < 2; i++) A.decks.push(buildDeckChain(i));
+  for (let i = 0; i < (FOUR ? NDECKS : 2); i++) A.decks.push(buildDeckChain(i));
   routeOutput("off");
   applyAllMixer();
   A.currentSink = "";
@@ -1554,6 +1823,11 @@ function buildDeckChain(i) {
 }
 
 function routeOutput(mode) {
+  const ok = routeOutputInner(mode);
+  if (A.recTap) A.limiter.connect(A.recTap);
+  return ok;
+}
+function routeOutputInner(mode) {
   const ctx = A.ctx;
   try { A.limiter.disconnect(); } catch (e) {}
   try { A.hpSum.disconnect(); } catch (e) {}
@@ -1596,9 +1870,10 @@ function routeOutput(mode) {
 // =====================================================================================
 //  Mixer state (all controls normalised 0..1, like the hardware)
 // =====================================================================================
+const perCh = (v) => Array.from({ length: NDECKS }, () => v);
 const M = {
-  trim: [0.5, 0.5], hi: [0.5, 0.5], mid: [0.5, 0.5], low: [0.5, 0.5], cfx: [0.5, 0.5], fader: [1, 1],
-  pfl: [false, false], xfader: 0.5, headMix: 0.5, master: 0.8,
+  trim: perCh(0.5), hi: perCh(0.5), mid: perCh(0.5), low: perCh(0.5), cfx: perCh(0.5), fader: perCh(1),
+  pfl: perCh(false), xfader: 0.5, headMix: 0.5, master: 0.8,
 };
 const ramp = (p, v) => { if (A.ctx) p.setTargetAtTime(v, A.ctx.currentTime, 0.008); };
 function eqGain(v) {
@@ -1627,9 +1902,11 @@ function applyMixer(i) {
   } else {
     ramp(c.lp.frequency, 22000); ramp(c.hp.frequency, 10); ramp(c.lp.Q, 0.707); ramp(c.hp.Q, 0.707);
   }
-  // crossfader: both full at the centre, smooth fade to each side
+  // crossfader: both full at the centre, smooth fade to each side. Decks 1 and 3 on the left, 2 and 4 right.
+  // A hidden deck (3 or 4 with 4-deck mode off) is muted.
   const x = M.xfader;
-  const g = i === 0 ? (x <= 0.5 ? 1 : Math.cos((x - 0.5) * Math.PI)) : (x >= 0.5 ? 1 : Math.cos((0.5 - x) * Math.PI));
+  if (!deckActive(i)) { ramp(c.xf.gain, 0); return; }
+  const g = i % 2 === 0 ? (x <= 0.5 ? 1 : Math.cos((x - 0.5) * Math.PI)) : (x >= 0.5 ? 1 : Math.cos((0.5 - x) * Math.PI));
   ramp(c.xf.gain, g < 0.002 ? 0 : g);
 }
 function applyMaster() {
@@ -1638,7 +1915,7 @@ function applyMaster() {
   ramp(A.hpCue.gain, Math.cos(M.headMix * Math.PI / 2));
   ramp(A.hpMaster.gain, Math.sin(M.headMix * Math.PI / 2));
 }
-function applyAllMixer() { applyMixer(0); applyMixer(1); applyMaster(); }
+function applyAllMixer() { for (let i = 0; i < NDECKS; i++) applyMixer(i); applyMaster(); }
 
 // =====================================================================================
 //  Decks
@@ -1753,13 +2030,16 @@ class Deck {
   get range() { return RANGES[this.rangeIdx]; }
   get bpm() { return this.ana ? this.ana.bpm : 0; }
   get spb() { return this.bpm ? 60 / this.bpm : 0.5; }
-  other() { return decks[1 - this.i]; }
+  other() { return decks[this.i ^ 1]; }
   master() {
-    // the deck to follow when synced: the other deck, unless it synced after us (then we lead)
-    const o = this.other();
-    if (!o.loaded || !o.bpm) return null;
-    if (o.sync && this.sync && o.syncSince > this.syncSince) return null;
-    return o;
+    // the deck to follow when synced. Two decks: the other one, unless it synced after us (then we lead).
+    // Four decks: of the other shown decks with a tempo (leaving out ones that synced after us), prefer
+    // one that isn't synced itself, then one that's playing, then the one that's been playing longest.
+    const c = decks.filter((o) => o !== this && deckActive(o.i) && o.loaded && o.bpm && !(o.sync && this.sync && o.syncSince > this.syncSince));
+    if (!c.length) return null;
+    const score = (o) => (o.sync ? 0 : 4) + (o.playing ? 2 : 0);
+    c.sort((a, b) => score(b) - score(a) || (a.startedAt || Infinity) - (b.startedAt || Infinity) || a.i - b.i);
+    return c[0];
   }
   rate() {
     if (this.sync && this.master() && this.bpm) return this.syncRate * (1 + this.syncTrim);
@@ -1794,6 +2074,7 @@ class Deck {
 
   async load(track) {
     if (!A.ctx) return status("Press Start first");
+    if (!deckActive(this.i) || !this.chain) return status(`Deck ${this.i + 1} is hidden: turn on 4 DECKS first`);
     if (this.playing) return status(`Deck ${this.i + 1} is playing. Stop it before loading.`);
     this.loading = true;
     this.track = track;
@@ -1927,6 +2208,7 @@ class Deck {
     if (on) {
       this.syncSince = performance.now();
       const m = this.master();
+      this.syncWith = m;
       if (!m) { status("Load a track on the other deck to sync to"); }
       else {
         // halftime / double time: of 1/2x, 1x and 2x the master's tempo, take the one nearest our own
@@ -1958,6 +2240,12 @@ class Deck {
     if (!this.sync) return;
     const m = this.master();
     if (!m || !this.bpm) return;
+    // the master changed (4 decks): pick half/normal/double time again against the new one
+    if (this.syncWith && this.syncWith !== m) {
+      const r0 = m.effBpm() / this.bpm;
+      this.syncMult = [0.5, 1, 2].reduce((best, k) => Math.abs(Math.log(r0 * k)) < Math.abs(Math.log(r0 * best)) ? k : best, 1);
+    }
+    this.syncWith = m;
     const r = clamp(m.effBpm() * this.syncMult / this.bpm, 0.5, 2);
     if (Math.abs(r - this.syncRate) > 1e-7) { this.syncRate = r; this.sendRate(); }
     this.lockPhase(m);
@@ -2070,7 +2358,7 @@ class Deck {
     if (next != null) { this.seek(next); if (!this.playing) this.cue = next; }
   }
 }
-const decks = [new Deck(0), new Deck(1)];
+const decks = Array.from({ length: NDECKS }, (_, i) => new Deck(i));
 
 // cue points saved per track
 function trackKey(t) { return "cb.cues." + t.id; }
@@ -2288,6 +2576,8 @@ async function runAnalysisQueue() {
       $("#progress").textContent = deckLoads > 0 ? "Analysis waiting…" : "Analysis paused while playing";
       await sleep(1000);
     }
+    // music playing: a breather between tracks, so analysis never competes with the decks for long
+    if (decks.some((d) => d.playing)) { $("#progress").textContent = "Analysis (slowed while playing)…"; await sleep(1500); }
     const t = lib.queue.shift();
     if (analysisCurrent(t) || badTracks.has(t.id)) { if (badTracks.has(t.id) && t.bpm == null) t.bpm = 0; continue; }
     $("#progress").textContent = `Analyzing ${done + 1} of ${done + lib.queue.length + 1}: ${t.title}`;
@@ -2410,7 +2700,8 @@ function renderList(full) {
       h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
       h("div", { class: "num" }, onDeck >= 0 ? String(onDeck + 1) : ""));
     row.onclick = (e) => selectRow(i, e);
-    row.ondblclick = () => loadSelected(decks[0].playing && !decks[1].playing ? 1 : 0);
+    // double-click: the first shown deck that isn't playing
+    row.ondblclick = () => { const k = decks.findIndex((d) => deckActive(d.i) && !d.playing); loadSelected(k < 0 ? 0 : k); };
     row.ondragstart = (e) => {
       // drag the whole selection if this row is part of it
       const inSel = lib.selIds.has(t.id) && lib.selIds.size > 1;
@@ -2456,14 +2747,15 @@ $("#waveSel").value = waveStyle;
 $("#waveSel").addEventListener("change", (e) => {
   waveStyle = e.target.value;
   try { localStorage.setItem("cb.wave", waveStyle); } catch (err) {}
-  overviewBase[0] = overviewBase[1] = null;
+  overviewBase.fill(null);
 });
 // scrolling waveforms: drag to move through the track (audio follows the hand while playing, like
 // grabbing the record; silent while paused), tap/click to jump to that spot
-for (const i of [0, 1]) {
+for (let i = 0; i < NDECKS; i++) {
   const cv = $("#lane" + i), d = decks[i];
   let g = null;
-  const ppsCss = () => cv.clientWidth / zoomSecs / Math.max(0.05, d.rate());
+  // on-screen width (with the interface size zoom), in the same units as pointer positions
+  const ppsCss = () => cv.getBoundingClientRect().width / zoomSecs / Math.max(0.05, d.rate());
   cv.addEventListener("pointerdown", (e) => {
     if (!d.loaded || MIDI.learning) return;
     cv.setPointerCapture(e.pointerId);
@@ -2495,7 +2787,7 @@ for (const i of [0, 1]) {
   cv.addEventListener("pointerup", end);
   cv.addEventListener("pointercancel", () => { if (g && g.moved && g.scratch) d.jogTouch(false, true); g = null; });
 }
-for (const i of [0, 1]) $("#lane" + i).addEventListener("wheel", (e) => {
+for (let i = 0; i < NDECKS; i++) $("#lane" + i).addEventListener("wheel", (e) => {
   e.preventDefault();
   zoomSecs = clamp(zoomSecs * (e.deltaY > 0 ? 1.15 : 1 / 1.15), 1, 32);
 }, { passive: false });
@@ -3401,10 +3693,10 @@ function knob(id, label, value, onInput, { color = "var(--fg)", size = 40, cente
   function draw() {
     const a = -135 + 270 * v, ca = -135 + 270 * center;
     const px = c + (r - 6) * Math.sin(a * Math.PI / 180), py = c - (r - 6) * Math.cos(a * Math.PI / 180);
-    svg.innerHTML = `<circle cx="${c}" cy="${c}" r="${r - 4}" fill="#252a32" stroke="#3a414c"/>
-      <path d="${arc(-135, 135)}" fill="none" stroke="#2a2f38" stroke-width="3"/>
+    svg.innerHTML = `<circle class="kcap" cx="${c}" cy="${c}" r="${r - 4}"/>
+      <path class="ktrack" d="${arc(-135, 135)}" fill="none" stroke-width="3"/>
       <path d="${arc(Math.min(a, ca), Math.max(a, ca))}" fill="none" stroke="${color}" stroke-width="3"/>
-      <line x1="${c}" y1="${c}" x2="${px}" y2="${py}" stroke="#f2f4f7" stroke-width="2.5" stroke-linecap="round"/>`;
+      <line class="kline" x1="${c}" y1="${c}" x2="${px}" y2="${py}" stroke-width="2.5" stroke-linecap="round"/>`;
     svg.setAttribute("aria-valuenow", v.toFixed(2));
   }
   function set(nv, emit = true) { v = clamp(nv, 0, 1); draw(); if (emit) onInput(v); }
@@ -3462,7 +3754,7 @@ function hslider(id, value, onInput) {
 // =====================================================================================
 //  Build the deck + mixer panels
 // =====================================================================================
-const ui = [{}, {}];
+const ui = Array.from({ length: NDECKS }, () => ({}));
 function buildDeck(i) {
   const d = decks[i];
   const u = ui[i];
@@ -3581,6 +3873,30 @@ function buildDeck(i) {
   }
   const ctrl = h("div", { class: "ctrl" }, loopRow, jumpRow, modes, pads);
   el.append(h("div", { class: "dbody" }, pitchwrap, h("div", { class: "jogwrap" }, u.jog, h("div", { class: "transport" }, u.cueBtn, u.playBtn)), ctrl));
+  // the deck's "screen": header, info, (Booth look: its own scrolling waveform), overview.
+  // display: contents in the default look, so it changes nothing there
+  u.lanehost = h("div", { class: "lanehost" });
+  u.screen = h("div", { class: "screen" });
+  const dh = el.querySelector(".dhead"), di = el.querySelector(".dinfo");
+  el.insertBefore(u.screen, dh);
+  u.screen.append(dh, di, u.lanehost, u.overview);
+  // decks 3 and 4 start compact: title, overview and a row of essentials; ⤢ opens the full deck
+  if (i >= 2) {
+    el.classList.add("compact", "ch34");
+    u.miniCue = h("button", { class: "sq mcue" }, "CUE");
+    u.miniCue.addEventListener("pointerdown", () => d.cueDown());
+    u.miniCue.addEventListener("pointerup", () => d.cueUp());
+    u.miniCue.addEventListener("pointerleave", () => d.cueUp());
+    u.miniPlay = h("button", { class: "sq mplay", onclick: () => d.togglePlay() }, "▶ ❙❙");
+    u.miniSync = h("button", { class: "sq msync", onclick: () => d.setSync(!d.sync) }, "SYNC");
+    u.miniLoop = h("button", { class: "sq", title: "4-beat loop / exit", onclick: () => (d.loop.on ? d.reloopExit() : d.beatLoop(4)) }, "LOOP 4");
+    u.miniPitch = h("span", { class: "mpitch" }, "");
+    const bend = (k) => h("button", { class: "sq", title: k < 0 ? "Tempo −0.1% (hold Shift: −1%)" : "Tempo +0.1% (hold Shift: +1%)",
+      onclick: (e) => { d.setPitch(clamp(d.pitch + k * (e.shiftKey ? 10 : 1) * 0.001 * 100 / d.range, -1, 1)); setCtl(`pitch${i}`, 0.5 - d.pitch / 2); refreshDeckUI(i); } }, k < 0 ? "−" : "+");
+    el.append(h("div", { class: "mini" }, u.miniCue, u.miniPlay, u.miniSync, u.miniLoop, h("span", { class: "spacer" }), bend(-1), u.miniPitch, bend(1)));
+    u.expand = h("button", { class: "tag expand", title: "Full deck / compact", onclick: () => { el.classList.toggle("compact"); u.expand.textContent = el.classList.contains("compact") ? "⤢" : "⤡"; overviewBase[i] = null; fitApp(); } }, "⤢");
+    el.querySelector(".dhead").append(u.expand);
+  }
   return el;
 }
 const LOOP_SIZES = [0.25, 0.5, 1, 2, 4, 8, 16, 32];
@@ -3635,21 +3951,73 @@ function buildMixer() {
   A.masterMeterCanvas = h("canvas", { class: "meter", width: "16", height: "300", style: "width:14px;height:126px" });
   center.append(A.masterMeterCanvas);
   mx.append(strip(0), center, strip(1));
+  for (let i = 2; i < NDECKS; i++) mx.append(Object.assign(strip(i), { className: `strip ch34 s${i}` }));
   const faders = h("div", { class: "faders" });
-  for (const i of [0, 1]) {
-    const meter = h("canvas", { class: "meter", width: "16", height: "300" });
+  for (let i = 0; i < NDECKS; i++) {
+    const meter = h("canvas", { class: "meter" + (i >= 2 ? " ch34" : ""), width: "16", height: "300" });
     ui[i].meter = meter;
-    const fcol = h("div", { class: "fcol" }, vslider(`fader${i}`, M.fader[i], (v) => { M.fader[i] = v; applyMixer(i); }, { height: 112 }), h("span", { class: "slabel" }, `CH ${i + 1}`));
-    if (i === 0) faders.append(fcol, h("div", { class: "fcol", style: "flex-direction:row;gap:6px;justify-content:center" }, meter));
-    else { faders.lastChild.append(meter); faders.append(fcol); }
+    const fcol = h("div", { class: "fcol" + (i >= 2 ? ` ch34 f${i}` : "") }, vslider(`fader${i}`, M.fader[i], (v) => { M.fader[i] = v; applyMixer(i); }, { height: 112 }), h("span", { class: "slabel" }, `CH ${i + 1}`));
+    if (i === 0) faders.append(fcol, h("div", { class: "fcol mcol", style: "flex-direction:row;gap:6px;justify-content:center" }, meter));
+    else if (i === 1) { faders.querySelector(".mcol").append(meter); faders.append(fcol); }
+    else { faders.querySelector(".mcol").append(meter); faders.append(fcol); }
   }
   mx.append(faders);
-  mx.append(h("div", { class: "xfade" }, h("span", { class: "slabel" }, "1"), hslider("xfader", M.xfader, (v) => { M.xfader = v; applyMixer(0); applyMixer(1); }), h("span", { class: "slabel" }, "2")));
+  const xl = h("span", { class: "slabel xl" }, "1"), xr = h("span", { class: "slabel xr" }, "2");
+  mx.append(h("div", { class: "xfade" }, xl, hslider("xfader", M.xfader, (v) => { M.xfader = v; for (let i = 0; i < NDECKS; i++) applyMixer(i); }), xr));
   return mx;
 }
 
 function refreshMixerUI() {
-  for (const i of [0, 1]) ui[i].pfl.classList.toggle("lit", M.pfl[i]);
+  for (let i = 0; i < NDECKS; i++) ui[i].pfl.classList.toggle("lit", M.pfl[i]);
+}
+// looks: "default" and "booth" (club-player style: every deck its own player with a screen and waveform)
+let THEME = "default";
+try { THEME = localStorage.getItem("cb.theme") || "default"; } catch (e) {}
+function applyTheme(t) {
+  THEME = t === "booth" ? "booth" : "default";
+  try { localStorage.setItem("cb.theme", THEME); } catch (e) {}
+  document.documentElement.dataset.theme = THEME;
+  const own = THEME === "booth" && !PHONE;          // phones keep their layout and take the colours only
+  document.documentElement.classList.toggle("ownlanes", own);
+  for (let i = 0; i < NDECKS; i++) (own ? ui[i].lanehost : $("#waves")).append($("#lane" + i));
+  $("#themeSel").value = THEME;
+  readThemeColours();
+  overviewBase.fill(null);
+  fitApp();
+}
+// does the layout fit the window? If not (decks taller than the window leaves room for), let the page scroll
+function fitApp() {
+  if (PHONE) return;
+  const html = document.documentElement;
+  html.classList.remove("tallapp");
+  if (innerWidth <= 1100) return;                   // the stacked layout scrolls anyway
+  const app = $("#app"), lib = $("#library");
+  requestAnimationFrame(() => {
+    const short = lib.getBoundingClientRect().height < 100 * UIZ || app.scrollHeight > app.clientHeight + 2;
+    html.classList.toggle("tallapp", short);
+    if (short) renderList(true);
+  });
+}
+// 2 / 4 decks (computers and tablets)
+function setFour(on) {
+  if (PHONE) return;
+  // the music never stops: decks 3/4 can't be hidden while they play
+  const busy = !on && decks.slice(2).find((d) => d.playing);
+  if (busy) { status(`Deck ${busy.i + 1} is playing: stop it (or fade it out) before going back to 2 decks`, 6000); return; }
+  if (on && A.ctx) while (A.decks.length < NDECKS) A.decks.push(buildDeckChain(A.decks.length));
+  FOUR = on;
+  try { localStorage.setItem("cb.four", on ? "1" : "0"); } catch (e) {}
+  document.documentElement.classList.toggle("four", on);
+  $("#fourBtn").classList.toggle("on", on);
+  $("#fourBtn").textContent = on ? "2 DECKS" : "4 DECKS";
+  $("#fourBtn").title = on ? "Back to 2 decks" : "Show decks 3 and 4 (4-channel mixer)";
+  const xl = $("#mixer .xl"), xr = $("#mixer .xr");
+  if (xl) { xl.textContent = on ? "1·3" : "1"; xr.textContent = on ? "2·4" : "2"; }
+  for (const d of decks.slice(2)) if (d.sync && !on) d.setSync(false);
+  applyAllMixer();
+  overviewBase.fill(null);
+  renderList(true);
+  fitApp();
 }
 function refreshDeckUI(i) {
   const d = decks[i], u = ui[i];
@@ -3658,6 +4026,7 @@ function refreshDeckUI(i) {
   u.artist.textContent = d.track ? d.track.artist || "Unknown artist" : emptyDeckHint();
   u.playBtn.classList.toggle("lit", d.playing);
   u.syncBtn.classList.toggle("lit", d.sync);
+  if (u.miniPlay) { u.miniPlay.classList.toggle("lit", d.playing); u.miniSync.classList.toggle("lit", d.sync); u.miniLoop.classList.toggle("lit", d.loop.on); }
   u.qtag.classList.toggle("on", d.quant);
   u.mtBtn.classList.toggle("on", d.mt);
   u.range.textContent = d.range === 100 ? "WIDE" : `±${d.range}%`;
@@ -3755,7 +4124,8 @@ function imageFor(store, i, g, W, H) {
 const overviewBase = [null, null];
 function fitCanvas(cv) {
   // phones: 2x is plenty for waveforms, and 3x makes Safari push 2.25x the pixels every frame
-  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3);
+  // (UIZ: the interface size zoom, so canvases stay sharp when the app is scaled up)
+  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3) * UIZ;
   const w = Math.round(cv.clientWidth * dpr), hh = Math.round(cv.clientHeight * dpr);
   if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; }
   return [w, hh, dpr];
@@ -3810,13 +4180,19 @@ function lanePps(i, W) {
   const d = decks[i];
   return W / zoomSecs / Math.max(0.05, d.loaded ? d.rate() : 1);
 }
+// deck colours for canvas drawing, read from the theme's CSS variables
+let DECK_COL = ["#39a7ff", "#ff8a3d", "#2fd3c0", "#e15bd2"];
+function readThemeColours() {
+  const cs = getComputedStyle(document.documentElement);
+  DECK_COL = [0, 1, 2, 3].map((i) => cs.getPropertyValue("--d" + i).trim() || DECK_COL[i]);
+}
 function drawLane(i) {
   const cv = $("#lane" + i), g = cv.getContext("2d"), d = decks[i];
   const [W, H, dpr] = fitCanvas(cv);
   if (!W || !H) return;
   g.fillStyle = "#050608"; g.fillRect(0, 0, W, H);
   const mid = H / 2, cx = Math.round(W / 2);
-  g.fillStyle = i ? "#ff8a3d" : "#39a7ff";
+  g.fillStyle = DECK_COL[i];
   g.fillRect(0, 0, 4 * dpr, H);
   if (!d.loaded || !d.ana) {
     g.fillStyle = "#586070"; g.font = `${13 * dpr}px Barlow, sans-serif`;
@@ -3834,7 +4210,7 @@ function drawLane(i) {
       paintCol(im.u32, W, H, x, aggregate(a, k0, k1), x < cx ? 0.62 : 1);
     }
     g.putImageData(im, 0, 0);
-    g.fillStyle = i ? "#ff8a3d" : "#39a7ff";
+    g.fillStyle = DECK_COL[i];
     g.fillRect(0, 0, 4 * dpr, H);
   }
   // loop region
@@ -3882,7 +4258,7 @@ function drawJog(i) {
   const d = decks[i], cv = ui[i].jog, g = cv.getContext("2d");
   const W = cv.width, c = W / 2;
   g.clearRect(0, 0, W, W);
-  const col = i ? "#ff8a3d" : "#39a7ff";
+  const col = DECK_COL[i];
   g.beginPath(); g.arc(c, c, c - 6, 0, Math.PI * 2); g.fillStyle = "#14171c"; g.fill();
   g.lineWidth = 6; g.strokeStyle = d.touch ? col : "#2d333d"; g.stroke();
   g.beginPath(); g.arc(c, c, c * 0.62, 0, Math.PI * 2); g.fillStyle = "#1c2027"; g.fill();
@@ -3909,7 +4285,8 @@ function peakOf(an) {
   for (let k = 0; k < meterBuf.length; k++) { const v = Math.abs(meterBuf[k]); if (v > p) p = v; }
   return p;
 }
-const meterState = [0, 0, 0];
+const meterState = [0, 0, 0, 0];
+let masterMeterState = 0;
 function levelOf(p) { const db = 20 * Math.log10(p + 1e-9); return clamp((db + 42) / 42, 0, 1); }
 function drawMeter(cv, level) {
   const g = cv.getContext("2d"), W = cv.width, H = cv.height;
@@ -4475,7 +4852,7 @@ $("#cueTest").addEventListener("click", () => {
 // which on-screen control MIDI learn should assign when it's clicked
 function tagLearnables() {
   const tag = (el, action, deck) => { if (!el) return; el.dataset.learn = action; if (deck != null) el.dataset.deck = deck; };
-  for (const i of [0, 1]) {
+  for (let i = 0; i < NDECKS; i++) {
     const u = ui[i];
     tag(u.playBtn, "play", i); tag(u.cueBtn, "cue", i); tag(u.syncBtn, "sync", i);
     tag(u.inBtn, "loopIn", i); tag(u.outBtn, "loopOut", i); tag(u.reloopBtn, "reloop", i);
@@ -4488,6 +4865,180 @@ function tagLearnables() {
   tag(widgets.headmix && widgets.headmix.el, "headMix", -1);
   tag(widgets.master && widgets.master.el, "master", -1);
 }
+// ---- set recording: master output to WAV (16-bit) or MP3 (320 kbps, lamejs in a worker) + a tracklist ----
+const REC = { on: false, fmt: "wav", sr: 48000, frames: 0, parts: [], pending: [], pendingBytes: 0, worker: null, list: [], logged: new Map(), started: null, blob: null, name: "" };
+try { REC.fmt = localStorage.getItem("cb.recfmt") || "wav"; } catch (e) {}
+$("#recFmtSel").value = REC.fmt;
+$("#abufSel").value = audioBuffer;
+$("#abufSel").addEventListener("change", (e) => { audioBuffer = e.target.value; try { localStorage.setItem("cb.abuf", audioBuffer); } catch (err) {} status("Audio buffer changes after a reload (when you're not playing)", 6000); });
+$("#recFmtSel").addEventListener("change", (e) => { REC.fmt = e.target.value; try { localStorage.setItem("cb.recfmt", REC.fmt); } catch (err) {} });
+const recPart = (u8) => {
+  // small pieces are folded into Blobs every few MB: the browser can keep big Blobs out of the page's memory
+  REC.pending.push(u8); REC.pendingBytes += u8.byteLength;
+  if (REC.pendingBytes > 4e6) { REC.parts.push(new Blob(REC.pending)); REC.pending = []; REC.pendingBytes = 0; }
+};
+const MP3_WORKER = `
+let enc = null;
+const i16 = (f) => { const o = new Int16Array(f.length); for (let k = 0; k < f.length; k++) { const v = Math.max(-1, Math.min(1, f[k])); o[k] = v < 0 ? v * 32768 : v * 32767; } return o; };
+onmessage = (e) => {
+  const m = e.data;
+  if (m.t === "init") { importScripts(m.lib); enc = new lamejs.Mp3Encoder(2, m.sr, 320); }
+  else if (m.t === "pcm") { const b = enc.encodeBuffer(i16(m.L), i16(m.R)); if (b.length) postMessage({ t: "mp3", b: new Uint8Array(b) }); }
+  else if (m.t === "end") { const b = enc.flush(); postMessage({ t: "done", b: new Uint8Array(b) }); }
+};`;
+function recData(m) {
+  if (!m.L) return;
+  const n = m.n || m.L.length;
+  if (REC.on) {
+    REC.frames += n;
+    if (REC.fmt === "mp3") REC.worker.postMessage({ t: "pcm", L: m.L.slice(0, n), R: m.R.slice(0, n) });
+    else {
+      const out = new Int16Array(n * 2);
+      for (let k = 0, j = 0; k < n; k++) {
+        const l = Math.max(-1, Math.min(1, m.L[k])), r = Math.max(-1, Math.min(1, m.R[k]));
+        out[j++] = l < 0 ? l * 32768 : l * 32767; out[j++] = r < 0 ? r * 32768 : r * 32767;
+      }
+      recPart(new Uint8Array(out.buffer));
+    }
+  }
+  // hand the buffers back to the audio thread for reuse
+  if (m.L.length === 4096 && A.recTap) A.recTap.port.postMessage({ ret: [m.L, m.R] }, [m.L.buffer, m.R.buffer]);
+}
+function wavHeader(frames, sr) {
+  const b = new ArrayBuffer(44), v = new DataView(b), str = (o, t) => { for (let k = 0; k < t.length; k++) v.setUint8(o + k, t.charCodeAt(k)); };
+  const bytes = frames * 4;
+  str(0, "RIFF"); v.setUint32(4, 36 + bytes, true); str(8, "WAVE"); str(12, "fmt "); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 2, true); v.setUint32(24, sr, true); v.setUint32(28, sr * 4, true);
+  v.setUint16(32, 4, true); v.setUint16(34, 16, true); str(36, "data"); v.setUint32(40, bytes, true);
+  return b;
+}
+const recClock = () => { const t = Math.floor(REC.frames / REC.sr); return `${Math.floor(t / 3600) ? Math.floor(t / 3600) + ":" : ""}${String(Math.floor(t / 60) % 60).padStart(Math.floor(t / 3600) ? 2 : 1, "0")}:${String(t % 60).padStart(2, "0")}`; };
+// tracklist: a track goes on the list the first time it's playing and can be heard in the master
+function recTrackTick() {
+  if (!REC.on) return;
+  for (const d of decks) {
+    if (!deckActive(d.i) || !d.playing || !d.track) continue;
+    const xg = M.xfader, side = d.i % 2 === 0 ? (xg <= 0.5 ? 1 : Math.cos((xg - 0.5) * Math.PI)) : (xg >= 0.5 ? 1 : Math.cos((0.5 - xg) * Math.PI));
+    if (faderGain(M.fader[d.i]) * side < 0.05) continue;
+    if (REC.logged.get(d.i) === d.track) continue;
+    REC.logged.set(d.i, d.track);
+    REC.list.push({ at: recClock(), title: d.track.title, artist: d.track.artist || "", bpm: d.bpm ? Math.round(d.effBpm()) : 0, deck: d.i + 1 });
+  }
+}
+async function recStart() {
+  if (!A.ctx) return;
+  if (REC.fmt === "mp3") {
+    try {
+      REC.worker = new Worker(URL.createObjectURL(new Blob([MP3_WORKER], { type: "text/javascript" })));
+      REC.worker.postMessage({ t: "init", lib: new URL("vendor/lame.min.js", location.href).href, sr: A.ctx.sampleRate });
+      REC.worker.onmessage = (e) => { if (e.data.t === "mp3") recPart(e.data.b); else if (e.data.t === "done") { recPart(e.data.b); recFinish(); } };
+      REC.worker.onerror = () => { status("MP3 encoder failed to load: recording as WAV instead", 9000); REC.fmt = "wav"; };
+    } catch (e) { REC.fmt = "wav"; }
+  }
+  Object.assign(REC, { on: true, sr: A.ctx.sampleRate, frames: 0, parts: [], pending: [], pendingBytes: 0, list: [], logged: new Map(), started: new Date(), blob: null });
+  if (!A.recTap) {
+    A.recTap = new AudioWorkletNode(A.ctx, "rec-tap", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2], channelCount: 2, channelCountMode: "explicit" });
+    const sink = A.ctx.createGain(); sink.gain.value = 0;
+    A.recTap.connect(sink); sink.connect(A.ctx.destination);       // keeps the tap running
+  }
+  A.recTap.port.onmessage = (e) => recData(e.data);
+  A.limiter.connect(A.recTap);
+  $("#recBtn").classList.add("on");
+  $("#recPanel").hidden = true;
+  status(`Recording the master output (${REC.fmt === "mp3" ? "MP3 320" : "WAV"})`);
+}
+function recStop() {
+  if (!REC.on) return;
+  recTrackTick();
+  A.recTap.port.onmessage = (e) => { if (e.data.flushed) { REC.on = false; try { A.limiter.disconnect(A.recTap); } catch (err) {} if (REC.fmt === "mp3") REC.worker.postMessage({ t: "end" }); else recFinish(); } else recData(e.data); };
+  A.recTap.port.postMessage("flush");
+  $("#recBtn").classList.remove("on");
+  $("#recBtn").textContent = "● REC";
+}
+function recFinish() {
+  const parts = [...REC.parts, ...REC.pending];
+  REC.blob = REC.fmt === "mp3" ? new Blob(parts, { type: "audio/mpeg" }) : new Blob([wavHeader(REC.frames, REC.sr), ...parts], { type: "audio/wav" });
+  REC.parts = []; REC.pending = [];
+  if (REC.worker) { REC.worker.terminate(); REC.worker = null; }
+  const st = REC.started, pad = (n) => String(n).padStart(2, "0");
+  REC.name = `Cratebox set ${st.getFullYear()}-${pad(st.getMonth() + 1)}-${pad(st.getDate())} ${pad(st.getHours())}${pad(st.getMinutes())}`;
+  recSave();
+  $("#recInfo").textContent = `${recClock()} · ${(REC.blob.size / 1e6).toFixed(1)} MB · ${REC.fmt === "mp3" ? "MP3 320 kbps" : "WAV 16-bit"} · ${REC.list.length} track${REC.list.length === 1 ? "" : "s"}`;
+  $("#recList").textContent = recListText(false);
+  $("#recPanel").hidden = false;
+}
+const recListText = (full) => (full ? `${REC.name}\n\n` : "") + REC.list.map((x) => `${x.at.padStart(5)}  ${x.artist ? x.artist + " - " : ""}${x.title}${x.bpm ? ` (${x.bpm} BPM)` : ""}`).join("\n");
+function saveBlob(blob, name) {
+  const a = h("a", { href: URL.createObjectURL(blob), download: name });
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+}
+function recSave() { if (REC.blob) saveBlob(REC.blob, `${REC.name}.${REC.fmt === "mp3" ? "mp3" : "wav"}`); }
+$("#recBtn").addEventListener("click", () => (REC.on ? recStop() : recStart()));
+$("#recSaveAgain").addEventListener("click", recSave);
+$("#recSaveList").addEventListener("click", () => saveBlob(new Blob([recListText(true) + "\n"], { type: "text/plain" }), `${REC.name} tracklist.txt`));
+$("#recClose").addEventListener("click", () => { $("#recPanel").hidden = true; });
+window.addEventListener("beforeunload", (e) => { if (REC.on || decks.some((d) => d.playing)) { e.preventDefault(); e.returnValue = ""; } });
+
+// ---- report a problem: a GitHub issue (a repo workflow appends it to reports.txt) or copied text ----
+const REPORT_REPO = "zonahbear/Cratebox";
+function reportDiagnostics() {
+  const ua = navigator.userAgent, d = (i) => decks[i];
+  const browser = /Edg\//.test(ua) ? "Edge" : /OPR\//.test(ua) ? "Opera" : /Firefox\//.test(ua) ? "Firefox" : /CriOS|Chrome\//.test(ua) ? "Chrome" : /Safari\//.test(ua) ? "Safari" : "?";
+  const lines = [
+    `Cratebox: v${VERSION}`,
+    `Browser: ${browser} (${ua})`,
+    `Layout: ${PHONE ? "phone" : document.documentElement.classList.contains("touch") ? "touch" : "desktop"}, window ${innerWidth}x${innerHeight}, screen ${screen.width}x${screen.height} @${devicePixelRatio}x`,
+    `Web MIDI: ${HAS_MIDI ? "yes" : "no"}, controller: ${MIDI.name || "none"}${MIDI.profile ? ` (mapping ${MIDI.profile.id})` : ""}`,
+    `Audio: ${A.ctx ? `${A.ctx.sampleRate} Hz, ${A.ctx.destination.maxChannelCount} ch, state ${A.ctx.state}` : "not started"}`,
+    `Library: ${lib.tracks.length} tracks, files ${CAN_PICK_FOLDER ? "folder access" : MOBILE_FILES ? "imported" : "file picker"}`,
+    `Decks: ${[0, 1].map((i) => d(i) && d(i).loaded ? `${i + 1}: ${d(i).effBpm ? d(i).effBpm().toFixed(2) : "?"} BPM${d(i).playing ? " playing" : ""}${d(i).sync ? " sync" : ""}` : `${i + 1}: empty`).join(", ")}`,
+  ];
+  if (RECENT_ERRORS.length) lines.push("Recent errors:", ...RECENT_ERRORS.map((e) => "  " + e));
+  return lines.join("\n");
+}
+function reportText() {
+  const what = $("#reportWhat").value.trim(), want = $("#reportWant").value.trim();
+  let t = `What happened:\n${what || "(not filled in)"}\n`;
+  if (want) t += `\nExpected:\n${want}\n`;
+  if ($("#reportDiag").checked) t += `\nDevice details:\n${reportDiagnostics()}\n`;
+  return t;
+}
+function reportRefresh() { $("#reportPreview").textContent = $("#reportDiag").checked ? reportDiagnostics() : ""; }
+function openReport() {
+  $("#setPanel").hidden = true; $("#setSheet").hidden = true;
+  $("#reportNote").textContent = "No GitHub account? Copy it and send it to the developer.";
+  reportRefresh();
+  $("#reportSheet").hidden = false;
+  setTimeout(() => $("#reportWhat").focus(), 50);
+}
+$("#reportOpen").addEventListener("click", openReport);
+$("#reportClose").addEventListener("click", () => { $("#reportSheet").hidden = true; });
+$("#reportSheet").addEventListener("pointerdown", (e) => { if (e.target === e.currentTarget) $("#reportSheet").hidden = true; });
+$("#reportDiag").addEventListener("change", reportRefresh);
+// typing in the report must not trigger the deck keyboard shortcuts
+for (const id of ["#reportWhat", "#reportWant"]) $(id).addEventListener("keydown", (e) => e.stopPropagation());
+$("#reportGitHub").addEventListener("click", () => {
+  const what = $("#reportWhat").value.trim();
+  if (!what) { $("#reportNote").textContent = "Describe what happened first."; $("#reportWhat").focus(); return; }
+  const title = "[Report] " + (what.split("\n")[0].slice(0, 70) || "Problem");
+  // the marker lets the repo's workflow pick out reports made from here
+  const body = reportText() + "\n<!-- cratebox-report -->";
+  const url = `https://github.com/${REPORT_REPO}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body.slice(0, 6000))}`;
+  window.open(url, "_blank", "noopener");
+  $("#reportNote").textContent = "Opened GitHub: press Create to send it. Thanks!";
+});
+$("#reportCopy").addEventListener("click", async () => {
+  const t = reportText();
+  let ok = false;
+  try { await navigator.clipboard.writeText(t); ok = true; } catch (e) {
+    // older in-app browsers: select a temporary textarea and copy that
+    const ta = h("textarea", { style: "position:fixed;opacity:0" }); ta.value = t; document.body.append(ta); ta.select();
+    try { ok = document.execCommand("copy"); } catch (e2) {}
+    ta.remove();
+  }
+  $("#reportNote").textContent = ok ? "Copied. Paste it in a message or comment to the developer." : "Couldn't copy here: select the details above and copy them by hand.";
+});
 $("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; $("#setSheet").hidden = true; startLearn(); });
 $("#learnDone").addEventListener("click", stopLearn);
 $("#ctlClear").addEventListener("click", clearLearned);
@@ -4559,12 +5110,18 @@ function phoneize() {
 //  Build UI + main loop
 // =====================================================================================
 const deckEls = [buildDeck(0), buildMixer(), buildDeck(1)];
+for (let i = 2; i < NDECKS; i++) deckEls.push(buildDeck(i));
 $("#decks").append(...deckEls);
+$("#fourBtn").addEventListener("click", () => setFour(!FOUR));
 $("#masterSlot").append(knob("master", "Master", M.master, (v) => { M.master = v; applyMaster(); }, { size: 30 }));
 if (PHONE) phoneize();
 tagLearnables();
 useProfile("ddj-flx4");
-refreshDeckUI(0); refreshDeckUI(1); refreshMixerUI();
+for (let i = 0; i < NDECKS; i++) refreshDeckUI(i);
+refreshMixerUI();
+applyTheme(THEME);
+setFour(FOUR);
+$("#themeSel").addEventListener("change", (e) => applyTheme(e.target.value));
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
 $("#rangeSel").addEventListener("change", (e) => {
@@ -4600,25 +5157,44 @@ document.addEventListener("visibilitychange", () => {
   updateWakeLock();
 });
 let lastWake = 0;
+// audio first: sync and beat lock run on a 20 ms timer of their own. Screen drawing (requestAnimationFrame)
+// stops when the tab is hidden and slows down when the computer is busy; this doesn't (Chrome doesn't
+// throttle timers in a tab that's playing sound), and nothing in drawing can stop it.
+let controlTimer = 0, lastRecTick = 0;
+function controlTick() {
+  for (const d of decks) { try { d.syncTick(); } catch (e) { noteError("sync: " + e.message); } }
+  const now = performance.now();
+  if (REC.on && now - lastRecTick > 500) { lastRecTick = now; try { recTrackTick(); } catch (e) {} }
+}
+function startControl() { if (!controlTimer) controlTimer = setInterval(controlTick, 20); }
+// drawing backs off when frames get slow (a weak computer, a 4K screen): the waveforms skip every other frame
+let drawCost = 0, frameNo = 0;
 function frame(ts) {
+  requestAnimationFrame(frame);                     // first: an error below can't stop the next frame
+  frameNo++;
+  const t0 = performance.now();
   if (ts - lastWake > 1000) { lastWake = ts; updateWakeLock(); if (A.ctx) checkAudioAlive(); }
-  for (const d of decks) d.syncTick();
-  // a drawing hiccup (e.g. a hidden canvas) must never stop the loop
-  for (const f of [drawLane, drawOverview, drawJog]) for (const i of [0, 1]) { try { f(i); } catch (e) {} }
+  const skipLanes = drawCost > 10 && (frameNo & 1);
+  for (const f of [drawLane, drawOverview, drawJog]) for (let i = 0; i < NDECKS; i++) {
+    if (!deckActive(i) || (f === drawJog && i >= 2 && ui[i].jog.offsetParent === null) || (f === drawLane && skipLanes)) continue;
+    try { f(i); } catch (e) {}
+  }
   if (A.ctx) {
-    for (const i of [0, 1]) {
+    for (let i = 0; i < NDECKS; i++) {
+      if (!deckActive(i) || !A.decks[i]) continue;
       const c = A.decks[i];
       const lv = levelOf(Math.max(peakOf(c.meterL), peakOf(c.meterR)));
       meterState[i] = Math.max(lv, meterState[i] - 0.03);
       drawMeter(ui[i].meter, meterState[i]);
     }
     const ml = levelOf(Math.max(peakOf(A.masterMeterL), peakOf(A.masterMeterR)));
-    meterState[2] = Math.max(ml, meterState[2] - 0.03);
-    drawMeter(A.masterMeterCanvas, meterState[2]);
+    masterMeterState = Math.max(ml, masterMeterState - 0.03);
+    drawMeter(A.masterMeterCanvas, masterMeterState);
   }
   if (ts - lastUi > 66) {
     lastUi = ts;
-    for (const i of [0, 1]) {
+    for (let i = 0; i < NDECKS; i++) {
+      if (!deckActive(i)) continue;
       const d = decks[i], u = ui[i];
       const t = d.now();
       u.elapsed.textContent = fmtTime(t);
@@ -4638,8 +5214,8 @@ function frame(ts) {
       const ptxt = ph ? `${ph.label.toUpperCase()} ${Math.min(ph.bars, Math.floor((t - ph.start) / ph.barLen) + 1)}/${ph.bars}` : "";
       if (u.phraseTag.textContent !== ptxt) { u.phraseTag.textContent = ptxt; u.phraseTag.style.color = ph ? PHRASE_COLORS[ph.label] : ""; }
       [...u.beats.children].forEach((e, k) => e.classList.toggle("on", k === beat));
-      const m = d.other();
-      u.mtag.classList.toggle("on", d.loaded && m.sync && m.master() === d);
+      u.mtag.classList.toggle("on", d.loaded && decks.some((o) => o !== d && deckActive(o.i) && o.sync && o.master() === d));
+      if (u.miniPitch) { const pt = `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`; if (u.miniPitch.textContent !== pt) u.miniPitch.textContent = pt; u.miniPlay.classList.toggle("lit", d.playing); u.miniCue.classList.toggle("lit", d.loaded && Math.abs(t - d.cue) < 0.03); }
       const pe = d.sync ? d.phaseErr : null;
       const ptx = pe == null ? "" : `${pe >= 0 ? "+" : "−"}${Math.round(Math.abs(pe) * 1000)} ms`;
       if (u.phaseTag.textContent !== ptx) {
@@ -4652,9 +5228,10 @@ function frame(ts) {
       u.cueBtn.classList.toggle("lit", d.loaded && Math.abs(t - d.cue) < 0.03);
     }
   }
+  if (REC.on && ts - (REC.lastTick || 0) > 500) { REC.lastTick = ts; $("#recBtn").textContent = "■ " + recClock(); }
   if (ts - lastLed > 50) { lastLed = ts; updateLeds(); }
   if (ts - lastUi < 20) { const rk = refKey(); if (rk !== lastRef) { lastRef = rk; renderList(); } }
-  requestAnimationFrame(frame);
+  drawCost = drawCost * 0.9 + (performance.now() - t0) * 0.1;
 }
 
 window.addEventListener("keydown", (e) => {
@@ -4663,10 +5240,16 @@ window.addEventListener("keydown", (e) => {
   else if ((e.key === "a" || e.key === "A") && (e.ctrlKey || e.metaKey)) { e.preventDefault(); lib.selIds = new Set(lib.view.map((t) => t.id)); renderList(); }
   else if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); }
   else if (e.key === "ArrowUp") { e.preventDefault(); moveSel(-1); }
-  else if (e.key === "ArrowLeft" && e.shiftKey) loadSelected(0);
-  else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(1);
+  else if (e.key === "ArrowLeft" && e.shiftKey) loadSelected(FOUR && (e.ctrlKey || e.metaKey) ? 2 : 0);
+  else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(FOUR && (e.ctrlKey || e.metaKey) ? 3 : 1);
 });
-window.addEventListener("resize", () => { overviewBase[0] = overviewBase[1] = null; renderList(true); });
+window.addEventListener("resize", () => { applyUiSize(); overviewBase.fill(null); renderList(true); fitApp(); });
+$("#uiSizeSel").value = uiSize;
+$("#uiSizeSel").addEventListener("change", (e) => {
+  uiSize = e.target.value;
+  try { localStorage.setItem("cb.uisize", uiSize); } catch (err) {}
+  applyUiSize(); overviewBase.fill(null); renderList(true); fitApp();
+});
 window.addEventListener("beforeunload", () => {
   // leave the controller dark
   for (const [key] of MIDI.ledCache) midiSend([Math.floor(key / 256), key % 256, 0]);
@@ -4702,11 +5285,12 @@ $("#startBtn").addEventListener("click", async () => {
   waitForMidi().then(initMIDI);
   listOutputs();
   navigator.mediaDevices && navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener("devicechange", listOutputs);
+  startControl();
   requestAnimationFrame(frame);
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

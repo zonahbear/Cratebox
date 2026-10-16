@@ -1,0 +1,54 @@
+# Changelog
+
+All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`; 1.0 comes once it has been road-tested on real sets.
+
+## 0.10.0 (2026-10-15)
+
+### Added
+- **4-deck mode** (computers and tablets): **4 DECKS** in the header adds decks 3 and 4, two more waveforms and a 4-channel mixer (3 1 2 4). Decks 3 and 4 start compact (CUE, PLAY, SYNC, loop, tempo) and expand to full decks with ⤢. Crossfader: 1 and 3 left, 2 and 4 right. Sync picks a master among four decks. Remembered between sessions.
+- **Set recording**: ● REC records the master output to WAV (16-bit, lossless) or MP3 (320 kbps, encoded in the background with the bundled lamejs). A tracklist with timestamps is kept while recording and can be saved as text.
+- **Looks**: a new **Booth** look in Settings, an original club-player style where each deck is its own player with a screen and waveform, and controls are drawn like hardware. The current look stays the default.
+- **Interface size**: Auto scales the whole app up on big screens (1440p, 4K) so it fills them like a laptop screen; or choose 100–175%.
+- **Report a problem** (Settings): sends a pre-filled GitHub issue with device details, which a workflow copies into `reports.txt`; or copies the report to the clipboard.
+- **Audio buffer** setting: Small / Medium (new default) / Large.
+- This changelog.
+
+### Changed: audio first
+- Sync and the beat lock now run on their own 20 ms timer instead of the screen refresh: they keep correcting with the tab hidden or the screen busy, and a drawing error can't stop them.
+- A stopped deck no longer costs processing on the audio thread; decks 3 and 4 have no audio chain until 4-deck mode is turned on.
+- The recorder reuses its buffers (no garbage on the audio thread).
+- Library analysis takes a breather between tracks while music plays.
+- Waveform drawing skips every other frame when frames get slow, before anything else gives.
+- Default audio buffer is now Medium ("balanced") instead of the smallest, trading a few ms of latency for fewer dropouts.
+- Leaving or reloading the page while music plays (or records) asks first.
+- **2 DECKS** won't hide decks 3 and 4 while they play (it used to stop them).
+
+### Fixed
+- Short laptop screens (720–820 px tall): decks and mixer tightened so both waveforms and the library stay visible.
+
+## 0.9.3 (2026-10-15)
+### Fixed
+- Phones and tablets: **Add music** did nothing in some in-app browsers (iOS MIDI browsers). The tap now lands on the real file picker instead of one opened from script.
+### Added
+- `filetest.html`: tries four ways of picking files, to see which an in-app browser allows.
+
+## 0.9.2 (2026-10-15)
+### Added
+- iPhone/iPad: FLX4 support through MIDI browser apps (MIDIWeb Browser). Web MIDI added late by such apps is picked up when you press Start.
+### Changed
+- File pickers are invisible instead of `display: none`, which some in-app browsers won't open.
+- Safari's start screen points to MIDIWeb Browser for controller use.
+
+## 0.9.1 (2026-10-15)
+### Fixed
+- Phone faders start at 100%, and the handle sits at the bottom at 0%.
+- Layout scales from an iPhone SE to a 1440p monitor (narrow phones drop the tiny jog, short laptops get a tighter deck and paired mixer knobs, tablets get finger-sized controls); iPad mini landscape no longer scrolls sideways.
+- Service worker: if GitHub Pages answers with an error page (it briefly 404s while redeploying), the cached app is used.
+### Changed
+- Bigger mixer EQ knobs on phones.
+
+## 0.9.0 (2026-10-14)
+### Added
+- Sync locks halftime / double time (70↔140, 65↔130, 85↔170) without changing either track's speed; SYNC ½ / SYNC ×2 on the button.
+- Beat lock: continuous tiny speed corrections keep synced decks from drifting; ±ms phase readout.
+- Playlists, rekordbox USB/SD export and rekordbox XML support; Android controller support; waveform seeking. (Earlier history: see the git log.)

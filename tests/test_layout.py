@@ -5,6 +5,7 @@ targets are big enough on touch screens, the decks and mixer fit without scrolli
 layout promises it. Screenshots go to the folder given as the first argument (optional).
 
     python tests/test_layout.py [screenshot-folder]
+    CB_THEME=booth CB_FOUR=1 python tests/test_layout.py      (the Booth look, 4-deck mode)
 """
 import os
 import sys
@@ -92,6 +93,8 @@ def main():
                 opts.update(is_mobile=kind in ("iphone", "android"), has_touch=True, user_agent=ua, device_scale_factor=3 if kind == "iphone" else 2,
                             screen={"width": short, "height": long_} if h < w else {"width": short, "height": long_})
             ctx = b.new_context(**opts)
+            # CB_THEME=booth / CB_FOUR=1: audit the Booth look and 4-deck mode too
+            ctx.add_init_script(f"localStorage.setItem('cb.theme', '{os.environ.get('CB_THEME', 'default')}'); localStorage.setItem('cb.four', '{os.environ.get('CB_FOUR', '0')}');")
             if kind in ("iphone", "ipad"):
                 ctx.add_init_script(I.STRIP)
             page = ctx.new_page()
@@ -104,7 +107,7 @@ def main():
                 await cratebox.addFiles(files); }""", names)
             page.wait_for_function("cratebox.lib.tracks.length === 2")
             page.evaluate("cratebox.lib.sel = 0; cratebox.loadSelected(0); cratebox.lib.sel = 1; cratebox.loadSelected(1)")
-            page.wait_for_function("cratebox.decks.every(d => d.loaded)", timeout=60000)
+            page.wait_for_function("cratebox.decks.slice(0, 2).every(d => d.loaded)", timeout=60000)
             page.wait_for_timeout(400)
             a = page.evaluate(AUDIT)
             label = f"{name} {w}x{h}"
