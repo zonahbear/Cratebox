@@ -708,7 +708,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.1</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.2</span></div>
         </div>
       </div>
     <span id="status"></span>
@@ -774,7 +774,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.1</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.2</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -787,7 +787,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "1.0.1";
+const VERSION = "1.0.2";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
@@ -1930,9 +1930,12 @@ function applyMixer(i) {
 function applyMaster() {
   if (!A.ctx) return;
   ramp(A.masterLevel.gain, Math.pow(M.master, 1.6) * 1.2);
-  // CUE/MASTER mix: full left = only the cued channels, full right = only the master, equal-power in between
-  ramp(A.hpCue.gain, M.headMix < 0.01 ? 1 : Math.cos(M.headMix * Math.PI / 2));
-  ramp(A.hpMaster.gain, M.headMix < 0.01 ? 0 : Math.sin(M.headMix * Math.PI / 2));
+  // CUE/MASTER mix: the left half up to 12 o'clock (with a little room for the knob's centre detent, which
+  // reads 64/127) is cued channels only, no master at all. Past that the master fades in (equal power) and the
+  // cue fades out, to master only at full right. So the master only comes in when you mean it, or with MASTER CUE.
+  const hm = clamp((M.headMix - 0.53) / 0.47, 0, 1);
+  ramp(A.hpCue.gain, Math.cos(hm * Math.PI / 2));
+  ramp(A.hpMaster.gain, Math.sin(hm * Math.PI / 2));
   if (A.hpMcue) ramp(A.hpMcue.gain, M.masterCue ? 1 : 0);
 }
 function applyAllMixer() { for (let i = 0; i < NDECKS; i++) applyMixer(i); applyMaster(); }

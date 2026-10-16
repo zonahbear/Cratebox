@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 1.0.1. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+Version 1.0.2. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 A lightweight DJ app (2 or 4 decks) that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -27,7 +27,7 @@ Wire it like rekordbox: speakers on the FLX4's rear MASTER outputs, headphones i
   - **Another device**: cue mix on a second sound output (for example your laptop's headphone jack), master stays on the FLX4.
   - **Split**: mono master left, mono cue right, for a single output and a splitter cable.
 - **Test cue** beeps three times in the headphone mix only. If you also hear it from the speakers, cue isn't separated yet.
-- The **CUE/MST** knob (and the FLX4's HEADPHONES MIX knob) blends cue and master in the headphones. It starts fully on **CUE**: the headphones are silent until you press a channel's **CUE**. Turn it right to bring the master in.
+- The **CUE/MST** knob (and the FLX4's HEADPHONES MIX knob) blends cue and master in the headphones. It starts fully on **CUE**: the headphones are silent until you press a channel's **CUE**. From fully left up to 12 o'clock it's cue only, with no master at all; past 12 o'clock the master fades in, and fully right is master only. So the master is only in your headphones when you turn past the middle or press MASTER CUE.
 - **MASTER CUE**: the FLX4's own MASTER CUE button puts the master in the headphones in the controller's hardware. On other setups (Split, another device), the **MST** button under the CUE/MST knob does the same in Cratebox (also learnable on a controller).
 - HEADPHONES LEVEL and MASTER LEVEL on the FLX4 are analog and always work.
 

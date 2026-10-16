@@ -3,7 +3,7 @@
 - nothing in the headphones until a channel's CUE is on (the mix knob starts on CUE)
 - channel CUE: that channel, and only it
 - MASTER CUE: the master in the headphones, whatever the mix knob says
-- the CUE/MASTER knob: full left = cue only, full right = master only
+- the CUE/MASTER knob: cue only up to 12 o'clock (no master), master fades in past it, master only at full right
 
     python tests/test_headphones.py
 """
@@ -59,6 +59,17 @@ def main():
         page.evaluate("cratebox.M.headMix = 1; document.querySelector('#mixer .mcuebtn').click(); document.querySelector('#mixer .mcuebtn').click()")
         full = lv()
         check("mix knob full right: the master", full > 0.02, f"peak {full:.3f}")
+        # 12 o'clock on the FLX4's knob (64/127) with MASTER CUE off: cue only, no master
+        page.evaluate("cratebox.midiIn([0xB6, 0x0C, 64]); cratebox.midiIn([0xB6, 0x2C, 0])")
+        noon = lv()
+        check("FLX4 mix knob at 12 o'clock, MASTER CUE off: no master", noon < 0.001, f"peak {noon:.4f}")
+        page.click('#mixer .strip[data-i="0"] .cuebtn')
+        noon_cue = lv()
+        page.click('#mixer .strip[data-i="0"] .cuebtn')
+        check("...but a cued channel is heard at full level there", noon_cue > 0.02, f"peak {noon_cue:.3f}")
+        page.evaluate("cratebox.midiIn([0xB6, 0x0C, 96]); cratebox.midiIn([0xB6, 0x2C, 0])")
+        three = lv()
+        check("past 12 o'clock (about 3 o'clock): the master fades in", three > 0.01, f"peak {three:.3f}")
         # the knob through MIDI (FLX4 HEADPHONES MIX) and back to CUE side
         page.evaluate("cratebox.midiIn([0xB6, 0x0C, 0]); cratebox.midiIn([0xB6, 0x2C, 0])")
         back = lv()

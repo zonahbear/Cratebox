@@ -2,6 +2,11 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.0.2 (2026-10-16)
+
+### Fixed
+- **Headphone mix knob at 12 o'clock no longer brings the master in.** The left half of the CUE/MASTER knob, up to and including 12 o'clock, is now cue only (with a little room for the FLX4 knob's centre detent); the master fades in only past 12 o'clock, and fully right is master only. With MASTER CUE off and the knob at the centre, you hear only the cued channels.
+
 ## 1.0.1 (2026-10-16)
 
 ### Fixed
