@@ -2,6 +2,14 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.0.1 (2026-10-16)
+
+### Fixed
+- **Headphone cue.** The CUE/MASTER mix started halfway, so about 70% of the master was always in the headphones, even with no CUE pressed, and the FLX4's MASTER CUE seemed to do little (the master was already there). The mix now starts fully on CUE: silence until you press a channel's CUE, and MASTER CUE (or turning the knob right) clearly brings the master in. Fully left is now exactly cue-only, fully right exactly master-only.
+
+### Added
+- **MST** (master cue) button under the CUE/MST knob, for setups without the FLX4's hardware MASTER CUE (Split, another device). Learnable on a controller.
+
 ## 1.0.0 (2026-10-16)
 
 ### Changed

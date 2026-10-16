@@ -156,6 +156,13 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .meter { width: 8px; height: 126px; display: block; }
 .cuebtn { width: 56px; height: 26px; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 13px; letter-spacing: .05em; }
 .cuebtn.lit { background: var(--cue); color: var(--bg); border-color: var(--cue); }
+/* master cue: a small button in the mixer's centre column, under the CUE/MASTER knob */
+.mcuebtn { width: 30px; height: 22px; padding: 0; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 10px; letter-spacing: .03em; color: var(--muted); }
+.mcuebtn.lit { background: var(--cue); color: var(--bg); border-color: var(--cue); }
+html.touch:not(.phone) .mcuebtn { height: 28px; }
+html.phone .mcuebtn { display: none; }
+html[data-theme="booth"] .mcuebtn { background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; color: #d7dce4; }
+html[data-theme="booth"] .mcuebtn.lit { background: var(--cue); color: #000; box-shadow: 0 0 12px #ffaa0088; }
 .faders { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 34px 1fr; gap: 6px; align-items: end; }
 .faders .fcol { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .xfade { grid-column: 1 / -1; display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
@@ -701,7 +708,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.0</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.1</span></div>
         </div>
       </div>
     <span id="status"></span>
@@ -767,7 +774,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.0</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.1</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -780,7 +787,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "1.0.0";
+const VERSION = "1.0.1";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
@@ -1789,6 +1796,9 @@ async function initAudio(ctxOverride) {
   A.masterLevel.connect(A.hpMaster);
   A.hpCue.connect(A.hpSum);
   A.hpMaster.connect(A.hpSum);
+  // MASTER CUE: the master straight into the headphones at full level, whatever the mix knob says
+  A.hpMcue = ctx.createGain(); A.hpMcue.gain.value = 0;
+  A.masterLevel.connect(A.hpMcue); A.hpMcue.connect(A.hpSum);
   A.limiter = ctx.createDynamicsCompressor();
   A.limiter.threshold.value = -1; A.limiter.knee.value = 0; A.limiter.ratio.value = 20;
   A.limiter.attack.value = 0.001; A.limiter.release.value = 0.08;
@@ -1881,7 +1891,7 @@ function routeOutputInner(mode) {
 const perCh = (v) => Array.from({ length: NDECKS }, () => v);
 const M = {
   trim: perCh(0.5), hi: perCh(0.5), mid: perCh(0.5), low: perCh(0.5), cfx: perCh(0.5), fader: perCh(1),
-  pfl: perCh(false), xfader: 0.5, headMix: 0.5, master: 0.8,
+  pfl: perCh(false), xfader: 0.5, headMix: 0, masterCue: false, master: 0.8,
 };
 const ramp = (p, v) => { if (A.ctx) p.setTargetAtTime(v, A.ctx.currentTime, 0.008); };
 function eqGain(v) {
@@ -1920,8 +1930,10 @@ function applyMixer(i) {
 function applyMaster() {
   if (!A.ctx) return;
   ramp(A.masterLevel.gain, Math.pow(M.master, 1.6) * 1.2);
-  ramp(A.hpCue.gain, Math.cos(M.headMix * Math.PI / 2));
-  ramp(A.hpMaster.gain, Math.sin(M.headMix * Math.PI / 2));
+  // CUE/MASTER mix: full left = only the cued channels, full right = only the master, equal-power in between
+  ramp(A.hpCue.gain, M.headMix < 0.01 ? 1 : Math.cos(M.headMix * Math.PI / 2));
+  ramp(A.hpMaster.gain, M.headMix < 0.01 ? 0 : Math.sin(M.headMix * Math.PI / 2));
+  if (A.hpMcue) ramp(A.hpMcue.gain, M.masterCue ? 1 : 0);
 }
 function applyAllMixer() { for (let i = 0; i < NDECKS; i++) applyMixer(i); applyMaster(); }
 
@@ -3973,8 +3985,11 @@ function buildMixer() {
     return s;
   };
   const center = h("div", { class: "mcenter" },
-    knob("headmix", "Cue/Mst", M.headMix, (v) => { M.headMix = v; applyMaster(); }, { size: 34 }),
+    knob("headmix", "Cue/Mst", M.headMix, (v) => { M.headMix = v; applyMaster(); }, { size: 34, center: 0, def: 0 }),
     h("span", { class: "slabel" }, "Master"));
+  A.mcueBtn = h("button", { class: "mcuebtn", "aria-label": "Master cue", title: "Master cue: hear the master in the headphones on top of the cued channels (the FLX4's own MASTER CUE button does this in its hardware)",
+    onclick: () => { M.masterCue = !M.masterCue; applyMaster(); refreshMixerUI(); } }, "MST");
+  center.append(A.mcueBtn);
   A.masterMeterCanvas = h("canvas", { class: "meter", width: "16", height: "300", style: "width:14px;height:126px" });
   center.append(A.masterMeterCanvas);
   mx.append(strip(0), center, strip(1));
@@ -3996,6 +4011,7 @@ function buildMixer() {
 
 function refreshMixerUI() {
   for (let i = 0; i < NDECKS; i++) ui[i].pfl.classList.toggle("lit", M.pfl[i]);
+  if (A.mcueBtn) A.mcueBtn.classList.toggle("lit", M.masterCue);
 }
 // looks: "default" and "booth" (club-player style: every deck its own player with a screen and waveform)
 // Booth is the default; a look only sticks once it has been picked in Settings (cb.themeChosen), so
@@ -4590,6 +4606,7 @@ function pressAction(name, arg, d, deck, on) {
     case "callNext": if (on) d.callCue(1); return;
     case "jump": if (on) d.beatJump(+arg); return;
     case "pfl": if (on) { M.pfl[deck] = !M.pfl[deck]; applyMixer(deck); refreshMixerUI(); } return;
+    case "masterCue": if (on) { M.masterCue = !M.masterCue; applyMaster(); refreshMixerUI(); } return;
     case "quant": if (on) { d.quant = !d.quant; refreshDeckUI(deck); } return;
     case "keylock": if (on) d.setMT(!d.mt); return;
     case "mode":
@@ -4645,7 +4662,7 @@ function updateLeds() {
 // ---- MIDI learn: click a control on screen, then move or press it on the controller ----
 // learnable on-screen controls carry data-learn="action" and data-deck
 const LEARN_LABEL = { play: "Play", cue: "Cue", sync: "Sync", loopIn: "Loop in", loopOut: "Loop out", reloop: "Reloop/exit",
-  tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", fader: "Channel fader", trim: "Trim", hi: "EQ high",
+  tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", masterCue: "Master cue", fader: "Channel fader", trim: "Trim", hi: "EQ high",
   mid: "EQ mid", low: "EQ low", cfx: "Filter (CFX)", xfader: "Crossfader", headMix: "Cue/master mix", master: "Master level",
   browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)" };
 function startLearn() {
@@ -4902,6 +4919,7 @@ function tagLearnables() {
   }
   tag(widgets.xfader && widgets.xfader.el, "xfader", -1);
   tag(widgets.headmix && widgets.headmix.el, "headMix", -1);
+  tag(A.mcueBtn, "masterCue", -1);
   tag(widgets.master && widgets.master.el, "master", -1);
 }
 // ---- set recording: master output to WAV (16-bit) or MP3 (320 kbps, lamejs in a worker) + a tracklist ----
