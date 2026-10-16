@@ -561,11 +561,26 @@ html.four #waves canvas { height: var(--lane4); }
   html.four:not(.phone) #decks > .deck[data-i="3"] { grid-column: 3; grid-row: 2; }
 }
 html.four #mixer { grid-template-columns: 1fr 1fr 44px 1fr 1fr; }
-html.four #mixer > .strip.s2 { grid-column: 1; grid-row: 1; }
-html.four #mixer > .strip[data-i="0"] { grid-column: 2; grid-row: 1; }
-html.four #mixer > .mcenter { grid-column: 3; grid-row: 1; }
-html.four #mixer > .strip[data-i="1"] { grid-column: 4; grid-row: 1; }
-html.four #mixer > .strip.s3 { grid-column: 5; grid-row: 1; }
+html.four #mixer > .layers { grid-column: 1 / -1; grid-row: 1; }
+html.four #mixer > .strip.s2 { grid-column: 1; grid-row: 2; }
+html.four #mixer > .strip[data-i="0"] { grid-column: 2; grid-row: 2; }
+html.four #mixer > .mcenter { grid-column: 3; grid-row: 2; }
+html.four #mixer > .strip[data-i="1"] { grid-column: 4; grid-row: 2; }
+html.four #mixer > .strip.s3 { grid-column: 5; grid-row: 2; }
+/* deck layers: which decks the controller's sides play (1|3 on the left, 2|4 on the right) */
+.layers { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.layerbtn { display: inline-flex; padding: 0; border: 1px solid var(--line2); border-radius: 5px; overflow: hidden; background: #0c0e12; height: 22px; }
+.layerbtn span { min-width: 24px; padding: 0 6px; display: grid; place-items: center; font-family: var(--f-disp); font-weight: 700; font-size: 13px; color: var(--muted); }
+html.touch .layerbtn { height: 30px; }
+html.touch .layerbtn span { min-width: 34px; font-size: 15px; }
+.layerbtn span.on[data-d="0"] { background: var(--d0); color: #031321; }
+.layerbtn span.on[data-d="1"] { background: var(--d1); color: #1d0c02; }
+.layerbtn span.on[data-d="2"] { background: var(--d2); color: #02201c; }
+.layerbtn span.on[data-d="3"] { background: var(--d3); color: #220320; }
+html.four .deck.hw[data-i="0"] { outline: 2px solid var(--d0); outline-offset: -2px; }
+html.four .deck.hw[data-i="1"] { outline: 2px solid var(--d1); outline-offset: -2px; }
+html.four .deck.hw[data-i="2"] { outline: 2px solid var(--d2); outline-offset: -2px; }
+html.four .deck.hw[data-i="3"] { outline: 2px solid var(--d3); outline-offset: -2px; }
 html.four #mixer .faders { grid-template-columns: 1fr 1fr 44px 1fr 1fr; }
 html.four #mixer .faders > .f2 { grid-column: 1; grid-row: 1; }
 html.four #mixer .faders > .fcol:first-child { grid-column: 2; grid-row: 1; }
@@ -4421,7 +4436,16 @@ function buildMixer() {
   center.append(A.mcueBtn);
   A.masterMeterCanvas = h("canvas", { class: "meter", width: "16", height: "300", style: "width:14px;height:126px" });
   center.append(A.masterMeterCanvas);
-  mx.append(strip(0), center, strip(1));
+  // deck layers (4-deck mode): which decks the controller's left and right sides play
+  const layers = h("div", { class: "layers ch34" });
+  A.layerBtns = [0, 1].map((side) => {
+    const b = h("button", { class: "layerbtn", title: `Which deck the controller's ${side ? "right" : "left"} side plays: ${side + 1} or ${side + 3}. Click to switch (learnable).`,
+      onclick: () => toggleSide(side) },
+      h("span", { "data-d": side, class: "on" }, String(side + 1)), h("span", { "data-d": side + 2 }, String(side + 3)));
+    return b;
+  });
+  layers.append(A.layerBtns[0], h("span", { class: "slabel" }, "Controller"), A.layerBtns[1]);
+  mx.append(layers, strip(0), center, strip(1));
   for (let i = 2; i < NDECKS; i++) mx.append(Object.assign(strip(i), { className: `strip ch34 s${i}` }));
   const faders = h("div", { class: "faders" });
   for (let i = 0; i < NDECKS; i++) {
@@ -4520,6 +4544,8 @@ function setFour(on) {
   const xl = $("#mixer .xl"), xr = $("#mixer .xr");
   if (xl) { xl.textContent = on ? "1·3" : "1"; xr.textContent = on ? "2·4" : "2"; }
   for (const d of decks.slice(2)) if (d.sync && !on) d.setSync(false);
+  if (!on) { MIDI.side = [0, 1]; MIDI.pickup.clear(); }
+  refreshLayerUI();
   if (!on && typeof FX.beat.ch === "number" && FX.beat.ch >= 2) fxChannel(0);
   applyAllMixer();
   overviewBase.fill(null);
@@ -4990,7 +5016,7 @@ function profileFor(portName) {
     || PROFILES.find((p) => p.id === "learn");
 }
 
-const MIDI = { access: null, inputs: [], outputs: [], sysex: false, ledCache: new Map(), msb: new Map(), keep: null, log: [], name: "",
+const MIDI = { access: null, inputs: [], outputs: [], sysex: false, ledCache: new Map(), msb: new Map(), side: [0, 1], pickup: new Map(), keep: null, log: [], name: "",
   profile: null, table: new Map(), lsbTable: new Map(), ledEntries: [], learned: [], learning: null };
 const midiKey = (st, d1) => (((st & 0xf0) === 0x80 ? 0x90 | (st & 0x0f) : st) << 8) | d1;
 function learnedKey(p) { return `cb.learn.${p.id}`; }
@@ -5083,14 +5109,17 @@ const REL_ACTIONS = new Set(["jogTop", "jogSide", "jogSearch", "browse", "zoom"]
 const LED_ACTIONS = /^(play|cue|sync|pfl|loopIn|loopOut|reloop|keylock|quant|mode:|hot:|loop:|pfx:|pfx2:|fxOn)/;
 const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump", "padfx", "padfx2"]);
 function runEntry(e, type, v, isLsb) {
-  const [, , action, deck, lsb] = e;
+  const [, , action, side, lsb] = e;
   const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = colon < 0 ? "" : action.slice(colon + 1);
+  // the controller's left/right side drives whichever deck its layer is on (1 or 3, 2 or 4)
+  const deck = name === "layer" ? side : hwDeck(side);
   const d = deck >= 0 ? decks[deck] : null;
   if (type === 0xb0 && ABS_ACTIONS.has(name)) {
     let val;
     if (!lsb) val = v / 127;
     else if (!isLsb) { MIDI.msb.set(e, v); val = v / 127; }       // apply the MSB straight away, refine on the LSB
     else val = (((MIDI.msb.get(e) || 0) << 7) | v) / 16383;
+    if (!pickedUp(name, deck, val)) return;
     return setAbs(name, deck, val);
   }
   if (REL_ACTIONS.has(name)) {
@@ -5105,6 +5134,47 @@ function runEntry(e, type, v, isLsb) {
   }
   const on = type === 0x90 ? v > 0 : type === 0x80 ? false : v > 63;
   pressAction(name, arg, d, deck, on);
+}
+// ---- deck layers: on a 2-channel controller like the FLX4, the left side plays deck 1 or 3 and the
+// right side deck 2 or 4 (4-deck mode only). The toggles are at the top of the mixer, and learnable.
+// After a switch, the hardware's faders and knobs only take over once they reach the new deck's
+// setting (soft takeover), so deck 3's tempo, volume or EQ never jump to where deck 1 left them.
+const PICKUP = ["tempo", "fader", "trim", "hi", "mid", "low", "cfx"];
+function hwDeck(deck) { return FOUR && (deck === 0 || deck === 1) ? MIDI.side[deck] : deck; }
+function absValue(name, deck) {
+  if (name === "tempo") return (decks[deck].pitch + 1) / 2;
+  return M[name] ? M[name][deck] : null;
+}
+function pickedUp(name, deck, val) {
+  const k = `${name}/${deck}`, p = MIDI.pickup.get(k);
+  if (!p) return true;
+  const cur = absValue(name, deck);
+  // close enough, or the hardware moved across the deck's setting since the last message
+  if (cur == null || Math.abs(val - cur) < 0.02 || (p.last != null && (p.last - cur) * (val - cur) <= 0)) { MIDI.pickup.delete(k); return true; }
+  p.last = val;
+  return false;
+}
+function setSide(side, deck) {
+  if (deck === MIDI.side[side] || !FOUR && deck >= 2) return;
+  const old = decks[MIDI.side[side]];
+  if (old && old.touch) old.jogTouch(false);                // let go of the platter on the deck being left
+  MIDI.side[side] = deck;
+  for (const n of PICKUP) MIDI.pickup.set(`${n}/${deck}`, { last: null });
+  // the FLX4's BEAT FX channel lever follows the side it's pointing at
+  if (MIDI.fxLever && MIDI.fxLever[side]) fxChannel(deck);
+  refreshLayerUI();
+  if (MIDI.profile) status(`Controller ${side ? "right" : "left"} side: deck ${deck + 1}. Faders and knobs take over once they reach deck ${deck + 1}'s settings.`, 5000);
+}
+function toggleSide(side) { setSide(side, MIDI.side[side] === side ? side + 2 : side); }
+function refreshLayerUI() {
+  for (const side of [0, 1]) {
+    const b = A.layerBtns && A.layerBtns[side];
+    if (b) for (const sp of b.children) sp.classList.toggle("on", +sp.dataset.d === MIDI.side[side]);
+  }
+  for (let i = 0; i < NDECKS; i++) {
+    const el = document.querySelector(`.deck[data-i="${i}"]`);
+    if (el) el.classList.toggle("hw", FOUR && MIDI.side.includes(i));
+  }
 }
 function setAbs(name, deck, val) {
   switch (name) {
@@ -5153,7 +5223,8 @@ function pressAction(name, arg, d, deck, on) {
     case "fxOff": if (on) fxOn(false); return;
     // the FLX4's CH SELECT lever: CH1 / CH2 send 7F while there, 00 when it leaves; neither = MASTER
     case "fxCh": MIDI.fxLever = MIDI.fxLever || {}; MIDI.fxLever[arg] = on;
-      fxChannel(MIDI.fxLever[0] ? 0 : MIDI.fxLever[1] ? 1 : "M"); return;
+      fxChannel(MIDI.fxLever[0] ? hwDeck(0) : MIDI.fxLever[1] ? hwDeck(1) : "M"); return;
+    case "layer": if (on && FOUR) toggleSide(deck); return;
     case "pfx": if (d) on ? pfxDown(deck, "padfx", +arg) : pfxUp(deck, "padfx", +arg); return;
     case "pfx2": if (d) on ? pfxDown(deck, "padfx2", +arg) : pfxUp(deck, "padfx2", +arg); return;
     case "quant": if (on) { d.quant = !d.quant; refreshDeckUI(deck); } return;
@@ -5182,10 +5253,10 @@ function updateLeds() {
   if (!MIDI.outputs.length) return;
   blinkOn = performance.now() % 1000 < 500;
   for (const e of MIDI.ledEntries) {
-    const [st, no, action, deck] = e;
+    const [st, no, action] = e;
     if (action === "fxOn") { led(st, no, FX.beat.on); continue; }
-    if (deck < 0) continue;
-    const d = decks[deck];
+    if (e[3] < 0) continue;
+    const deck = hwDeck(e[3]), d = decks[deck];
     const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = action.slice(colon + 1);
     let v;
     switch (name) {
@@ -5207,7 +5278,7 @@ function updateLeds() {
     }
     led(st, no, v);
   }
-  if (MIDI.profile && MIDI.profile.vu) for (const i of [0, 1]) led(0xb0 + i, 0x02, Math.round(meterState[i] * 127));   // channel VU meters
+  if (MIDI.profile && MIDI.profile.vu) for (const i of [0, 1]) led(0xb0 + i, 0x02, Math.round(meterState[hwDeck(i)] * 127));   // channel VU meters
 }
 
 // ---- MIDI learn: click a control on screen, then move or press it on the controller ----
@@ -5216,7 +5287,7 @@ const LEARN_LABEL = { play: "Play", cue: "Cue", sync: "Sync", loopIn: "Loop in",
   tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", masterCue: "Master cue", fxOn: "Beat FX on/off", fxSelect: "Beat FX select",
   fxBeatDown: "Beat FX beat ◀", fxBeatUp: "Beat FX beat ▶", fxDepth: "Beat FX level/depth", fader: "Channel fader", trim: "Trim", hi: "EQ high",
   mid: "EQ mid", low: "EQ low", cfx: "Filter (CFX)", xfader: "Crossfader", headMix: "Cue/master mix", master: "Master level",
-  browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)" };
+  browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)", layer: "Deck layer (1⇄3 / 2⇄4)" };
 function startLearn() {
   if (!MIDI.profile) useProfile("learn");
   document.documentElement.classList.add("learning");
@@ -5475,6 +5546,7 @@ function tagLearnables() {
   if (A.bfx) { tag(A.bfx.on, "fxOn", -1); tag(A.bfx.sel, "fxSelect", -1); tag(A.bfx.bl, "fxBeatDown", -1); tag(A.bfx.br, "fxBeatUp", -1); }
   tag(widgets.fxdepth && widgets.fxdepth.el, "fxDepth", -1);
   tag(widgets.master && widgets.master.el, "master", -1);
+  if (A.layerBtns) A.layerBtns.forEach((b, side) => tag(b, "layer", side));
 }
 // ---- set recording: master output to WAV (16-bit) or MP3 (320 kbps, lamejs in a worker) + a tracklist ----
 const REC = { on: false, fmt: "wav", sr: 48000, frames: 0, parts: [], pending: [], pendingBytes: 0, worker: null, list: [], logged: new Map(), started: null, blob: null, name: "" };
