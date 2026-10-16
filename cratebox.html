@@ -157,48 +157,6 @@ html.learning .learned-flash { outline: 3px solid var(--ok) !important; }
 .cuebtn { width: 56px; height: 26px; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 13px; letter-spacing: .05em; }
 .cuebtn.lit { background: var(--cue); color: var(--bg); border-color: var(--cue); }
 /* master cue: a small button in the mixer's centre column, under the CUE/MASTER knob */
-/* Beat FX panel (bottom of the mixer) */
-.beatfx { grid-column: 1 / -1; display: grid; gap: 5px; padding: 6px 6px 4px; border: 1px solid var(--line2); border-radius: 6px; background: #0c0e12; }
-.bfxrow { display: flex; align-items: center; gap: 4px; min-width: 0; }
-.bfxt { flex: none; margin-right: 2px; }
-.beatfx button { height: 24px; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); color: var(--fg); font-family: var(--f-disp); font-weight: 600; font-size: 12px; letter-spacing: .03em; padding: 0 6px; }
-.beatfx .bfxsel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--loop); }
-.beatfx .bfxon { flex: none; }
-.beatfx .bfxon.lit { background: var(--hot); border-color: var(--hot); color: #fff; box-shadow: 0 0 10px #ff3b5577; }
-.beatfx .bfxb { width: 22px; padding: 0; flex: none; }
-.beatfx .bfxb:disabled { opacity: .35; }
-.bfxbeat { font-family: var(--f-mono); font-size: 12px; min-width: 30px; text-align: center; flex: none; }
-.bfxch { display: flex; gap: 2px; flex: 1; justify-content: center; }
-.beatfx .bfxc { width: 22px; padding: 0; color: var(--muted); }
-.beatfx .bfxc.on { color: var(--bg); background: var(--loop); border-color: var(--loop); }
-.beatfx .knob { flex: none; flex-direction: row; gap: 3px; }
-.beatfx .knob .slabel { font-size: 9px; }
-html.touch:not(.phone) .beatfx button { height: 30px; }
-html.touch:not(.phone) .beatfx .bfxb, html.touch:not(.phone) .beatfx .bfxc { width: 28px; }
-html.touch .beatfx .knob svg { width: 30px; height: 30px; }
-/* PAD FX pads */
-.pad.pfx { color: #b9c3d3; font-size: 11px; letter-spacing: .02em; line-height: 1.05; overflow: hidden; padding: 0 1px; }
-.pad.pfx .pn, .pad.pfx .pb { display: block; white-space: nowrap; }
-.pad.pfx .pb { font-family: var(--f-mono); font-size: .9em; opacity: .8; }
-html.phone .pad.pfx { font-size: 10.5px; letter-spacing: 0; }
-/* narrower decks: a smaller font; the narrowest: 3-4 letter names (the text itself stays the full name) */
-@container deck (max-width: 400px) { .pad.pfx { font-size: 10px; letter-spacing: 0; } }
-@container deck (max-width: 300px) {
-  .pad.pfx { font-size: 9px; }
-  .pad.pfx .pn[data-s] { font-size: 0; }
-  .pad.pfx .pn[data-s]::after { content: attr(data-s); font-size: 9px; }
-}
-.pad.fxon { background: color-mix(in srgb, var(--hot) 35%, #101318); border-color: var(--hot); color: #fff; }
-html[data-theme="booth"] .pad.fxon { background: radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--hot) 40%, #1a1d21), #121417); box-shadow: inset 0 0 0 2px var(--hot), 0 0 14px color-mix(in srgb, var(--hot) 45%, transparent); color: #fff; }
-html[data-theme="booth"] .beatfx { background: #050607; border-color: #23262c; }
-html[data-theme="booth"] .beatfx button { background: linear-gradient(#2a2d33, #181a1e); border: 1px solid #050506; box-shadow: inset 0 1px 0 #ffffff14, 0 2px 0 #000; }
-html[data-theme="booth"] .beatfx .bfxc.on { background: var(--loop); color: #000; }
-html[data-theme="booth"] .beatfx .bfxon.lit { background: var(--hot); color: #fff; box-shadow: 0 0 12px #ff2d4b88; }
-/* phones: Beat FX lives in its own sheet (FX in the header) */
-html.phone #mixer .beatfx { display: none; }
-#fxSheet .beatfx { display: grid; grid-column: auto; }
-#fxSheet .beatfx button { height: 36px; font-size: 14px; }
-#fxSheet .beatfx .bfxb, #fxSheet .beatfx .bfxc { width: 36px; }
 .mcuebtn { width: 30px; height: 22px; padding: 0; border-radius: 3px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 600; font-size: 10px; letter-spacing: .03em; color: var(--muted); }
 .mcuebtn.lit { background: var(--cue); color: var(--bg); border-color: var(--cue); }
 html.touch:not(.phone) .mcuebtn { height: 28px; }
@@ -296,8 +254,7 @@ html.phone, html.phone body { height: 100%; overflow: hidden; overscroll-behavio
 html.phone #app { min-width: 0; height: 100dvh; display: flex; flex-direction: column;
   padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
 html.phone header { flex: 0 0 auto; height: 38px; padding: 0 2px; gap: 10px; background: transparent; border: 0; flex-wrap: nowrap; }
-html.phone header > :not(.logo):not(.ptabs):not(.spacer):not(#setOpen):not(#fxOpen):not(#midiPill) { display: none; }
-html.phone #fxOpen { font-family: var(--f-disp); font-weight: 700; font-size: 15px; letter-spacing: .04em; }
+html.phone header > :not(.logo):not(.ptabs):not(.spacer):not(#setOpen):not(#midiPill) { display: none; }
 html.phone .logo { font-size: 18px; }
 html.phone #midiPill { height: 24px; padding: 0 8px; font-size: 11px; }
 .ptabs { display: inline-flex; background: var(--raise); border: 1px solid var(--line2); border-radius: 9px; padding: 2px; gap: 2px; }
@@ -458,11 +415,7 @@ button, select, .pad, .sq { touch-action: manipulation; }
    heights follow the window height so the waveforms and library stay visible on short laptops. */
 .deck { container: deck / inline-size; }
 .modes .sh { display: none; }
-/* four pad-mode buttons: short labels (CUES LOOP JUMP FX) unless the deck is wide */
-@container deck (max-width: 680px) { .modes .lg { display: none; } .modes .sh { display: inline; } }
-html.phone .modes button { padding: 0 2px; letter-spacing: 0; }
-@container deck (max-width: 440px) { .modes button { padding: 0 2px !important; font-size: 11px !important; letter-spacing: 0 !important; } }
-@container deck (max-width: 260px) { .modes button { font-size: 8.5px !important; padding: 0 !important; } }
+@container deck (max-width: 500px) { .modes .lg { display: none; } .modes .sh { display: inline; } }
 html:not(.phone) .deck { --jog: clamp(96px, min(30cqw, calc(100vh - 600px)), 150px); }
 html:not(.phone) .deck[data-i="0"] .dbody { grid-template-columns: 44px var(--jog) minmax(0, 1fr); }
 html:not(.phone) .deck[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) var(--jog) 44px; }
@@ -755,7 +708,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.0</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.0.2</span></div>
         </div>
       </div>
     <span id="status"></span>
@@ -763,7 +716,6 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
     <button class="hbtn deskonly" id="fourBtn" title="Show decks 3 and 4 (4-channel mixer)">4 DECKS</button>
     <div id="masterSlot"></div>
-    <button class="iconbtn phoneonly" id="fxOpen" aria-label="Beat FX">FX</button>
     <button class="iconbtn phoneonly" id="setOpen" aria-label="Settings">⚙</button>
   </header>
   <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas><canvas id="lane2" class="ch34"></canvas><canvas id="lane3" class="ch34"></canvas></section>
@@ -819,11 +771,10 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
   </div>
 </div></div>
-<div class="sheet" id="fxSheet" hidden><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="fxBody"></div></div></div>
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.0</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.0.2</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -836,7 +787,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "1.1.0";
+const VERSION = "1.0.2";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
@@ -1136,204 +1087,6 @@ class RecTap extends AudioWorkletProcessor {
   }
 }
 registerProcessor("rec-tap", RecTap);
-// Beat FX / Pad FX: one processor per insert point (every deck channel, and the master). Two effect slots:
-// "beat" (the BEAT FX unit, when it's routed here) and "pad" (PAD FX, decks only). Every effect is computed
-// sample by sample here on the audio thread, timed by a beat clock the page sends (where the beat is now and
-// how fast it's moving), so echoes, rolls and gates land on the grid. With nothing on and no tails left it's
-// a straight copy, so an idle insert costs next to nothing.
-const FX_HIST = 5;                                       // seconds of input history (roll) and of each delay line
-class FxSlot {
-  constructor(sr) {
-    this.sr = sr; this.fx = ""; this.on = false; this.beats = 0.5; this.depth = 0.6;
-    this.g = 0; this.inG = 0;                            // smoothed: effect amount / feed into delays and reverb
-    this.active = false;                                 // on, or still ringing out
-    this.dL = null; this.dR = null; this.w = 0;          // delay line (echo, delay, ping pong, flanger)
-    this.fl = [0, 0, 0, 0]; this.fr = [0, 0, 0, 0];      // biquad state (filters)
-    this.cf = null;                                      // biquad coefficients
-    this.cfAt = -1;
-    this.rev = null;                                     // reverb state
-    this.roll = null;                                    // roll: { start, len, pos }
-    this.quiet = 0;                                      // samples of silence in the tail
-  }
-  set(m) {
-    if (m.fx != null && m.fx !== this.fx) { this.fx = m.fx; this.roll = null; this.cfAt = -1; }
-    if (m.beats != null) this.beats = m.beats;
-    if (m.depth != null) this.depth = m.depth;
-    if (m.on != null) { if (m.on && !this.on) this.roll = null; this.on = m.on; }
-    if (this.on) { this.active = true; this.quiet = 0; }
-  }
-  delayLines() {
-    if (!this.dL) { const n = Math.ceil(FX_HIST * this.sr); this.dL = new Float32Array(n); this.dR = new Float32Array(n); }
-  }
-  reverb() {
-    if (this.rev) return this.rev;
-    const k = this.sr / 44100, mk = (n) => new Float32Array(Math.max(8, Math.round(n * k)));
-    const combs = [1116, 1188, 1277, 1356, 1422, 1491, 1557, 1617];
-    const aps = [556, 441, 341, 225];
-    this.rev = {
-      cL: combs.map(mk), cR: combs.map((n) => mk(n + 23)), ci: combs.map(() => 0), fsL: combs.map(() => 0), fsR: combs.map(() => 0),
-      aL: aps.map(mk), aR: aps.map((n) => mk(n + 23)), ai: aps.map(() => 0),
-    };
-    return this.rev;
-  }
-}
-// RBJ biquad coefficients
-function biq(type, f, q, sr) {
-  const w = 2 * Math.PI * Math.min(f, sr * 0.45) / sr, cs = Math.cos(w), al = Math.sin(w) / (2 * q);
-  let b0, b1, b2;
-  if (type === "hp") { b0 = (1 + cs) / 2; b1 = -(1 + cs); b2 = (1 + cs) / 2; }
-  else { b0 = (1 - cs) / 2; b1 = 1 - cs; b2 = (1 - cs) / 2; }
-  const a0 = 1 + al;
-  return [b0 / a0, b1 / a0, b2 / a0, (-2 * cs) / a0, (1 - al) / a0];
-}
-class FxUnit extends AudioWorkletProcessor {
-  constructor() {
-    super();
-    const sr = sampleRate, n = Math.ceil(FX_HIST * sr);
-    this.hL = new Float32Array(n); this.hR = new Float32Array(n); this.hw = 0; this.hn = n;
-    this.slots = { beat: new FxSlot(sr), pad: new FxSlot(sr) };
-    this.clock = { t0: 0, beat0: 0, bps: 0, spb: 0.5 };
-    this.port.onmessage = (e) => {
-      const m = e.data;
-      if (m.t === "clock") this.clock = m;
-      else if (m.t === "slot") this.slots[m.slot].set(m);
-    };
-  }
-  process(inputs, outputs) {
-    const inp = inputs[0], out = outputs[0], oL = out[0], oR = out[1] || out[0], N = oL.length;
-    const iL = inp && inp[0], iR = inp && (inp[1] || inp[0]);
-    const hL = this.hL, hR = this.hR, hn = this.hn;
-    const sb = this.slots.beat, sp = this.slots.pad;
-    // input history (for ROLL) always runs: two writes a sample
-    let hw = this.hw;
-    for (let i = 0; i < N; i++) {
-      const l = iL ? iL[i] : 0, r = iR ? iR[i] : 0;
-      hL[hw] = l; hR[hw] = r; oL[i] = l; oR[i] = r;
-      if (++hw === hn) hw = 0;
-    }
-    if (!sb.active && !sp.active) { this.hw = hw; return true; }       // the usual case: a straight copy
-    const c = this.clock, sr = sampleRate;
-    const beatAt0 = c.beat0 + (currentTime - c.t0) * c.bps, dBeat = c.bps / sr;
-    const histEnd = hw;                                   // history index just after this block's last sample
-    for (const s of [sb, sp]) if (s.active) this.run(s, oL, oR, N, beatAt0, dBeat, c.spb, histEnd);
-    this.hw = hw;
-    return true;
-  }
-  // one slot over the block, in place on oL/oR
-  run(s, oL, oR, N, beat0, dBeat, spb, histEnd) {
-    const sr = sampleRate, fx = s.fx, on = s.on, depth = s.depth;
-    const gStep = 1 / (0.004 * sr);                       // 4 ms fades in and out: no clicks
-    let g = s.g, inG = s.inG, peak = 0;
-    const delayFamily = fx === "ECHO" || fx === "DELAY" || fx === "PING PONG";
-    if (delayFamily || fx === "FLANGER") s.delayLines();
-    const dn = s.dL ? s.dL.length : 0;
-    const fb = fx === "ECHO" ? 0.6 : fx === "PING PONG" ? 0.55 : 0.32;
-    const dSamp = delayFamily ? Math.max(1, Math.min(dn - 2, Math.round(s.beats * spb * sr))) : 0;
-    let w = s.w;
-    // filters: coefficients every 32 samples
-    const rv = fx === "REVERB" ? s.reverb() : null;
-    for (let i = 0; i < N; i++) {
-      const xl = oL[i], xr = oR[i];
-      const want = on ? 1 : 0;
-      g += g < want ? Math.min(gStep, want - g) : -Math.min(gStep, g - want);
-      inG += inG < want ? Math.min(gStep, want - inG) : -Math.min(gStep, inG - want);
-      let yl = xl, yr = xr;
-      if (delayFamily) {
-        // echoes: the dry signal always passes; switching off stops feeding the delay, so the echoes ring out
-        let r = w - dSamp; if (r < 0) r += dn;
-        const dl = s.dL[r], dr = s.dR[r];
-        if (fx === "PING PONG") { s.dL[w] = (xl + xr) * 0.5 * inG + dr * fb; s.dR[w] = dl * fb; }
-        else { s.dL[w] = xl * inG + dl * fb; s.dR[w] = xr * inG + dr * fb; }
-        yl = xl + dl * depth; yr = xr + dr * depth;
-        const a = Math.abs(dl) + Math.abs(dr); if (a > peak) peak = a;
-        if (++w === dn) w = 0;
-      } else if (fx === "REVERB") {
-        // Freeverb: 8 damped combs into 4 allpasses per side; switching off lets the room ring out
-        const inS = (xl + xr) * 0.015 * inG;
-        let sl = 0, sr2 = 0;
-        for (let k = 0; k < 8; k++) {
-          const bl = rv.cL[k], br = rv.cR[k];
-          let j = rv.ci[k];
-          const ol = bl[j % bl.length], or = br[j % br.length];
-          rv.fsL[k] = ol * 0.8 + rv.fsL[k] * 0.2; rv.fsR[k] = or * 0.8 + rv.fsR[k] * 0.2;
-          bl[j % bl.length] = inS + rv.fsL[k] * 0.86; br[j % br.length] = inS + rv.fsR[k] * 0.86;
-          sl += ol; sr2 += or;
-          rv.ci[k] = j + 1 >= 1e9 ? 0 : j + 1;
-        }
-        for (let k = 0; k < 4; k++) {
-          const al = rv.aL[k], ar = rv.aR[k], j = rv.ai[k];
-          const bo = al[j % al.length], bo2 = ar[j % ar.length];
-          al[j % al.length] = sl + bo * 0.5; ar[j % ar.length] = sr2 + bo2 * 0.5;
-          sl = bo - sl; sr2 = bo2 - sr2;
-          rv.ai[k] = j + 1 >= 1e9 ? 0 : j + 1;
-        }
-        yl = xl + sl * depth * 1.2; yr = xr + sr2 * depth * 1.2;
-        const a = Math.abs(sl) + Math.abs(sr2); if (a > peak) peak = a;
-      } else {
-        const beat = beat0 + i * dBeat;
-        let el = xl, er = xr;                               // the fully-wet signal
-        if (fx === "FLANGER") {
-          // a 1-5 ms delay swept once per cycle (BEAT sets the cycle length), with feedback
-          const cyc = Math.max(0.25, s.beats), ph = beat / cyc;
-          const dd = (0.001 + 0.004 * (0.5 - 0.5 * Math.cos(2 * Math.PI * ph))) * sr;
-          let rp = w - dd; if (rp < 0) rp += dn;
-          const i0 = rp | 0, f = rp - i0, i1 = i0 + 1 === dn ? 0 : i0 + 1;
-          const dl = s.dL[i0] + (s.dL[i1] - s.dL[i0]) * f, dr = s.dR[i0] + (s.dR[i1] - s.dR[i0]) * f;
-          s.dL[w] = xl + dl * 0.6; s.dR[w] = xr + dr * 0.6;
-          if (++w === dn) w = 0;
-          el = (xl + dl * depth) / (1 + 0.6 * depth); er = (xr + dr * depth) / (1 + 0.6 * depth);
-        } else if (fx === "FILTER" || fx === "HPF" || fx === "LPF") {
-          if ((i & 31) === 0 || !s.cf) {
-            let type = "lp", f;
-            if (fx === "FILTER") {
-              // LFO low-pass sweep, one cycle per BEAT setting; LEVEL/DEPTH sets how low it dips
-              const ph = beat / Math.max(0.25, s.beats);
-              f = 20000 * Math.pow(2, -9 * depth * (0.5 - 0.5 * Math.cos(2 * Math.PI * ph)));
-              s.cf = biq("lp", f, 2.2, sr);
-            } else if (fx === "HPF") { f = 20 * Math.pow(2, 9.5 * depth); s.cf = biq("hp", f, 1.1, sr); }
-            else { f = 20000 * Math.pow(2, -9.5 * depth); s.cf = biq("lp", f, 1.1, sr); }
-          }
-          const cf = s.cf, L = s.fl, R = s.fr;
-          el = cf[0] * xl + cf[1] * L[0] + cf[2] * L[1] - cf[3] * L[2] - cf[4] * L[3];
-          L[1] = L[0]; L[0] = xl; L[3] = L[2]; L[2] = el;
-          er = cf[0] * xr + cf[1] * R[0] + cf[2] * R[1] - cf[3] * R[2] - cf[4] * R[3];
-          R[1] = R[0]; R[0] = xr; R[3] = R[2]; R[2] = er;
-        } else if (fx === "TRANS") {
-          // gate: on for the first half of each BEAT-long step, cut (by LEVEL/DEPTH) for the second half
-          const st = Math.max(1 / 32, s.beats), ph = beat / st, fr = ph - Math.floor(ph);
-          const want2 = fr < 0.5 ? 1 : 1 - depth;
-          s.tg = s.tg == null ? want2 : s.tg + (want2 - s.tg) * 0.02;   // ~1 ms smoothing
-          el = xl * s.tg; er = xr * s.tg;
-        } else if (fx === "ROLL") {
-          // repeat the last BEAT-long slice, lined up with the grid (it starts on the slice the playhead is in)
-          if (!s.roll && on) {
-            const len = Math.max(64, Math.min(this.hn - 256, Math.round(s.beats * spb * sr)));
-            const st = Math.max(1 / 32, s.beats), fr = beat / st - Math.floor(beat / st);
-            const into = Math.round(fr * len);                       // samples since the slice began
-            const nowIdx = histEnd - N + i;
-            let start = nowIdx - into; while (start < 0) start += this.hn;
-            s.roll = { start, len, pos: into };
-          }
-          if (s.roll) {
-            let j = s.roll.start + (s.roll.pos % s.roll.len); if (j >= this.hn) j -= this.hn;
-            el = this.hL[j]; er = this.hR[j]; s.roll.pos++;
-          }
-          if (!on && g < 0.001) s.roll = null;
-        }
-        const mix = fx === "TRANS" || fx === "FILTER" || fx === "HPF" || fx === "LPF" ? 1 : fx === "ROLL" ? Math.max(depth, 0.001) : 1;
-        yl = xl + (el - xl) * g * mix; yr = xr + (er - xr) * g * mix;
-      }
-      oL[i] = yl; oR[i] = yr;
-    }
-    s.g = g; s.inG = inG; s.w = w;
-    // done ringing out? (off, faded, and the delay lines / reverb have gone quiet for half a second)
-    if (!on && g < 0.0005 && inG < 0.0005) {
-      if (delayFamily || fx === "REVERB") { if (peak < 1e-4) s.quiet += N; else s.quiet = 0; if (s.quiet > 0.5 * sr) s.active = false; }
-      else s.active = false;
-    }
-  }
-}
-registerProcessor("fx-unit", FxUnit);
 `;
 
 // BPM, beat grid and waveform analysis, off the main thread.
@@ -2038,9 +1791,7 @@ async function initAudio(ctxOverride) {
   A.hpCue = ctx.createGain();
   A.hpMaster = ctx.createGain();
   A.hpSum = ctx.createGain();
-  // master insert for BEAT FX on MASTER
-  A.masterFx = new AudioWorkletNode(ctx, "fx-unit", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
-  A.master.connect(A.masterFx); A.masterFx.connect(A.masterLevel);
+  A.master.connect(A.masterLevel);
   A.cueBus.connect(A.hpCue);
   A.masterLevel.connect(A.hpMaster);
   A.hpCue.connect(A.hpSum);
@@ -2075,19 +1826,16 @@ function buildDeckChain(i) {
   chain(trim, biquad("highpass", 2500), biquad("highpass", 2500), highG, sum);
   const lp = biquad("lowpass", 22000), hp = biquad("highpass", 10);
   sum.connect(lp); lp.connect(hp);
-  // Beat FX / Pad FX insert: after the EQ and CFX filter, before CUE, the meters and the fader
-  const fx = new AudioWorkletNode(ctx, "fx-unit", { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] });
-  hp.connect(fx);
   const pfl = ctx.createGain(); pfl.gain.value = 0;
-  fx.connect(pfl); pfl.connect(A.cueBus);
+  hp.connect(pfl); pfl.connect(A.cueBus);
   const meterL = ctx.createAnalyser(), meterR = ctx.createAnalyser();
   meterL.fftSize = meterR.fftSize = 512;
   const sp = ctx.createChannelSplitter(2);
-  fx.connect(sp); sp.connect(meterL, 0); sp.connect(meterR, 1);
+  hp.connect(sp); sp.connect(meterL, 0); sp.connect(meterR, 1);
   const fader = ctx.createGain(), xf = ctx.createGain();
-  chain(fx, fader, xf, A.master);
+  chain(hp, fader, xf, A.master);
   const d = A.decks[i] || null;
-  const chainObj = { node, trim, lowG, midG, highG, lp, hp, fx, pfl, fader, xf, meterL, meterR };
+  const chainObj = { node, trim, lowG, midG, highG, lp, hp, pfl, fader, xf, meterL, meterR };
   node.port.onmessage = (e) => decks[i].onReport(e.data);
   return chainObj;
 }
@@ -4139,9 +3887,8 @@ function buildDeck(i) {
   u.modes = {};
   const modes = h("div", { class: "modes" });
   // long and short labels: a narrow deck (container query) shows the short ones
-  for (const [m, label, short] of [["hotcue", "HOT CUE", "CUES"], ["beatloop", "BEAT LOOP", "LOOP"], ["beatjump", "BEAT JUMP", "JUMP"], ["padfx", "PAD FX", "FX"]]) {
-    u.modes[m] = h("button", { title: m === "padfx" ? "PAD FX: hold a pad for an effect (press again for the second bank)" : label,
-      onclick: () => { d.padMode = m === "padfx" && d.padMode === "padfx" ? "padfx2" : m; refreshDeckUI(i); } }, h("span", { class: "lg" }, label), h("span", { class: "sh" }, short));
+  for (const [m, label, short] of [["hotcue", "HOT CUE", "CUES"], ["beatloop", "BEAT LOOP", "LOOP"], ["beatjump", "BEAT JUMP", "JUMP"]]) {
+    u.modes[m] = h("button", { title: label, onclick: () => { d.padMode = m; refreshDeckUI(i); } }, h("span", { class: "lg" }, label), h("span", { class: "sh" }, short));
     modes.append(u.modes[m]);
   }
   u.pads = [];
@@ -4155,11 +3902,7 @@ function buildDeck(i) {
       clearTimeout(holdT);
       if (e.pointerType === "touch") holdT = setTimeout(() => { if (decks[i].padMode === "hotcue") padPress(i, p, true); }, 900);
     });
-    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => {
-      clearTimeout(holdT);
-      const m = decks[i].padMode;
-      if (m === "padfx" || m === "padfx2") pfxUp(i, m, p);           // PAD FX: momentary
-    });
+    for (const ev of ["pointerup", "pointerleave", "pointercancel"]) b.addEventListener(ev, () => clearTimeout(holdT));
     b.addEventListener("contextmenu", (e) => e.preventDefault());
     u.pads.push(b);
     pads.append(b);
@@ -4198,125 +3941,10 @@ function barBeat(d, t) {
   const bar = Math.floor(b / 4) + 1, beat = ((b % 4) + 4) % 4 + 1;
   return `${bar}.${beat}`;
 }
-// =====================================================================================
-//  Beat FX and Pad FX (the effects themselves run in the "fx-unit" audio worklet)
-// =====================================================================================
-// each effect: which BEAT values it offers (null = none: REVERB, HPF, LPF), its default beat and depth
-const FX_LIST = {
-  "ECHO": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 3 / 4, 1, 2, 4], beat: 1 / 2, depth: 0.55 },
-  "DELAY": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 3 / 4, 1, 2, 4], beat: 3 / 4, depth: 0.6 },
-  "PING PONG": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 3 / 4, 1, 2, 4], beat: 1 / 2, depth: 0.6 },
-  "REVERB": { beats: null, beat: 1, depth: 0.55 },
-  "FLANGER": { beats: [1, 2, 4, 8, 16, 32], beat: 16, depth: 0.8 },
-  "FILTER": { beats: [1, 2, 4, 8, 16, 32], beat: 4, depth: 0.7 },
-  "TRANS": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2], beat: 1 / 4, depth: 1 },
-  "ROLL": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4], beat: 1 / 2, depth: 1 },
-  "HPF": { beats: null, beat: 1, depth: 0.6 },
-  "LPF": { beats: null, beat: 1, depth: 0.6 },
-};
-const FX_NAMES = Object.keys(FX_LIST);
-// PAD FX banks: [effect, beats, depth] per pad; FX1 on PAD FX1, FX2 on PAD FX2 (SHIFT + PAD FX1 on the FLX4)
-const PAD_FX = {
-  padfx: [["ECHO", 1 / 2, 0.6], ["ECHO", 1, 0.6], ["REVERB", 1, 0.7], ["ROLL", 1 / 4, 1], ["ROLL", 1 / 2, 1], ["TRANS", 1 / 4, 1], ["HPF", 1, 0.7], ["LPF", 1, 0.7]],
-  padfx2: [["PING PONG", 1 / 2, 0.6], ["DELAY", 3 / 4, 0.6], ["FLANGER", 16, 0.8], ["ROLL", 1 / 8, 1], ["ROLL", 1, 1], ["TRANS", 1 / 8, 1], ["FILTER", 4, 0.8], ["ECHO", 1 / 4, 0.7]],
-};
-const fracText = (b) => b >= 1 ? String(b) : b === 0.75 ? "3/4" : `1/${Math.round(1 / b)}`;
-const FX = {
-  beat: { fx: "ECHO", beats: Object.fromEntries(FX_NAMES.map((n) => [n, FX_LIST[n].beat])), depth: 0.55, on: false, ch: 0 },
-  pad: [],                                      // per deck: { p, bank } while a pad is held
-  lastActive: new Map(),                        // insert node -> time it was last on (keeps its beat clock going while tails ring)
-};
-try { const sv = JSON.parse(localStorage.getItem("cb.bfx") || "null"); if (sv && FX_LIST[sv.fx]) Object.assign(FX.beat, { fx: sv.fx, beats: { ...FX.beat.beats, ...sv.beats }, depth: sv.depth ?? FX.beat.depth, ch: sv.ch ?? 0 }); } catch (e) {}
-const saveFx = () => { try { localStorage.setItem("cb.bfx", JSON.stringify({ fx: FX.beat.fx, beats: FX.beat.beats, depth: FX.beat.depth, ch: FX.beat.ch })); } catch (e) {} };
-const fxNodeFor = (ch) => (ch === "M" ? A.masterFx : A.decks[ch] && A.decks[ch].fx);
-// the beat clock for an insert: its deck's (master: the deck the mix follows), so effects land on that grid
-function clockDeck(ch) {
-  if (ch !== "M") return decks[ch];
-  const syncedTo = decks.find((d) => deckActive(d.i) && d.sync && d.master());
-  if (syncedTo) return syncedTo.master();
-  const loud = decks.filter((d) => deckActive(d.i) && d.playing && d.loaded).sort((a, b) => M.fader[b.i] - M.fader[a.i]);
-  return loud[0] || decks.find((d) => d.loaded) || decks[0];
-}
-function sendClock(ch) {
-  const node = fxNodeFor(ch), d = clockDeck(ch);
-  if (!node || !A.ctx) return;
-  const bpm = d && d.bpm ? d.effBpm() : 120, playing = d && d.playing && d.loaded;
-  node.port.postMessage({ t: "clock", t0: A.ctx.currentTime, beat0: d && d.bpm ? d.beatAt(d.now()) : 0, bps: playing ? bpm / 60 : 0, spb: 60 / bpm });
-}
-// keep the clocks of busy inserts fresh (called from the 20 ms control loop, every ~100 ms)
-let lastClock = 0;
-function fxClockTick(now) {
-  if (now - lastClock < 100 || !A.ctx) return;
-  lastClock = now;
-  for (const [ch, t] of FX.lastActive) {
-    const busy = (ch === FX.beat.ch && FX.beat.on) || (ch !== "M" && FX.pad[ch]);
-    if (busy) FX.lastActive.set(ch, now);
-    if (busy || now - t < 15000) sendClock(ch); else FX.lastActive.delete(ch);
-  }
-}
-function sendBeatFx() {
-  const b = FX.beat, node = fxNodeFor(b.ch);
-  if (!node) return;
-  if (b.on) { FX.lastActive.set(b.ch, performance.now()); sendClock(b.ch); }
-  node.port.postMessage({ t: "slot", slot: "beat", fx: b.fx, beats: b.beats[b.fx], depth: b.depth, on: b.on });
-  refreshFxUI();
-}
-const fxBeatList = () => FX_LIST[FX.beat.fx].beats;
-function fxSelect(step) {
-  const b = FX.beat, k = FX_NAMES.indexOf(b.fx);
-  const was = b.on;
-  b.fx = FX_NAMES[(k + step + FX_NAMES.length) % FX_NAMES.length];
-  b.depth = FX_LIST[b.fx].depth === undefined ? b.depth : b.depth;
-  sendBeatFx(); saveFx();
-  if (was) status(`Beat FX: ${b.fx}`);
-}
-function fxBeat(step) {
-  const list = fxBeatList();
-  if (!list) return;
-  const b = FX.beat, cur = b.beats[b.fx];
-  let k = list.findIndex((x) => Math.abs(x - cur) < 1e-6); if (k < 0) k = list.indexOf(FX_LIST[b.fx].beat);
-  b.beats[b.fx] = list[clamp(k + step, 0, list.length - 1)];
-  sendBeatFx(); saveFx();
-}
-function fxChannel(ch) {
-  const b = FX.beat;
-  if (ch === b.ch) return;
-  // the old insert stops taking input and rings out; the new one picks up
-  const old = fxNodeFor(b.ch);
-  if (old) old.port.postMessage({ t: "slot", slot: "beat", on: false });
-  b.ch = ch;
-  sendBeatFx(); saveFx();
-}
-function fxOn(on) { FX.beat.on = on; sendBeatFx(); }
-function fxDepth(v) { FX.beat.depth = clamp(v, 0, 1); sendBeatFx(); saveFx(); }
-// PAD FX: hold a pad = that effect on this deck; let go = off (the last pad pressed wins)
-function pfxDown(i, bank, p) {
-  const node = A.decks[i] && A.decks[i].fx, pr = PAD_FX[bank] && PAD_FX[bank][p];
-  if (!node || !pr) return;
-  FX.pad[i] = { p, bank };
-  FX.lastActive.set(i, performance.now()); sendClock(i);
-  node.port.postMessage({ t: "slot", slot: "pad", fx: pr[0], beats: pr[1], depth: pr[2], on: true });
-  refreshPadFx(i);
-}
-function pfxUp(i, bank, p) {
-  const cur = FX.pad[i];
-  if (!cur || cur.p !== p || cur.bank !== bank) return;
-  FX.pad[i] = null;
-  const node = A.decks[i] && A.decks[i].fx;
-  if (node) node.port.postMessage({ t: "slot", slot: "pad", on: false });
-  refreshPadFx(i);
-}
-function refreshPadFx(i) {
-  const u = ui[i], d = decks[i];
-  if (!u || !u.pads) return;
-  const cur = FX.pad[i];
-  u.pads.forEach((b, p) => b.classList.toggle("fxon", !!cur && cur.p === p && cur.bank === d.padMode));
-}
 const LOOP_SIZES = [0.25, 0.5, 1, 2, 4, 8, 16, 32];
 const JUMPS = [-1, 1, -2, 2, -4, 4, -8, 8];
 function padPress(i, p, shift) {
   const d = decks[i];
-  if (d.padMode === "padfx" || d.padMode === "padfx2") return pfxDown(i, d.padMode, p);
   if (d.padMode === "hotcue") shift ? d.clearHot(p) : d.hotcue(p);
   else if (d.padMode === "beatloop") d.beatLoop(LOOP_SIZES[p]);
   else if (d.padMode === "beatjump") d.beatJump(JUMPS[p]);
@@ -4379,46 +4007,14 @@ function buildMixer() {
     else { faders.querySelector(".mcol").append(meter); faders.append(fcol); }
   }
   mx.append(faders);
-  // BEAT FX: effect, BEAT ◀ ▶, channel (1 2 [3 4] MASTER), LEVEL/DEPTH, ON
-  const bfx = h("div", { class: "beatfx" });
-  A.bfx = {};
-  A.bfx.sel = h("button", { class: "bfxsel", title: "Beat FX: next effect (Shift-click or right-click: previous)" }, "ECHO");
-  A.bfx.sel.addEventListener("click", (e) => fxSelect(e.shiftKey ? -1 : 1));
-  A.bfx.sel.addEventListener("contextmenu", (e) => { e.preventDefault(); fxSelect(-1); });
-  A.bfx.on = h("button", { class: "bfxon", title: "Beat FX on/off", onclick: () => fxOn(!FX.beat.on) }, "FX ON");
-  A.bfx.bl = h("button", { class: "bfxb", title: "Fewer beats", onclick: () => fxBeat(-1) }, "◀");
-  A.bfx.br = h("button", { class: "bfxb", title: "More beats", onclick: () => fxBeat(1) }, "▶");
-  A.bfx.beat = h("span", { class: "bfxbeat", title: "Beats" }, "1/2");
-  A.bfx.chs = h("div", { class: "bfxch" });
-  A.bfx.chBtns = {};
-  for (const ch of [2, 0, "M", 1, 3]) {
-    if (typeof ch === "number" && ch >= NDECKS) continue;
-    const b = h("button", { class: "bfxc" + (typeof ch === "number" && ch >= 2 ? " ch34" : ""), title: ch === "M" ? "Beat FX on the master" : `Beat FX on channel ${ch + 1}`, onclick: () => fxChannel(ch) }, ch === "M" ? "M" : String(ch + 1));
-    A.bfx.chBtns[ch] = b;
-    A.bfx.chs.append(b);
-  }
-  const dk = knob("fxdepth", "Level", FX.beat.depth, (v) => fxDepth(v), { size: 26, center: 0, def: 0.5, color: "var(--loop)" });
-  bfx.append(h("div", { class: "bfxrow" }, h("span", { class: "slabel bfxt" }, "Beat FX"), A.bfx.sel, A.bfx.on),
-    h("div", { class: "bfxrow" }, A.bfx.bl, A.bfx.beat, A.bfx.br, A.bfx.chs, dk));
-  mx.append(bfx);
   const xl = h("span", { class: "slabel xl" }, "1"), xr = h("span", { class: "slabel xr" }, "2");
   mx.append(h("div", { class: "xfade" }, xl, hslider("xfader", M.xfader, (v) => { M.xfader = v; for (let i = 0; i < NDECKS; i++) applyMixer(i); }), xr));
   return mx;
 }
 
-function refreshFxUI() {
-  if (!A.bfx) return;
-  const b = FX.beat, list = FX_LIST[b.fx].beats;
-  A.bfx.sel.textContent = b.fx;
-  A.bfx.on.classList.toggle("lit", b.on);
-  A.bfx.beat.textContent = list ? fracText(b.beats[b.fx]) : "—";
-  A.bfx.bl.disabled = A.bfx.br.disabled = !list;
-  for (const k in A.bfx.chBtns) A.bfx.chBtns[k].classList.toggle("on", String(b.ch) === k);
-}
 function refreshMixerUI() {
   for (let i = 0; i < NDECKS; i++) ui[i].pfl.classList.toggle("lit", M.pfl[i]);
   if (A.mcueBtn) A.mcueBtn.classList.toggle("lit", M.masterCue);
-  refreshFxUI();
 }
 // looks: "default" and "booth" (club-player style: every deck its own player with a screen and waveform)
 // Booth is the default; a look only sticks once it has been picked in Settings (cb.themeChosen), so
@@ -4466,7 +4062,6 @@ function setFour(on) {
   const xl = $("#mixer .xl"), xr = $("#mixer .xr");
   if (xl) { xl.textContent = on ? "1·3" : "1"; xr.textContent = on ? "2·4" : "2"; }
   for (const d of decks.slice(2)) if (d.sync && !on) d.setSync(false);
-  if (!on && typeof FX.beat.ch === "number" && FX.beat.ch >= 2) fxChannel(0);
   applyAllMixer();
   overviewBase.fill(null);
   renderList(true);
@@ -4483,24 +4078,12 @@ function refreshDeckUI(i) {
   u.qtag.classList.toggle("on", d.quant);
   u.mtBtn.classList.toggle("on", d.mt);
   u.range.textContent = d.range === 100 ? "WIDE" : `±${d.range}%`;
-  for (const m in u.modes) u.modes[m].classList.toggle("on", d.padMode === m || (m === "padfx" && d.padMode === "padfx2"));
-  if (u.modes.padfx) { const two = d.padMode === "padfx2"; u.modes.padfx.firstChild.textContent = two ? "PAD FX 2" : "PAD FX"; u.modes.padfx.lastChild.textContent = two ? "FX2" : "FX"; }
+  for (const m in u.modes) u.modes[m].classList.toggle("on", d.padMode === m);
   u.pads.forEach((b, p) => {
     b.className = "pad";
     if (d.padMode === "hotcue") {
       b.textContent = d.hot[p] != null ? `${"ABCDEFGH"[p]}  ${fmtTime(d.hot[p]).replace(/\.\d$/, "")}` : "ABCDEFGH"[p];
       if (d.hot[p] != null) b.classList.add("set");
-    } else if (d.padMode === "padfx" || d.padMode === "padfx2") {
-      const pr = PAD_FX[d.padMode][p];
-      const short = { "PING PONG": "PING", "REVERB": "VERB", "FLANGER": "FLANG" }[pr[0]] || pr[0];
-      // two lines: the effect, then its beat
-      b.textContent = "";
-      const tiny = { "ECHO": "ECHO", "DELAY": "DLY", "PING PONG": "PING", "REVERB": "VERB", "FLANGER": "FLG", "FILTER": "FLT", "TRANS": "TRNS", "ROLL": "ROLL", "HPF": "HPF", "LPF": "LPF" }[pr[0]];
-      b.append(h("span", { class: "pn", "data-s": tiny }, short));
-      if (FX_LIST[pr[0]].beats) b.append(" ", h("span", { class: "pb" }, fracText(pr[1])));
-      b.title = `${pr[0]}${FX_LIST[pr[0]].beats ? " " + fracText(pr[1]) + " beat" : ""} (hold)`;
-      b.classList.add("pfx");
-      if (FX.pad[i] && FX.pad[i].p === p && FX.pad[i].bank === d.padMode) b.classList.add("fxon");
     } else if (d.padMode === "beatloop") {
       const s = LOOP_SIZES[p];
       b.textContent = s < 1 ? `1/${1 / s}` : String(s);
@@ -4813,18 +4396,12 @@ function ddjRekordboxMap(deckChs = [0, 1], padChs = [[0x97, 0x98], [0x99, 0x9a]]
       m.push([pn, p, `hot:${p}`, d, 0], [ps, p, `hotClear:${p}`, d, 0]);
       m.push([pn, 0x60 + p, `loop:${LOOP_SIZES[p]}`, d, 0], [ps, 0x60 + p, `loop:${LOOP_SIZES[p]}`, d, 0]);
       m.push([pn, 0x20 + p, `jump:${JUMPS[p]}`, d, 0]);
-      m.push([pn, 0x10 + p, `pfx:${p}`, d, 0], [ps, 0x10 + p, `pfx:${p}`, d, 0]);        // PAD FX1 pads
-      m.push([pn, 0x50 + p, `pfx2:${p}`, d, 0], [ps, 0x50 + p, `pfx2:${p}`, d, 0]);      // PAD FX2 pads
     }
   });
   m.push([0x96, 0x46, "load", 0, 0], [0x96, 0x47, "load", 1, 0], [0x96, 0x48, "load", 0, 0], [0x96, 0x49, "load", 1, 0],
     [0x96, 0x41, "browsePress", -1, 0], [0x96, 0x42, "browseShift", -1, 0],
     [0xb6, 0x40, "browse", -1, 0], [0xb6, 0x64, "zoom", -1, 0],
-    [0xb6, 0x1f, "xfader", -1, 0x3f], [0xb6, 0x17, "cfx", 0, 0x37], [0xb6, 0x18, "cfx", 1, 0x38], [0xb6, 0x0c, "headMix", -1, 0x2c],
-    // BEAT FX section (messages from Mixxx's DDJ-FLX4 mapping)
-    [0x94, 0x63, "fxSelect", -1, 0], [0x94, 0x64, "fxSelectPrev", -1, 0], [0x94, 0x4a, "fxBeatDown", -1, 0], [0x94, 0x4b, "fxBeatUp", -1, 0],
-    [0x94, 0x10, "fxCh:0", -1, 0], [0x95, 0x11, "fxCh:1", -1, 0], [0x94, 0x47, "fxOn", -1, 0], [0x95, 0x47, "fxOn", -1, 0],
-    [0x94, 0x43, "fxOff", -1, 0], [0x95, 0x43, "fxOff", -1, 0], [0xb4, 0x02, "fxDepth", -1, 0x22]);
+    [0xb6, 0x1f, "xfader", -1, 0x3f], [0xb6, 0x17, "cfx", 0, 0x37], [0xb6, 0x18, "cfx", 1, 0x38], [0xb6, 0x0c, "headMix", -1, 0x2c]);
   for (const st of [0x94, 0x95]) for (let no = 0; no < 128; no++) m.push([st, no, "unsupported:Beat FX", -1, 0]);
   return m;
 }
@@ -4967,10 +4544,10 @@ function midiIn(data) {
   if (l && type === 0xb0) return runEntry(l, type, d2, true);
 }
 
-const ABS_ACTIONS = new Set(["tempo", "fader", "trim", "hi", "mid", "low", "cfx", "xfader", "headMix", "master", "fxDepth"]);
+const ABS_ACTIONS = new Set(["tempo", "fader", "trim", "hi", "mid", "low", "cfx", "xfader", "headMix", "master"]);
 const REL_ACTIONS = new Set(["jogTop", "jogSide", "jogSearch", "browse", "zoom"]);
-const LED_ACTIONS = /^(play|cue|sync|pfl|loopIn|loopOut|reloop|keylock|quant|mode:|hot:|loop:|pfx:|pfx2:|fxOn)/;
-const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump", "padfx", "padfx2"]);
+const LED_ACTIONS = /^(play|cue|sync|pfl|loopIn|loopOut|reloop|keylock|quant|mode:|hot:|loop:)/;
+const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump"]);
 function runEntry(e, type, v, isLsb) {
   const [, , action, deck, lsb] = e;
   const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = colon < 0 ? "" : action.slice(colon + 1);
@@ -5006,7 +4583,6 @@ function setAbs(name, deck, val) {
       M[name][deck] = val; applyMixer(deck); setCtl(`${name}${deck}`, val); return;
     case "xfader": M.xfader = val; applyMixer(0); applyMixer(1); setCtl("xfader", val); return;
     case "headMix": M.headMix = val; applyMaster(); setCtl("headmix", val); return;
-    case "fxDepth": fxDepth(val); setCtl("fxdepth", val); return;
     case "master": M.master = val; applyMaster(); setCtl("master", val); return;
   }
 }
@@ -5034,17 +4610,6 @@ function pressAction(name, arg, d, deck, on) {
     case "jump": if (on) d.beatJump(+arg); return;
     case "pfl": if (on) { M.pfl[deck] = !M.pfl[deck]; applyMixer(deck); refreshMixerUI(); } return;
     case "masterCue": if (on) { M.masterCue = !M.masterCue; applyMaster(); refreshMixerUI(); } return;
-    case "fxSelect": if (on) fxSelect(1); return;
-    case "fxSelectPrev": if (on) fxSelect(-1); return;
-    case "fxBeatDown": if (on) fxBeat(-1); return;
-    case "fxBeatUp": if (on) fxBeat(1); return;
-    case "fxOn": if (on) fxOn(!FX.beat.on); return;
-    case "fxOff": if (on) fxOn(false); return;
-    // the FLX4's CH SELECT lever: CH1 / CH2 send 7F while there, 00 when it leaves; neither = MASTER
-    case "fxCh": MIDI.fxLever = MIDI.fxLever || {}; MIDI.fxLever[arg] = on;
-      fxChannel(MIDI.fxLever[0] ? 0 : MIDI.fxLever[1] ? 1 : "M"); return;
-    case "pfx": if (d) on ? pfxDown(deck, "padfx", +arg) : pfxUp(deck, "padfx", +arg); return;
-    case "pfx2": if (d) on ? pfxDown(deck, "padfx2", +arg) : pfxUp(deck, "padfx2", +arg); return;
     case "quant": if (on) { d.quant = !d.quant; refreshDeckUI(deck); } return;
     case "keylock": if (on) d.setMT(!d.mt); return;
     case "mode":
@@ -5072,7 +4637,6 @@ function updateLeds() {
   blinkOn = performance.now() % 1000 < 500;
   for (const e of MIDI.ledEntries) {
     const [st, no, action, deck] = e;
-    if (action === "fxOn") { led(st, no, FX.beat.on); continue; }
     if (deck < 0) continue;
     const d = decks[deck];
     const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = action.slice(colon + 1);
@@ -5091,7 +4655,6 @@ function updateLeds() {
       case "mode": v = d.padMode === arg; break;
       case "hot": v = d.padMode === "hotcue" && d.hot[+arg] != null; break;
       case "loop": v = d.padMode === "beatloop" && d.loop.on && Math.abs(d.loopBeats() - +arg) < 0.01; break;
-      case "pfx": case "pfx2": { const bank = name === "pfx" ? "padfx" : "padfx2"; v = d.padMode === bank && !!FX.pad[deck] && FX.pad[deck].p === +arg && FX.pad[deck].bank === bank; break; }
       default: continue;
     }
     led(st, no, v);
@@ -5102,8 +4665,7 @@ function updateLeds() {
 // ---- MIDI learn: click a control on screen, then move or press it on the controller ----
 // learnable on-screen controls carry data-learn="action" and data-deck
 const LEARN_LABEL = { play: "Play", cue: "Cue", sync: "Sync", loopIn: "Loop in", loopOut: "Loop out", reloop: "Reloop/exit",
-  tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", masterCue: "Master cue", fxOn: "Beat FX on/off", fxSelect: "Beat FX select",
-  fxBeatDown: "Beat FX beat ◀", fxBeatUp: "Beat FX beat ▶", fxDepth: "Beat FX level/depth", fader: "Channel fader", trim: "Trim", hi: "EQ high",
+  tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", masterCue: "Master cue", fader: "Channel fader", trim: "Trim", hi: "EQ high",
   mid: "EQ mid", low: "EQ low", cfx: "Filter (CFX)", xfader: "Crossfader", headMix: "Cue/master mix", master: "Master level",
   browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)" };
 function startLearn() {
@@ -5361,8 +4923,6 @@ function tagLearnables() {
   tag(widgets.xfader && widgets.xfader.el, "xfader", -1);
   tag(widgets.headmix && widgets.headmix.el, "headMix", -1);
   tag(A.mcueBtn, "masterCue", -1);
-  if (A.bfx) { tag(A.bfx.on, "fxOn", -1); tag(A.bfx.sel, "fxSelect", -1); tag(A.bfx.bl, "fxBeatDown", -1); tag(A.bfx.br, "fxBeatUp", -1); }
-  tag(widgets.fxdepth && widgets.fxdepth.el, "fxDepth", -1);
   tag(widgets.master && widgets.master.el, "master", -1);
 }
 // ---- set recording: master output to WAV (16-bit) or MP3 (320 kbps, lamejs in a worker) + a tracklist ----
@@ -5575,9 +5135,6 @@ function phoneize() {
     $("#setPanel"));
   $("#cueTest").classList.add("sq");
   $("#setOpen").addEventListener("click", () => openSheet("#setSheet"));
-  // Beat FX: its own sheet (the phone mixer has no room)
-  $("#fxBody").append($("#mixer .beatfx"));
-  $("#fxOpen").addEventListener("click", () => openSheet("#fxSheet"));
   // decks
   for (const i of [0, 1]) {
     const u = ui[i], d = decks[i], el = document.querySelector(`.deck[data-i="${i}"]`);
@@ -5667,7 +5224,6 @@ let controlTimer = 0, lastRecTick = 0;
 function controlTick() {
   for (const d of decks) { try { d.syncTick(); } catch (e) { noteError("sync: " + e.message); } }
   const now = performance.now();
-  try { fxClockTick(now); } catch (e) { noteError("fx clock: " + e.message); }
   if (REC.on && now - lastRecTick > 500) { lastRecTick = now; try { recTrackTick(); } catch (e) {} }
 }
 function startControl() { if (!controlTimer) controlTimer = setInterval(controlTick, 20); }
@@ -5790,12 +5346,11 @@ $("#startBtn").addEventListener("click", async () => {
   listOutputs();
   navigator.mediaDevices && navigator.mediaDevices.addEventListener && navigator.mediaDevices.addEventListener("devicechange", listOutputs);
   startControl();
-  sendBeatFx();
   requestAnimationFrame(frame);
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

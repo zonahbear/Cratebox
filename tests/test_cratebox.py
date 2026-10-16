@@ -144,10 +144,6 @@ def main():
         check("SYNC aligns beats", abs(sy["phase"]) < 0.012, f"{sy['phase']*1000:.1f} ms apart after 2.5 s")
         midi(0xB0, 0x00, 0x7F); midi(0xB0, 0x20, 0x7F)      # deck 1 tempo to +6%: deck 2 should follow
         page.wait_for_timeout(200)
-        try:   # the follow happens on the next control tick; give a busy machine up to a second
-            page.wait_for_function("Math.abs(cratebox.lanePps(0, 1000) * cratebox.decks[0].spb - cratebox.lanePps(1, 1000) * cratebox.decks[1].spb) < 0.05", timeout=1000)
-        except Exception:
-            pass
         px = page.evaluate("[0, 1].map(i => cratebox.lanePps(i, 1000) * cratebox.decks[i].spb)")
         check("synced waveforms show beats at the same spacing", abs(px[0] - px[1]) < 0.05, f"{px[0]:.2f} px vs {px[1]:.2f} px per beat")
         f = page.evaluate("[cratebox.decks[0].effBpm(), cratebox.decks[1].effBpm()]")
