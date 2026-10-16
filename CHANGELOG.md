@@ -2,6 +2,11 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`; 1.0 comes once it has been road-tested on real sets.
 
+## 0.10.1 (2026-10-15)
+
+### Added
+- **Bar counter** on every deck, like rekordbox: bar.beat (1.1, 1.2, 1.3, 1.4, 2.1 ...), next to the time. Counted from the beat grid's first downbeat (bars before it read 0.4, 0.3 ...); **BAR 1 HERE** in GRID moves the downbeat. Shown on compact decks and phones too, and bigger in the Booth look.
+
 ## 0.10.0 (2026-10-15)
 
 ### Added

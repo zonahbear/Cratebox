@@ -68,6 +68,7 @@ header { min-width: 0; overflow: hidden; }
 .dbpm span { font-size: 11px; color: var(--muted); }
 .dinfo { display: flex; flex-wrap: wrap; row-gap: 4px; align-items: center; gap: 12px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
 .dinfo .remain { color: var(--fg); font-size: 16px; }
+.dinfo .bartag { font-family: var(--f-mono); font-size: 15px; color: var(--fg); font-variant-numeric: tabular-nums; min-width: 4.2ch; text-align: right; }
 .beats { display: flex; gap: 3px; }
 .beats i { width: 16px; height: 6px; background: var(--line2); border-radius: 1px; }
 .beats i.on { background: var(--c); }
@@ -276,7 +277,8 @@ html.phone .dtitle span { font-size: 11px; }
 html.phone .dbpm b { font-size: 19px; }
 html.phone .dbpm span { font-size: 10px; }
 html.phone .dinfo { gap: 8px; font-size: 11px; flex-wrap: nowrap; overflow: hidden; height: 18px; }
-html.phone .dinfo > :not(.remain):not(.phrasetag):not(.keytag):not(.spacer):not(.mastertag) { display: none; }
+html.phone .dinfo > :not(.remain):not(.bartag):not(.phrasetag):not(.keytag):not(.spacer):not(.mastertag) { display: none; }
+html.phone .dinfo .bartag { font-size: 13px; min-width: 3.6ch; }
 html.phone .dinfo .remain { font-size: 13px; }
 html.phone .phrasetag { font-size: 12px; }
 html.phone .keytag { font-size: 11px; padding: 0 5px; }
@@ -540,7 +542,7 @@ html.tallapp.ownlanes:not(.phone) #app { grid-template-rows: 42px auto 360px; }
 html.four #mixer .cuebtn { width: 100%; max-width: 56px; }
 /* compact deck: header, overview and one row of essentials */
 .deck .mini { display: none; }
-.deck.compact .dbody, .deck.compact .gridbar, .deck.compact .dinfo > :not(.remain):not(.keytag):not(.phrasetag):not(.mastertag):not(.phasetag):not(.spacer) { display: none !important; }
+.deck.compact .dbody, .deck.compact .gridbar, .deck.compact .dinfo > :not(.remain):not(.bartag):not(.keytag):not(.phrasetag):not(.mastertag):not(.phasetag):not(.spacer) { display: none !important; }
 .deck.compact { gap: 5px; padding-bottom: 8px; }
 .deck.compact .dnum { font-size: 24px; }
 .deck.compact .dtitle b { font-size: 13px; }
@@ -601,6 +603,7 @@ html.ownlanes[data-theme="booth"] .deck .screen {
 html[data-theme="booth"]:not(.phone) .dnum { font-size: 30px; text-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
 html[data-theme="booth"]:not(.phone) .dtitle b { font-size: 16px; letter-spacing: .01em; }
 html[data-theme="booth"]:not(.phone) .dbpm b { font-family: var(--f-mono); font-size: 26px; color: #fff; padding: 2px 8px; border: 1px solid #2a2e35; border-radius: 4px; background: #0a0c0e; display: inline-block; }
+html[data-theme="booth"]:not(.phone) .dinfo .bartag { font-size: 20px; color: #fff; }
 html[data-theme="booth"]:not(.phone) .dinfo .remain { font-size: 20px; color: #fff; font-weight: 500; }
 html[data-theme="booth"] .dinfo { color: #9aa3b2; }
 html[data-theme="booth"] .beats i { height: 7px; border-radius: 0; background: #1e2126; }
@@ -722,7 +725,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v0.10.0</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v0.10.1</span></div>
         </div>
       </div>
       <span id="progress"></span>
@@ -762,7 +765,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.10.0</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v0.10.1</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -775,7 +778,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "0.10.0";
+const VERSION = "0.10.1";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
@@ -3780,6 +3783,8 @@ function buildDeck(i) {
   u.elapsed = h("span", {}, "0:00.0");
   u.remain = h("span", { class: "remain" }, "-0:00.0");
   u.beats = h("div", { class: "beats" }, h("i"), h("i"), h("i"), h("i"));
+  // bar counter like rekordbox: bar.beat (1.1 1.2 1.3 1.4 2.1 ...), counted from the grid's bar 1
+  u.barTag = h("span", { class: "bartag", title: "Bar.beat on the beat grid (BAR 1 HERE in GRID sets bar 1)" }, "");
   u.phraseTag = h("span", { class: "phrasetag", title: "Phrase: bar within the phrase / phrase length" }, "");
   u.qtag = h("button", { class: "tag on", title: "Quantize: snap cues and loops to the beat grid", onclick: () => { d.quant = !d.quant; refreshDeckUI(i); } }, "Q");
   u.mtag = h("span", { class: "tag mastertag", title: "This deck is the tempo master" }, "MASTER");
@@ -3787,7 +3792,7 @@ function buildDeck(i) {
   u.keyTag = h("span", { class: "keytag", title: "Key (Camelot)" }, "");
   u.gridBtn = h("button", { class: "tag", title: "Edit the beat grid", onclick: () => { u.gridBar.hidden = !u.gridBar.hidden; u.gridBtn.classList.toggle("on", !u.gridBar.hidden); } }, "GRID");
   u.mtBtn = h("button", { class: "tag", title: "Master tempo (keylock): change tempo without changing the key", onclick: () => d.setMT(!d.mt) }, "MT");
-  el.append(h("div", { class: "dinfo" }, u.elapsed, u.remain, u.beats, u.phraseTag, h("span", { class: "spacer" }), u.phaseTag, u.keyTag, u.mtag, u.gridBtn, u.mtBtn, u.qtag));
+  el.append(h("div", { class: "dinfo" }, u.elapsed, u.remain, u.barTag, u.beats, u.phraseTag, h("span", { class: "spacer" }), u.phaseTag, u.keyTag, u.mtag, u.gridBtn, u.mtBtn, u.qtag));
   u.overview = h("canvas", { class: "overview", height: "44" });
   // click/tap to jump, drag to scrub
   const ovSeek = (e) => { const r = u.overview.getBoundingClientRect(); d.seekTo(clamp((e.clientX - r.left) / r.width, 0, 1) * d.duration); };
@@ -3898,6 +3903,12 @@ function buildDeck(i) {
     el.querySelector(".dhead").append(u.expand);
   }
   return el;
+}
+// "bar.beat" at time t: beat 0 of the grid is bar 1 beat 1. Before bar 1 the count runs 0.4, 0.3 ... -1.4
+function barBeat(d, t) {
+  const b = Math.floor(d.beatAt(t) + 1e-6);       // the beat we're in (a hair of tolerance for landing on it)
+  const bar = Math.floor(b / 4) + 1, beat = ((b % 4) + 4) % 4 + 1;
+  return `${bar}.${beat}`;
 }
 const LOOP_SIZES = [0.25, 0.5, 1, 2, 4, 8, 16, 32];
 const JUMPS = [-1, 1, -2, 2, -4, 4, -8, 8];
@@ -5210,6 +5221,8 @@ function frame(ts) {
       const pct = (d.rate() - 1) * 100;
       u.tempo.textContent = `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%  ${d.range === 100 ? "WIDE" : "±" + d.range + "%"}`;
       const beat = d.bpm ? (((Math.floor(d.beatAt(t)) % 4) + 4) % 4) : -1;
+      const bt = d.loaded && d.bpm ? barBeat(d, t) : "";
+      if (u.barTag.textContent !== bt) u.barTag.textContent = bt;
       const ph = d.loaded ? phraseAt(d, t) : null;
       const ptxt = ph ? `${ph.label.toUpperCase()} ${Math.min(ph.bars, Math.floor((t - ph.start) / ph.barLen) + 1)}/${ph.bars}` : "";
       if (u.phraseTag.textContent !== ptxt) { u.phraseTag.textContent = ptxt; u.phraseTag.style.color = ph ? PHRASE_COLORS[ph.label] : ""; }
@@ -5290,7 +5303,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
+window.cratebox = { VERSION, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, importXml, exportXml, removeFromPlaylist, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET };
 </script>
 </body>
 </html>

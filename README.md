@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 0.10.0 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
+Version 0.10.1 (beta: feature-complete, not yet road-tested on a real set). 1.0 once it has been.
 
 A lightweight DJ app (2 or 4 decks) that runs in Chrome, built around the Pioneer DDJ-FLX4.
 
@@ -137,6 +137,10 @@ Settings → **Report a problem…**: describe what happened; device details (br
 - Scroll the mouse wheel over a waveform to zoom (or SHIFT + BROWSE on the FLX4).
 - The waveforms follow tempo: speed a track up and its waveform squeezes together, so two synced decks show their beats at the same spacing.
 
+## Bar counter
+
+Each deck shows where you are as **bar.beat**, like rekordbox: 1.1, 1.2, 1.3, 1.4, 2.1 and so on, counted on the beat grid from the track's first downbeat. If the count is a beat off, the grid's downbeat is: pause on the "1" and press **BAR 1 HERE** in GRID.
+
 ## Phrases
 
 Each track is split into phrases on bar lines and named: **Intro**, **Build**, **Drop**, **Groove** (drums in, not the peak), **Breakdown**, **Outro**. They show as a coloured strip under the track overview and along the top of the scrolling waveform, and the deck shows where you are, e.g. `DROP 13/16` = bar 13 of a 16-bar drop. Handy for landing your next drop on the 1 of the other track's.
@@ -250,4 +254,4 @@ Chrome for Android has Web MIDI, so **the FLX4 (and the other controllers) work 
 
 ## Tests
 
-`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_ios_midi.py` runs an iPhone inside a MIDI browser app (Web MIDI added late, stand-in FLX4), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given; `CB_THEME=booth` and `CB_FOUR=1` audit the Booth look and 4-deck mode), `python tests/test_fourdeck.py` covers 4-deck mode and the big-screen zoom, `python tests/test_record.py` records WAV and MP3 sets and checks the files and tracklist, `python tests/test_audio_first.py` checks that playback and sync never depend on the screen, `python tests/test_report.py` covers Report a problem, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
+`python tests/make_tracks.py tests/music` builds four synthetic tracks with known tempos, keys and sections, then `python tests/test_cratebox.py` drives Cratebox in headless Chrome with real FLX4 MIDI messages, `python tests/test_controllers.py` drives every built-in controller mapping and MIDI learn, `python tests/test_ios.py` checks the touch/iPhone mode (no MIDI, imported files, phone screen sizes), `python tests/test_ios_midi.py` runs an iPhone inside a MIDI browser app (Web MIDI added late, stand-in FLX4), `python tests/test_android.py` runs an emulated Android phone with a stand-in FLX4 on Web MIDI, and `python tests/test_sync.py` checks halftime/double-time sync and the beat lock, `python tests/test_layout.py [folder]` audits the layout on 19 screen sizes from an iPhone SE to a 1440p monitor (nothing off screen, overlapping, cut off or too small to tap; screenshots into the folder if given; `CB_THEME=booth` and `CB_FOUR=1` audit the Booth look and 4-deck mode), `python tests/test_fourdeck.py` covers 4-deck mode and the big-screen zoom, `python tests/test_record.py` records WAV and MP3 sets and checks the files and tracklist, `python tests/test_audio_first.py` checks that playback and sync never depend on the screen, `python tests/test_report.py` covers Report a problem, `python tests/test_barcounter.py` checks the bar counter, and `python tests/test_playlists.py` covers playlists, rekordbox XML import/export and a rekordbox USB export. `node tests/test_rekordbox.js` checks the rekordbox file readers against a real USB export (`tests/fixtures/rekordbox_usb`, from pyrekordbox's test data, MIT licence) and against hand-built cue lists. The Python tests need `pip install playwright` and `playwright install chromium`.
