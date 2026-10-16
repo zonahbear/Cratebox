@@ -1,6 +1,6 @@
 # Cratebox
 
-Version 1.1.0. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.1. What changed in each version: [CHANGELOG.md](CHANGELOG.md).
 
 A lightweight DJ app (2 or 4 decks) that runs in Chrome, built around the Pioneer DDJ-FLX4.
 

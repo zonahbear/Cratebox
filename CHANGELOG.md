@@ -2,7 +2,7 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
-## Unreleased
+## 1.1.1 (2026-10-16)
 
 ### Changed
 - **Faster drawing on slow computers.** The scrolling waveforms are painted once into a strip and slid along by the graphics card, instead of every pixel being repainted on every frame. The overview, jog wheels and level meters only repaint when something on them changes, so a paused deck costs almost nothing. Measured in headless Chrome with the CPU slowed 4x: 4 decks at 2560x1440 went from 10.6 to 4.1 ms of drawing per frame while playing, and from 10.3 to 1.6 ms when paused; 2 decks at 1440x900 from 4.4 to 1.9 ms playing and 3.9 to 0.9 ms paused.

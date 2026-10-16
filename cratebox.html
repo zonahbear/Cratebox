@@ -761,7 +761,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.0</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.1</span></div>
         </div>
       </div>
     <span id="status"></span>
@@ -829,7 +829,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 <div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
 <div id="start">
   <div class="card">
-    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.0</small></h1>
+    <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.1</small></h1>
     <p>Two decks, a mixer and your music folder, for Pioneer DJ / AlphaTheta controllers (built on the DDJ-FLX4).</p>
     <p id="startMidi">Plug in your controller first. Chrome will ask to let this page use MIDI devices: allow it, including "control and reprogram", which keeps the controller's lights awake.</p>
     <p id="startNote" class="warn" hidden></p>
@@ -842,7 +842,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 // =====================================================================================
 //  Small helpers
 // =====================================================================================
-const VERSION = "1.1.0";
+const VERSION = "1.1.1";
 // the last few errors, for problem reports
 const RECENT_ERRORS = [];
 const noteError = (msg) => { RECENT_ERRORS.push(`${new Date().toISOString().slice(11, 19)} ${String(msg).slice(0, 300)}`); if (RECENT_ERRORS.length > 8) RECENT_ERRORS.shift(); };
