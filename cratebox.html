@@ -731,6 +731,8 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
+          <label for="wavqSel">Waveform detail <small>Light draws fewer pixels, for slow computers</small></label>
+          <select class="hsel" id="wavqSel"><option value="auto">Auto (drops to Light if drawing is slow)</option><option value="sharp">Sharp</option><option value="light">Light</option></select>
           <label for="abufSel" class="deskonly">Audio buffer <small>bigger = safer from dropouts; applies after a reload</small></label>
           <select class="hsel deskonly" id="abufSel"><option value="interactive">Small (tightest jog feel)</option><option value="balanced">Medium (default)</option><option value="playback">Large (safest)</option></select>
           <label for="recFmtSel" class="deskonly">Recording format</label>
@@ -1952,6 +1954,25 @@ function phraseSpans(d) {
 function phraseAt(d, t) { return phraseSpans(d).find((p) => t >= p.start && t < p.end) || null; }
 let waveStyle = "rgb";
 try { if (localStorage.getItem("cb.wave") === "3band") waveStyle = "3band"; } catch (e) {}
+// waveform detail: "sharp" draws the waveform canvases at the screen's full pixel density, "light" at 1x
+// (a quarter of the pixels on a 2x screen). "auto" starts sharp and drops to light for the session if
+// drawing stays slow (see frame()).
+let wavQuality = "auto", wavLight = false;
+try { const q = localStorage.getItem("cb.wavq"); if (q === "sharp" || q === "light") wavQuality = q; } catch (e) {}
+wavLight = wavQuality === "light";
+// what draws the screen. A software renderer (SwiftShader, llvmpipe, Microsoft Basic Render) means
+// the browser isn't using the graphics card; shown in problem reports, since it explains slow drawing.
+const GPU = (() => {
+  try {
+    const gl = document.createElement("canvas").getContext("webgl");
+    if (!gl) return { name: "no WebGL", soft: true };
+    const ext = gl.getExtension("WEBGL_debug_renderer_info");
+    const name = String((ext && gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)) || gl.getParameter(gl.RENDERER) || "?");
+    const lose = gl.getExtension("WEBGL_lose_context");
+    if (lose) lose.loseContext();
+    return { name, soft: /swiftshader|llvmpipe|softpipe|software|basic render/i.test(name) };
+  } catch (e) { return { name: "?", soft: false }; }
+})();
 // backspin length: seconds for the platter to recover from a hard backwards fling
 let spinSecs = 2.5;
 try { const v = parseFloat(localStorage.getItem("cb.spin")); if (v > 0) spinSecs = v; } catch (e) {}
@@ -3029,6 +3050,13 @@ $("#waveSel").value = waveStyle;
 $("#waveSel").addEventListener("change", (e) => {
   waveStyle = e.target.value;
   try { localStorage.setItem("cb.wave", waveStyle); } catch (err) {}
+  overviewBase.fill(null);
+});
+$("#wavqSel").value = wavQuality;
+$("#wavqSel").addEventListener("change", (e) => {
+  wavQuality = e.target.value;
+  try { localStorage.setItem("cb.wavq", wavQuality); } catch (err) {}
+  wavLight = wavQuality === "light";
   overviewBase.fill(null);
 });
 // scrolling waveforms: drag to move through the track (audio follows the hand while playing, like
@@ -4579,30 +4607,68 @@ function aggregate(src, a, b) {
   }
   return colVal;
 }
-const laneImg = [null, null];
-function imageFor(store, i, g, W, H) {
-  let im = store[i];
-  if (!im || im.width !== W || im.height !== H) { im = store[i] = g.createImageData(W, H); im.u32 = new Uint32Array(im.data.buffer); }
-  im.u32.fill(BG32);
-  return im;
-}
 const overviewBase = [null, null];
+let overviewStamp = 0;
+// canvases that are always painted edge to edge get an opaque context: the browser can then put them
+// on screen without blending them over the page behind. Attributes only count on the first getContext.
+function ctx2d(cv, opaque) {
+  if (!cv._g) cv._g = cv.getContext("2d", opaque ? { alpha: false } : undefined);
+  return cv._g;
+}
 function fitCanvas(cv) {
   // phones: 2x is plenty for waveforms, and 3x makes Safari push 2.25x the pixels every frame
   // (UIZ: the interface size zoom, so canvases stay sharp when the app is scaled up)
-  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3) * UIZ;
+  // Light waveform detail: 1x, so a 2x screen draws a quarter of the pixels
+  const dpr = (wavLight ? 1 : Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3)) * UIZ;
   const w = Math.round(cv.clientWidth * dpr), hh = Math.round(cv.clientHeight * dpr);
-  if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; }
+  if (cv.width !== w || cv.height !== hh) { cv.width = w; cv.height = hh; cv._key = null; }
   return [w, hh, dpr];
+}
+// The scrolling waveform is painted once into a strip twice the lane's width and slid along with
+// drawImage (a copy the graphics card does) every frame. It's repainted only when the playhead nears
+// its edge (every few seconds), the zoom or tempo moves it more than a little, or the track, analysis
+// or waveform style changes. Painting every pixel of every lane on every frame was the biggest
+// drawing cost, and the reason slow computers dropped frames with four decks.
+const laneStrip = [null, null, null, null];
+function laneStripFor(i, a, W, H, t, pps) {
+  let s = laneStrip[i];
+  const now = performance.now();
+  if (s && s.a === a && s.H === H && s.W === W && s.style === waveStyle) {
+    const r = pps / s.pps;
+    const tv0 = t - W / 2 / pps, tv1 = t + W / 2 / pps;               // the time span on screen
+    const covered = tv0 >= s.t0 - 0.5 / s.pps && tv1 <= s.t0 + s.SW / s.pps + 0.5 / s.pps;
+    // a small tempo change is drawn by stretching the strip (exact geometry, slightly soft pixels);
+    // it's repainted sharp once the tempo holds still, or at once if it moved a lot
+    if (covered && (r === 1 || (Math.abs(r - 1) < 0.04 && (Math.abs(r - 1) < 0.002 || now - s.built < 250)))) return s;
+  }
+  const SW = Math.min(16384, W * 2);
+  if (!s || s.cv.width !== SW || s.cv.height !== H) {
+    const cv = document.createElement("canvas");
+    cv.width = SW; cv.height = H;
+    const g = cv.getContext("2d", { alpha: false });
+    const im = g.createImageData(SW, H);
+    s = laneStrip[i] = { cv, g, im, u32: new Uint32Array(im.data.buffer) };
+  }
+  s.a = a; s.W = W; s.H = H; s.SW = SW; s.pps = pps; s.style = waveStyle; s.built = now;
+  s.t0 = t - SW / 2 / pps;
+  s.u32.fill(BG32);
+  const n = a.peak.length, wps = a.wps;
+  for (let x = 0; x < SW; x++) {
+    const k0 = Math.floor((s.t0 + x / pps) * wps), k1 = Math.floor((s.t0 + (x + 1) / pps) * wps);
+    if (k1 < 0 || k0 >= n) continue;
+    paintCol(s.u32, SW, H, x, aggregate(a, k0, k1), 1);
+  }
+  s.g.putImageData(s.im, 0, 0);
+  return s;
 }
 function drawOverviewBase(i) {
   const d = decks[i], cv = ui[i].overview;
   if (!cv) return;
-  const [W, H] = fitCanvas(cv);
+  const [W, H, cdpr] = fitCanvas(cv);
   if (!W || !H) { overviewBase[i] = null; return; }
   const off = document.createElement("canvas");
-  off.width = W; off.height = H;
-  const g = off.getContext("2d");
+  off.width = W; off.height = H; off.stamp = ++overviewStamp;
+  const g = off.getContext("2d", { alpha: false });
   const im = g.createImageData(W, H), u32 = new Uint32Array(im.data.buffer);
   u32.fill(BG32);
   if (d.ana && d.ana.overview) {
@@ -4611,7 +4677,7 @@ function drawOverviewBase(i) {
   }
   g.putImageData(im, 0, 0);
   // phrase strip along the bottom
-  const dpr = Math.min(window.devicePixelRatio || 1, PHONE ? 2 : 3), sh = Math.round(5 * dpr);
+  const sh = Math.round((5 * cdpr) / UIZ);
   for (const p of phraseSpans(d)) {
     const x0 = Math.round((p.start / d.duration) * W), x1 = Math.round((p.end / d.duration) * W);
     g.fillStyle = PHRASE_COLORS[p.label] || "#888";
@@ -4621,14 +4687,18 @@ function drawOverviewBase(i) {
 }
 function drawOverview(i) {
   const d = decks[i], cv = ui[i].overview;
-  const g = cv.getContext("2d");
+  const g = ctx2d(cv, true);
   const [W, H] = fitCanvas(cv);
   if (!W || !H) return;
-  if (!overviewBase[i] || overviewBase[i].width !== W) drawOverviewBase(i);
+  if (!overviewBase[i] || overviewBase[i].width !== W || overviewBase[i].height !== H) drawOverviewBase(i);
   if (!overviewBase[i]) return;
+  const t = d.loaded ? d.now() : 0, x = d.loaded ? (t / d.duration) * W : 0;
+  // redraw only when something on it moved (the playhead advances about one pixel every few frames)
+  const key = d.loaded ? `${overviewBase[i].stamp}|${Math.round(x * 2)}|${d.loop.a}|${d.loop.b}|${d.loop.on}|${d.cue}|${d.hot.join()}` : `${overviewBase[i].stamp}`;
+  if (cv._key === key) return;
+  cv._key = key;
   g.drawImage(overviewBase[i], 0, 0);
   if (!d.loaded) return;
-  const t = d.now(), x = (t / d.duration) * W;
   g.fillStyle = "rgba(0,0,0,0.45)"; g.fillRect(0, 0, x, H);
   if (d.loop.a != null && d.loop.b != null) {
     g.fillStyle = d.loop.on ? "rgba(245,214,74,0.30)" : "rgba(245,214,74,0.12)";
@@ -4652,29 +4722,35 @@ function readThemeColours() {
   DECK_COL = [0, 1, 2, 3].map((i) => cs.getPropertyValue("--d" + i).trim() || DECK_COL[i]);
 }
 function drawLane(i) {
-  const cv = $("#lane" + i), g = cv.getContext("2d"), d = decks[i];
+  const cv = $("#lane" + i), g = ctx2d(cv, true), d = decks[i];
   const [W, H, dpr] = fitCanvas(cv);
   if (!W || !H) return;
-  g.fillStyle = "#050608"; g.fillRect(0, 0, W, H);
   const mid = H / 2, cx = Math.round(W / 2);
+  const ready = d.loaded && d.ana;
+  const t = ready ? d.now() : 0, pps = ready ? lanePps(i, W) : 0, t0 = t - cx / pps;
+  // nothing changed since the last frame (a paused or empty deck): leave the canvas as it is
+  const key = ready
+    ? `${t}|${pps}|${d.cue}|${d.hot.join()}|${d.loop.a}|${d.loop.b}|${d.loop.on}|${d.spb}|${d.ana.firstBeat}|${d.effBpm()}|${waveStyle}|${DECK_COL[i]}|${document.fonts ? document.fonts.status : ""}`
+    : `${d.loading}|${DECK_COL[i]}|${document.fonts ? document.fonts.status : ""}`;
+  if (cv._key === key && cv._ana === d.ana) return;
+  cv._key = key; cv._ana = d.ana;
+  g.fillStyle = "#050608"; g.fillRect(0, 0, W, H);
   g.fillStyle = DECK_COL[i];
   g.fillRect(0, 0, 4 * dpr, H);
-  if (!d.loaded || !d.ana) {
+  if (!ready) {
     g.fillStyle = "#586070"; g.font = `${13 * dpr}px Barlow, sans-serif`;
     g.fillText(d.loading ? `Deck ${i + 1}: analyzing…` : `Deck ${i + 1}: empty`, 14 * dpr, mid + 4 * dpr);
     return;
   }
-  const a = d.ana, wps = a.wps;
-  const t = d.now(), pps = lanePps(i, W), t0 = t - cx / pps;
+  const a = d.ana;
   if (a.peak) {
-    const im = imageFor(laneImg, i, g, W, H);
-    const n = a.peak.length;
-    for (let x = 0; x < W; x++) {
-      const k0 = Math.floor((t0 + x / pps) * wps), k1 = Math.floor((t0 + (x + 1) / pps) * wps);
-      if (k1 < 0 || k0 >= n) continue;
-      paintCol(im.u32, W, H, x, aggregate(a, k0, k1), x < cx ? 0.62 : 1);
-    }
-    g.putImageData(im, 0, 0);
+    const s = laneStripFor(i, a, W, H, t, pps);
+    const r = pps / s.pps, dx = (s.t0 - t) * pps + cx, dw = s.SW * r;
+    g.imageSmoothingEnabled = r !== 1;               // whole-pixel copy when not stretched: stays crisp
+    if (r === 1) g.drawImage(s.cv, Math.round(dx), 0);
+    else g.drawImage(s.cv, dx, 0, dw, H);
+    // the part already played (left of the playhead) is dimmed
+    g.fillStyle = "rgba(5,6,8,0.38)"; g.fillRect(0, 0, cx, H);
     g.fillStyle = DECK_COL[i];
     g.fillRect(0, 0, 4 * dpr, H);
   }
@@ -4732,12 +4808,16 @@ function drawLane(i) {
 function drawJog(i) {
   const d = decks[i], cv = ui[i].jog, g = cv.getContext("2d");
   const W = cv.width, c = W / 2;
-  g.clearRect(0, 0, W, W);
   const col = DECK_COL[i];
+  const ang = d.loaded ? (d.now() / 1.8) * Math.PI * 2 : 0;
+  // a stopped platter doesn't need repainting 60 times a second
+  const key = `${W}|${d.touch}|${d.playing}|${d.loaded}|${col}|${d.loaded ? ang.toFixed(3) : ""}|${d.loaded && d.duration ? (d.now() / d.duration).toFixed(4) : ""}|${document.fonts ? document.fonts.status : ""}`;
+  if (cv._key === key) return;
+  cv._key = key;
+  g.clearRect(0, 0, W, W);
   g.beginPath(); g.arc(c, c, c - 6, 0, Math.PI * 2); g.fillStyle = "#14171c"; g.fill();
   g.lineWidth = 6; g.strokeStyle = d.touch ? col : "#2d333d"; g.stroke();
   g.beginPath(); g.arc(c, c, c * 0.62, 0, Math.PI * 2); g.fillStyle = "#1c2027"; g.fill();
-  const ang = d.loaded ? (d.now() / 1.8) * Math.PI * 2 : 0;
   g.save(); g.translate(c, c); g.rotate(ang);
   g.fillStyle = col; g.fillRect(-3, -(c - 8), 6, c * 0.32);
   g.restore();
@@ -4764,9 +4844,13 @@ const meterState = [0, 0, 0, 0];
 let masterMeterState = 0;
 function levelOf(p) { const db = 20 * Math.log10(p + 1e-9); return clamp((db + 42) / 42, 0, 1); }
 function drawMeter(cv, level) {
-  const g = cv.getContext("2d"), W = cv.width, H = cv.height;
+  const W = cv.width, H = cv.height, segs = 15, sh = H / segs;
+  // only repaint when the number of lit segments changes
+  const lit = Math.min(segs, Math.max(0, Math.ceil(level * segs))), key = lit * 100000 + W * 1000 + H;
+  if (cv._key === key) return;
+  cv._key = key;
+  const g = ctx2d(cv, true);
   g.fillStyle = "#07080a"; g.fillRect(0, 0, W, H);
-  const segs = 15, sh = H / segs;
   for (let s = 0; s < segs; s++) {
     const on = level * segs > s;
     g.fillStyle = on ? (s >= 13 ? "#ff3b55" : s >= 10 ? "#ffb020" : "#3ddc84") : "#15181d";
@@ -5491,6 +5575,7 @@ function reportDiagnostics() {
     `Layout: ${PHONE ? "phone" : document.documentElement.classList.contains("touch") ? "touch" : "desktop"}, window ${innerWidth}x${innerHeight}, screen ${screen.width}x${screen.height} @${devicePixelRatio}x`,
     `Web MIDI: ${HAS_MIDI ? "yes" : "no"}, controller: ${MIDI.name || "none"}${MIDI.profile ? ` (mapping ${MIDI.profile.id})` : ""}`,
     `Audio: ${A.ctx ? `${A.ctx.sampleRate} Hz, ${A.ctx.destination.maxChannelCount} ch, state ${A.ctx.state}` : "not started"}`,
+    `Graphics: ${GPU.name}${GPU.soft ? " (software, no graphics card acceleration)" : ""}, waveform detail ${wavQuality}${wavLight ? " (light)" : ""}, draw ${drawCost.toFixed(1)} ms/frame`,
     `Library: ${lib.tracks.length} tracks, files ${CAN_PICK_FOLDER ? "folder access" : MOBILE_FILES ? "imported" : "file picker"}`,
     `Decks: ${[0, 1].map((i) => d(i) && d(i).loaded ? `${i + 1}: ${d(i).effBpm ? d(i).effBpm().toFixed(2) : "?"} BPM${d(i).playing ? " playing" : ""}${d(i).sync ? " sync" : ""}` : `${i + 1}: empty`).join(", ")}`,
   ];
@@ -5736,7 +5821,18 @@ function frame(ts) {
   if (ts - lastLed > 50) { lastLed = ts; updateLeds(); }
   if (ts - lastUi < 20) { const rk = refKey(); if (rk !== lastRef) { lastRef = rk; renderList(); } }
   drawCost = drawCost * 0.9 + (performance.now() - t0) * 0.1;
+  // Auto waveform detail: if drawing has stayed slow for 3 seconds, draw the waveforms at 1x for the
+  // rest of the session (a weak computer, or a browser drawing without the graphics card)
+  if (wavQuality === "auto" && !wavLight) {
+    if (drawCost < 8) slowSince = 0;
+    else if (!slowSince) slowSince = ts;
+    else if (ts - slowSince > 3000) {
+      wavLight = true; overviewBase.fill(null);
+      status("Drawing was slow, so waveforms are now drawn in Light detail (Settings → Waveform detail)", 8000);
+    }
+  }
 }
+let slowSince = 0;
 
 window.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT") return;
