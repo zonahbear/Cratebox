@@ -2,6 +2,11 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.4-mac (2026-10-19)
+
+### Fixed
+- **The playing deck no longer stutters while you load a track.** On the Air's 2 cores, library analysis running in the background took the CPU time the audio needed, and the replaced track's audio (~100 MB) was freed on the audio thread; together they held the audio up for up to ~250 ms during a load. Now, on a computer with 2 cores (4 hardware threads or fewer), library analysis stops completely while anything plays (a job under way is ended at once and its track goes back in the queue; the library carries on when everything stops; tracks you load are still analysed right away), and the replaced track's audio is handed back to the page to be freed there. Measured with a probe on the audio thread over 10 loads: worst hold-up 244 ms before, 26-37 ms after (this test machine's own floor). `tests/test_loadstutter.py`.
+
 ## 1.1.3-mac (2026-10-19)
 
 The Mac edition with these changes from `main`:
