@@ -1,6 +1,6 @@
 # Cratebox: Mac edition
 
-Version 1.1.5-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.6-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
 
 A lightweight DJ app (2 or 4 decks) for the Pioneer DDJ-FLX4, in this edition built for one machine: a **2017 MacBook Air running CachyOS, played in Firefox**. It's the full desktop Cratebox with the phone and tablet parts taken out, set up for Firefox and Linux, and it runs entirely from this folder: no internet needed, nothing is uploaded.
 
@@ -231,6 +231,7 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 - **+** makes a playlist, **▤** a folder. Type a name and press Enter. Double-click to rename; hover and click **×** to delete (it asks first).
 - Add tracks by dragging rows onto a playlist in the tree, or select them and use **Add to ▾**. Drag a playlist onto a folder to file it there, or onto the PLAYLISTS heading to take it back out.
 - Inside a playlist, drag rows up and down to rearrange them, and press **Delete** (or **Remove from list**) to take them out. That only removes them from the playlist, never from your folder.
+- Each list remembers how you sorted it (click a column heading; **#** goes back to the playlist's own order), also after a restart.
 - Playlists are kept in Firefox, for this Cratebox on this computer. A track whose folder isn't connected shows greyed out, and comes back by itself once you reconnect the folder (matched by file name and size).
 - **FLX4:** press the BROWSE knob to jump to the tree, turn it to walk the playlists (the list follows as you go), press again to go back to the tracks. LOAD still loads.
 
@@ -238,7 +239,8 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 
 **USB sticks and SD cards**: plug it in (CachyOS mounts it under `/run/media/<you>/`), then click **+ USB** under DEVICES. Every plugged-in drive with a rekordbox export opens; if there's none (or they're all open already), the folder dialog asks for the drive itself (the folder that holds `PIONEER`). Cratebox reads the rekordbox export on it: every track, the playlist tree, and for each track you load, rekordbox's own beat grid, phrases, hot cues A–H and first memory cue. These replace Cratebox's own analysis for that track, until you edit the grid or set cues yourself. Your edits stay on this computer.
 
-- **Read-only.** Cratebox never writes to the stick, so it can't damage a set you've prepared for the club.
+- **Edit its playlists (off by default).** Turn it on in **Settings → rekordbox USB playlists → Editable**; it warns first that this is untested and may damage the stick. Then a stick's playlists work like your own: drag its tracks onto them, drag rows to reorder, **Delete** to take a track out, double-click to rename, **×** to delete, **+** / **▤** on the stick for a new playlist or folder. Only tracks already on that stick can go in its playlists. Changes are written into the stick's `export.pdb` a moment later, through the launcher (which writes nothing else).
+- Only the playlist tables change. Before the first save each session the old database is kept as `PIONEER/rekordbox/export.pdb.cratebox-backup` (rename it back to `export.pdb` to undo). Syncing from rekordbox again replaces your changes; players that read the newer OneLibrary database (`exportLibrary.db`) won't see them. Back up a stick before you take it to a gig.
 - **⧉** on a device playlist copies it into your own playlists. Those tracks still play from the stick, so they show greyed out when it's not plugged in.
 - **×** on the device closes it. Cratebox remembers the drive, and opens it again by itself at Start when it's plugged in.
 
@@ -250,7 +252,7 @@ The column on the left of the library is the tree: **Collection**, your **Playli
 ## Limits
 
 - No key shift.
-- rekordbox: USB/SD exports in the classic `export.pdb` format, which every rekordbox 5/6/7 USB export still includes. Device Library Plus (`exportLibrary.db`) alone isn't read. Playlists on a stick are read-only, and Cratebox doesn't read rekordbox 6/7's own encrypted `master.db` on your PC: use the XML export for that.
+- rekordbox: USB/SD exports in the classic `export.pdb` format, which every rekordbox 5/6/7 USB export still includes. Device Library Plus (`exportLibrary.db`) alone isn't read. Playlists on a stick can be edited (written into `export.pdb` only), and Cratebox doesn't read rekordbox 6/7's own encrypted `master.db` on your PC: use the XML export for that.
 - rekordbox beat grids with tempo changes come in as one tempo (the most common one).
 - Audio files must be something Firefox can decode: MP3, WAV, FLAC, OGG/Opus, and AAC/M4A (through the system's ffmpeg). Not AIFF.
 - Beat grids assume a steady tempo. Live-drummed tracks will drift.

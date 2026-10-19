@@ -11,9 +11,11 @@ Firefox only allows MIDI controllers and the audio engine on secure origins. The
 so your library, cue points, settings and Firefox's MIDI permission are kept.
 
 It also reads your music folder and rekordbox USB sticks for the page (the "file bridge"), because
-Firefox can't open or remember a folder itself. The bridge is read-only, answers only this computer
-(127.0.0.1), only pages served from here (a header other sites can't send), only paths under your
-home folder and the usual mount points (/run/media, /media, /mnt), and it never writes anything.
+Firefox can't open or remember a folder itself. The bridge answers only this computer (127.0.0.1),
+only pages served from here (a header other sites can't send), only paths under your home folder and
+the usual mount points (/run/media, /media, /mnt). The one thing it can write is a rekordbox stick's
+playlist database, PIONEER/rekordbox/export.pdb (and its backup next to it), when you've turned on
+editing USB playlists in Cratebox's settings; nothing else, anywhere.
 """
 import http.server
 import json
@@ -91,6 +93,41 @@ def rekordbox_drives():
     return out
 
 
+WRITABLE = ("export.pdb", "export.pdb.cratebox-backup")
+MAX_WRITE = 256 << 20
+
+
+def writable(path):
+    """The real path if it's a rekordbox stick's export.pdb or its backup, else None."""
+    real = allowed(path)
+    if not real or os.path.basename(real) not in WRITABLE:
+        return None
+    d = os.path.dirname(real)
+    if os.path.basename(d) != "rekordbox" or os.path.basename(os.path.dirname(d)) != "PIONEER":
+        return None
+    if not os.path.isfile(os.path.join(d, "export.pdb")):
+        return None
+    return real
+
+
+def write_atomic(real, data):
+    """Write to a temporary file next to it, flush it to the stick, then swap it in."""
+    tmp = real + ".cratebox-tmp"
+    with open(tmp, "wb") as f:
+        f.write(data)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, real)
+    try:
+        fd = os.open(os.path.dirname(real), os.O_RDONLY)
+        try:
+            os.fsync(fd)
+        finally:
+            os.close(fd)
+    except OSError:
+        pass
+
+
 def walk_audio(top):
     files = []
     for d, dirs, names in os.walk(top):
@@ -128,6 +165,34 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/fs/"):
             return self.bridge()
         return super().do_GET()
+
+    def do_POST(self):
+        if self.headers.get("Host") not in HOSTS:
+            return self.send_error(403)
+        if not self.path.startswith("/fs/write?"):
+            return self.json({"error": "unknown request"}, 404)
+        if self.headers.get("X-Cratebox") != "1" or self.headers.get("Sec-Fetch-Site", "same-origin") not in ("same-origin", "none"):
+            return self.json({"error": "forbidden"}, 403)
+        q = {k: v[0] for k, v in urllib.parse.parse_qs(urllib.parse.urlsplit(self.path).query).items()}
+        real = writable(q.get("path", ""))
+        try:
+            n = int(self.headers.get("Content-Length", "-1"))
+        except ValueError:
+            n = -1
+        if not real:
+            return self.json({"error": "Cratebox only writes a rekordbox stick's export.pdb"}, 403)
+        if n < 0 or n > MAX_WRITE:
+            return self.json({"error": "bad length"}, 400)
+        data = self.rfile.read(n)
+        if len(data) != n:
+            return self.json({"error": "short body"}, 400)
+        try:
+            write_atomic(real, data)
+        except PermissionError:
+            return self.json({"error": "permission denied (is the stick read-only?)"}, 403)
+        except OSError as e:
+            return self.json({"error": e.strerror or str(e)}, 500)
+        return self.json({"ok": True, "size": n})
 
     def do_HEAD(self):
         if self.headers.get("Host") not in HOSTS or self.path.startswith("/fs/"):

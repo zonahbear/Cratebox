@@ -2,6 +2,15 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.6-mac (2026-10-19)
+
+### Added
+- **Edit a rekordbox USB stick's playlists, saved to the stick.** Off by default: Settings → *rekordbox USB playlists* → Editable, after a warning that it's untested and may damage the stick. Add (drag the stick's own tracks onto a playlist, or Add to ▾), remove, reorder, rename, delete, and make new playlists and folders (+ / ▤ on the stick). Changes are written into the stick's `export.pdb` a moment later, through the launcher. Only the playlist tables change; everything else in the file stays byte for byte. Each session's first save keeps the old database as `export.pdb.cratebox-backup`; every write is checked in memory and read back, and Cratebox won't save over a stick that rekordbox exported to after it was opened. Not yet tried on a CDJ.
+- The launcher can now write one kind of file: a rekordbox stick's `PIONEER/rekordbox/export.pdb` (and its backup), written to a temporary file, flushed to the stick and swapped in. Everything else stays read-only, with the same checks as before (this computer only, Cratebox's own page only).
+
+### Fixed
+- **Sorting is kept per list.** Sort a playlist by BPM, key or anything else, go to another one and come back: it's still sorted that way. Each list remembers its own sort, also after a restart; **#** goes back to the playlist's own order.
+
 ## 1.1.5-mac (2026-10-19)
 
 ### Fixed

@@ -32,10 +32,10 @@ USER = "cbtest"
 check = T.check
 
 
-def http(path, headers=None, host=None):
+def http(path, headers=None, host=None, data=None):
     h = {"X-Cratebox": "1"}
     h.update(headers or {})
-    req = urllib.request.Request(f"http://127.0.0.1:{PORT}{path}", headers=h)
+    req = urllib.request.Request(f"http://127.0.0.1:{PORT}{path}", headers=h, data=data, method="POST" if data is not None else "GET")
     if host:
         req.add_header("Host", host)
     try:
@@ -99,6 +99,14 @@ def main():
         st, body, _ = http("/fs/drives")
         drives = json.loads(body)["drives"]
         check("finds the plugged-in rekordbox USB", [d["name"] for d in drives] == ["RBUSB"], str(drives))
+        pdb = os.path.join(usb, "PIONEER", "rekordbox", "export.pdb")
+        q = lambda path: "/fs/write?path=" + urllib.request.quote(path)
+        check("bridge writes nothing but a stick's export.pdb (and its backup)",
+              http(q(os.path.join(music, "x.pdb")), data=b"x")[0] == 403 and http(q(os.path.join(home, "export.pdb")), data=b"x")[0] == 403
+              and http(q(os.path.join(home, ".bashrc")), data=b"x")[0] == 403 and not os.path.exists(os.path.join(home, "export.pdb")))
+        check("...and refuses a write from another site or without Cratebox's header",
+              http(q(pdb), data=b"x", headers={"X-Cratebox": ""})[0] == 403 and http(q(pdb), data=b"x", headers={"Sec-Fetch-Site": "cross-site"})[0] == 403
+              and open(pdb, "rb").read() == open(os.path.join(USB_SRC, "PIONEER", "rekordbox", "export.pdb"), "rb").read())
 
         with sync_playwright() as p:
             b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
@@ -159,6 +167,16 @@ def main():
             page.wait_for_function("cratebox.decks[1].loaded && !cratebox.decks[1].loading", timeout=30000)
             usb_t = page.evaluate("({ title: cratebox.decks[1].track.title, rb: !!cratebox.decks[1].track.rbRead, bpm: cratebox.decks[1].bpm })")
             check("a USB track loads with rekordbox's own grid", usb_t["title"] == "Demo Track 2" and usb_t["rb"], str(usb_t))
+            # ---- editing the stick's playlists through the launcher (turned on in settings)
+            page.evaluate("cratebox.setRbEdit(true)")
+            page.locator("#tree .trow2", has=page.locator(".nm", has_text="Playlist 1")).first.click()
+            page.evaluate("cratebox.lib.sel = 0; cratebox.removeFromPlaylist()")
+            page.wait_for_function("(() => { const d = cratebox.PL.devices[0]; return !d.saving && !d.unsaved; })()", timeout=10000)
+            orig_pdb = open(os.path.join(USB_SRC, "PIONEER", "rekordbox", "export.pdb"), "rb").read()
+            bak = os.path.join(usb, "PIONEER", "rekordbox", "export.pdb.cratebox-backup")
+            got = page.evaluate("(async () => { const b = await (await fetch('fs/file?path=' + encodeURIComponent(%r), { headers: { 'X-Cratebox': '1' } })).arrayBuffer(); return cratebox.RB.parsePdb(b).playlists.find(p => p.name === 'Playlist 1').tracks; })()" % pdb)
+            check("Firefox: a stick playlist edit is written to export.pdb on the stick, the old one backed up",
+                  got == [2] and os.path.isfile(bak) and open(bak, "rb").read() == orig_pdb and not os.path.exists(pdb + ".cratebox-tmp"), f"{got}")
             open(answer, "w").write("")
             page.click("#tree .thead button.ticon.wide"); page.wait_for_timeout(500)
             check("+ USB again with every stick open: the dialog, starting in /run/media", f"/run/media/{USER}" in open(os.path.join(tmp, "dialog-args")).read().strip().splitlines()[-1])
