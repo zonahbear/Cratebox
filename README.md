@@ -1,6 +1,6 @@
 # Cratebox: Mac edition
 
-Version 1.1.4-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
+Version 1.1.5-mac. What changed: [CHANGELOG.md](CHANGELOG.md).
 
 A lightweight DJ app (2 or 4 decks) for the Pioneer DDJ-FLX4, in this edition built for one machine: a **2017 MacBook Air running CachyOS, played in Firefox**. It's the full desktop Cratebox with the phone and tablet parts taken out, set up for Firefox and Linux, and it runs entirely from this folder: no internet needed, nothing is uploaded.
 

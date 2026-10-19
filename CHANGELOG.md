@@ -2,6 +2,11 @@
 
 All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MINOR.PATCH`.
 
+## 1.1.5-mac (2026-10-19)
+
+### Fixed
+- **Decks 3 and 4 expanded (⤢) get the full deck layout**, like decks 1 and 2: tempo fader, jog and controls side by side (mirrored on deck 4). Before, an expanded deck 3 or 4 piled the jog on top of the pads and buttons.
+
 ## 1.1.4-mac (2026-10-19)
 
 ### Fixed
