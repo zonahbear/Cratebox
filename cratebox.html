@@ -7,7 +7,7 @@
 <meta name="theme-color" content="#0b0d10">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cratebox">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon-180.png">
@@ -316,7 +316,7 @@ html.phone .deskonly { display: none !important; }
 html.phone.nomidi #ctlPanel { display: none; }
 html.phone, html.phone body { height: 100%; overflow: hidden; overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
 html.phone #app { min-width: 0; height: 100dvh; display: flex; flex-direction: column;
-  padding: 0 max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
+  padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(8px, env(safe-area-inset-left)); gap: 6px; }
 html.phone header { flex: 0 0 auto; height: 38px; padding: 0 2px; gap: 10px; background: transparent; border: 0; flex-wrap: nowrap; }
 html.phone header > :not(.logo):not(.ptabs):not(.spacer):not(#setOpen):not(#fxOpen):not(#midiPill) { display: none; }
 html.phone #fxOpen { font-family: var(--f-disp); font-weight: 700; font-size: 15px; letter-spacing: .04em; }
