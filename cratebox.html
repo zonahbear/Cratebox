@@ -758,6 +758,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 .tcpanel { width: 290px; }
 header .tcpanel { top: 48px; }
 .tcgo { height: 34px; margin-top: 8px; font-size: 13px; font-weight: 600; }
+#tcGo.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
 #tcMsg:empty { display: none; }
 html.phone .tcwrap { display: revert !important; }
 html.phone #tcBtn { height: 26px; font-size: 11px; }
@@ -6709,7 +6710,7 @@ const TC = (() => {
     const label = !S.running ? "HEAT" : S.phase === "preheat" ? `HEAT ${f0(S.live)}° ↑${f0(S.target)}` : S.phase === "running" ? `HEAT ${f0(S.live)}° ${Math.floor(S.t || 0)}/${Math.round(S.end)}s` : "HEAT…";
     if (label !== lastLabel) { btn.textContent = label + " ▾"; lastLabel = label; }
     btn.classList.toggle("on", hot);
-    $("#tcConn").hidden = c; $("#tcDisc").hidden = !c;
+    $("#tcConn").hidden = $("#tcSim").hidden = c; $("#tcDisc").hidden = !c;
     $("#tcDev").textContent = c ? `${S.dev.name}${S.battery != null ? " · " + S.battery + "%" : ""} · bowl ${f0(S.live)}°F` : "No device";
     go.disabled = !c || S.phase === "prep";
     go.textContent = S.running ? "Stop" : "Start curve";
