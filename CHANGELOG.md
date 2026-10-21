@@ -13,6 +13,7 @@ All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MIN
 - `tests/test_layers.py`, `tests/test_header.py`, `tests/test_resume.py`.
 
 ### Changed
+- **Settings, menus and sheets use the browser's own popover and dialog.** Esc now closes Settings, the Add to / playlist menus, the phone sheets, Report a problem and the rekordbox USB warning; while a sheet or the warning is up, Tab stays inside it. Looks the same. Safari before 17 keeps the old behaviour; tested in Chrome only so far, not yet on an iPhone or in the MIDIWeb Browser app.
 - **Deck layer toggles sit over their channel strips**: one number per deck in the mixer's own order (3 1 | 2 4). The decks the controller plays are lit in their colour with a slow, soft pulse (none with reduced motion turned on).
 - **Track analysis is about twice as fast for a library**: the beat tracker and key detection do the same maths with half the FFTs (two frames per FFT, tables worked out once); BPM, grid, key and phrases come out the same (to floating-point rounding). On a computer with 4 or more hardware threads (the 2017 MacBook Air has 4) two tracks are analysed at a time while nothing plays, one while music plays. Measured: 8 tracks (4 x 5 min, 4 x 75 s) from 15.5 to 7.1 s. Deck loads use whichever analysis worker is free, and the downmix before analysis runs in slices so the screen keeps drawing.
 

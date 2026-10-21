@@ -101,7 +101,7 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel .hsel { max-width: none; width: 100%; }
 .setpanel { width: 330px; }
 /* Settings sits in the header: its panel drops down over the app */
-header .setpanel { position: fixed; bottom: auto; top: 48px; left: auto; max-height: calc(var(--vh, 100vh) - 64px); overflow-y: auto; z-index: 40; }
+header .setpanel { position: fixed; inset: auto; margin: 0; color: var(--fg); top: 48px; max-height: calc(var(--vh, 100vh) - 64px); overflow-y: auto; z-index: 40; }
 .ctlpanel { display: grid; gap: 4px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .ctlnote { margin: 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
 .ctlrow { display: flex; gap: 6px; flex-wrap: wrap; }
@@ -274,7 +274,15 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .trow2 .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .trow2 .ct { font-family: var(--f-mono); font-size: 11px; color: var(--muted); }
 .trow2.ro .nm { color: #c9d3e0; }
-.rbwarn { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: rgba(0,0,0,.6); padding: 16px; }
+/* modal dialogs (<dialog>.showModal): the browser puts them in the top layer, traps focus, closes on Esc and
+   dims the page with ::backdrop. The dialog box itself is invisible: its .panel is what you see, so a click
+   whose target is the dialog element is a click on the backdrop. */
+dialog.rbwarn, dialog.sheet { padding: 0; border: 0; background: transparent; color: inherit; overflow: visible; max-width: none; max-height: none; }
+dialog:modal { overscroll-behavior: contain; }
+/* a closed popover stays hidden even where its own rule sets display (browsers without popover skip this rule) */
+[popover]:not(:popover-open) { display: none !important; }
+dialog::backdrop { overflow: hidden; overscroll-behavior: contain; }
+.rbwarn::backdrop { background: rgba(0,0,0,.6); }
 .rbwarn .panel { max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; background: #151a22; color: #dfe6ef; border: 1px solid #39424f; border-radius: 10px; padding: 18px 20px; font-size: 13px; line-height: 1.45; }
 .rbwarn h3 { margin: 0 0 8px; font-size: 15px; }
 .rbwarn ul { margin: 8px 0; padding-left: 18px; } .rbwarn li { margin: 5px 0; }
@@ -287,7 +295,7 @@ body.browse #mixer, body.browse .dbody { display: none; }
 .tconfirm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 8px; background: #2a1a1c; font-size: 12px; }
 .tconfirm span { flex-basis: 100%; }
 .hbtn.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
-.popmenu { position: fixed; z-index: 70; min-width: 200px; max-width: 360px; max-height: 60vh; overflow-y: auto; display: grid; padding: 4px; background: var(--raise); border: 1px solid var(--line2); border-radius: 6px; box-shadow: 0 10px 30px #000c; }
+.popmenu { position: fixed; z-index: 70; inset: auto; margin: 0; color: var(--fg); min-width: 200px; max-width: 360px; max-height: 60vh; overflow-y: auto; display: grid; padding: 4px; background: var(--raise); border: 1px solid var(--line2); border-radius: 6px; box-shadow: 0 10px 30px #000c; }
 .popmenu button { text-align: left; height: 30px; padding: 0 10px; border: 0; background: transparent; color: var(--fg); border-radius: 4px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .popmenu button:hover { background: #2a3f59; }
 .popmenu .pmhead { padding: 6px 10px 2px; font-size: 10px; letter-spacing: .1em; color: var(--muted); }
@@ -395,8 +403,8 @@ html.phone #mixer .cuebtn { width: 40px; height: 22px; font-size: 11px; border-r
 html.phone #mixer .xfade { grid-column: 1 / -1; grid-row: 2; width: 100%; }
 html.phone #mixer .fcol .slabel { display: none; }
 /* sheets (settings, deck extras) */
-.sheet { position: fixed; inset: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center; background: #000a; }
-.sheet[hidden] { display: none; }
+dialog.sheet { position: fixed; inset: auto 0 0; margin: 0 auto; width: fit-content; }
+.sheet::backdrop { background: #000a; }
 .sheet .panel { width: min(860px, calc(100vw - 2 * max(12px, env(safe-area-inset-left)))); max-height: 86dvh; overflow: auto; background: var(--panel); border: 1px solid var(--line2); border-bottom: 0; border-radius: 14px 14px 0 0; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); display: grid; gap: 10px; }
 .sheet h3 { margin: 0; font-family: var(--f-disp); font-size: 18px; letter-spacing: .06em; display: flex; align-items: center; }
 .sheet h3 .spacer { flex: 1; }
@@ -417,7 +425,7 @@ html.phone #mixer .fcol .slabel { display: none; }
 .sheet label { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; }
 .sheet .hsel { height: 36px; font-size: 15px; width: 100%; max-width: none; border-radius: 8px; }
 .sheet .setpanel { position: static; width: auto; box-shadow: none; border: 0; padding: 0; background: transparent; display: grid !important; }
-#toast { position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 44px); transform: translateX(-50%); z-index: 60; max-width: min(560px, 80vw);
+#toast { position: fixed; inset: auto; margin: 0; left: 50%; top: calc(env(safe-area-inset-top) + 44px); transform: translateX(-50%); z-index: 60; max-width: min(560px, 80vw);
   background: #1f242c; border: 1px solid var(--line2); border-radius: 10px; padding: 8px 14px; font-size: 13px; color: var(--fg); box-shadow: 0 8px 24px #000b;
   opacity: 0; pointer-events: none; transition: opacity .2s; }
 #toast.show { opacity: 1; }
@@ -439,7 +447,7 @@ html.phone #list .hdr { height: 26px; padding: 0 10px; }
   #rotate span { color: var(--muted); max-width: 280px; }
 }
 @keyframes turn { 0%, 30% { transform: rotate(0); } 60%, 100% { transform: rotate(-90deg); } }
-#resume { position: fixed; top: 48px; left: 50%; transform: translateX(-50%); z-index: 90; display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border-radius: 10px; background: #1b1416; border: 1px solid #ff3b55; box-shadow: 0 8px 30px #000a; color: #ffd7dd; font-size: 13px; max-width: calc(100vw - 32px); }
+#resume { position: fixed; inset: auto; margin: 0; top: 48px; left: 50%; transform: translateX(-50%); z-index: 90; display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; border-radius: 10px; background: #1b1416; border: 1px solid #ff3b55; box-shadow: 0 8px 30px #000a; color: #ffd7dd; font-size: 13px; max-width: calc(100vw - 32px); }
 #resume[hidden] { display: none; }
 #resume button { height: 34px; padding: 0 16px; border-radius: 8px; border: 0; background: var(--d0); color: #031321; font-family: var(--f-disp); font-weight: 700; font-size: 18px; letter-spacing: .06em; }
 
@@ -766,8 +774,8 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <select class="hsel" id="hpDev" hidden></select>
     <button class="hbtn" id="cueTest" title="Beep in the headphones only">Test cue</button>
     <div class="setwrap">
-        <button class="hbtn" id="setBtn" aria-expanded="false">Settings ▾</button>
-        <div class="setpanel" id="setPanel" hidden>
+        <button class="hbtn" id="setBtn" aria-expanded="false" popovertarget="setPanel">Settings ▾</button>
+        <div class="setpanel" id="setPanel" popover hidden>
           <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
           <label for="waveSel">Waveform</label>
@@ -844,21 +852,21 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
   </section>
 </div>
 <div id="rotate"><div class="ph"></div><b>TURN YOUR PHONE SIDEWAYS</b><span>Cratebox is laid out for landscape on a phone: both decks and the mixer on one screen.</span></div>
-<div id="toast"></div>
+<div id="toast" popover="manual"></div>
 <div id="learnBar" hidden><b>LEARN</b><span id="learnText"></span>
   <span class="learnlib">Library: <button class="hbtn" data-learn="browse">Browse knob</button><button class="hbtn" data-learn="browsePress">Browse press</button>
   <button class="hbtn" data-learn="load" data-deck="0">Load 1</button><button class="hbtn" data-learn="load" data-deck="1">Load 2</button>
   <button class="hbtn" data-learn="jogSide" data-deck="0">Jog side 1</button><button class="hbtn" data-learn="jogSide" data-deck="1">Jog side 2</button></span>
   <button class="hbtn" id="learnDone">Done</button></div>
-<div id="resume" hidden role="alert"><span id="resumeText">Audio stopped. Starting it again…</span><button>Start audio</button></div>
-<div class="sheet" id="setSheet" hidden><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="setBody"></div></div></div>
+<div id="resume" popover="manual" hidden role="alert"><span id="resumeText">Audio stopped. Starting it again…</span><button>Start audio</button></div>
+<dialog class="sheet" id="setSheet" closedby="any" aria-label="Settings"><div class="panel"><h3>SETTINGS<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="setBody"></div></div></dialog>
 <div id="recPanel" hidden><div class="row"><b id="recTitle">RECORDING SAVED</b><span class="spacer"></span><button class="iconbtn" id="recClose" aria-label="Close">✕</button></div>
   <span class="ctlnote" id="recInfo"></span><pre id="recList"></pre>
   <div class="row"><button class="hbtn" id="recSaveAgain">Save recording again</button><button class="hbtn" id="recSaveList">Save tracklist</button></div></div>
-<div class="sheet" id="reportSheet" hidden><div class="panel report">
+<dialog class="sheet" id="reportSheet" closedby="any" aria-label="Report a problem"><div class="panel report">
   <h3>REPORT A PROBLEM<span class="spacer"></span><button class="iconbtn" id="reportClose" aria-label="Close">✕</button></h3>
   <label for="reportWhat">What happened? What did you do just before?</label>
-  <textarea id="reportWhat" rows="4" placeholder="e.g. Pressed SYNC on deck 2 and the track jumped ahead"></textarea>
+  <textarea id="reportWhat" rows="4" autofocus placeholder="e.g. Pressed SYNC on deck 2 and the track jumped ahead"></textarea>
   <label for="reportWant">What did you expect instead? <small>(optional)</small></label>
   <textarea id="reportWant" rows="2"></textarea>
   <label><input type="checkbox" id="reportDiag" checked> Include device details <small>(browser, screen, controller, version; no personal info or track names)</small></label>
@@ -868,9 +876,9 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
     <button class="sq" id="reportCopy">Copy report</button>
     <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
   </div>
-</div></div>
-<div class="sheet" id="fxSheet" hidden><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="fxBody"></div></div></div>
-<div class="sheet" id="deckSheet" hidden><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close>✕</button></h3><div id="deckBody"></div></div></div>
+</div></dialog>
+<dialog class="sheet" id="fxSheet" closedby="any" aria-label="Beat FX"><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="fxBody"></div></div></dialog>
+<dialog class="sheet" id="deckSheet" closedby="any" aria-labelledby="deckSheetTitle"><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="deckBody"></div></div></dialog>
 <div id="start">
   <div class="card">
     <h1>CRATEBOX <small style="font-size:13px;color:var(--muted);letter-spacing:.04em">v1.1.1</small></h1>
@@ -954,6 +962,23 @@ const fmtTime = (s) => {
   const m = Math.floor(s / 60), r = s - m * 60;
   return `${m}:${r.toFixed(1).padStart(4, "0")}`;
 };
+// Overlays: settings, menus, the toast and the audio banner are popovers and the sheets are modal <dialog>s, so
+// the browser stacks them in its top layer (no z-index fights, nothing clipped by the header's overflow), and
+// handles Esc, focus and outside presses. Browsers without popover (Safari < 17) keep the fixed-position CSS and
+// the hidden attribute; Safari has no dialog closedby yet, so a press on the backdrop closes a sheet by hand.
+const POPOVER = "popover" in HTMLElement.prototype, CLOSEDBY = "closedBy" in HTMLDialogElement.prototype;
+// show/hide a manual popover; raise: show it again even if it's up, so it lands over anything opened since
+function overlay(el, on, raise) {
+  if (!POPOVER) { el.hidden = !on; return; }
+  el.hidden = false;
+  const open = el.matches(":popover-open");
+  if (open && (!on || raise)) el.hidePopover();
+  if (on && (!open || raise)) el.showPopover();
+}
+// a modal's visible box is its .panel, so a press whose target is the <dialog> itself landed on the backdrop
+function lightDismiss(dlg) {
+  dlg.addEventListener("pointerdown", (e) => { if ((!CLOSEDBY && e.target === dlg) || e.target.closest("[data-close]")) dlg.close(); });
+}
 let statusTimer = null;
 function status(msg, ms = 4000) {
   const el = $("#status");
@@ -963,6 +988,7 @@ function status(msg, ms = 4000) {
   if (typeof PHONE !== "undefined" && PHONE) {
     const t = $("#toast");
     t.textContent = msg; t.classList.toggle("show", !!msg);
+    if (msg) overlay(t, true, true);
     clearTimeout(status.tt);
     status.tt = setTimeout(() => t.classList.remove("show"), Math.min(ms || 4000, 5000));
   }
@@ -3205,17 +3231,32 @@ function setBrowse(on) {
   try { localStorage.setItem("cb.browse", on ? "1" : "0"); } catch (e) {}
   requestAnimationFrame(() => renderList());
 }
-$("#setBtn").addEventListener("click", (e) => {
-  e.stopPropagation();
-  const p = $("#setPanel"); p.hidden = !p.hidden; $("#setBtn").setAttribute("aria-expanded", String(!p.hidden));
-  if (!p.hidden && !PHONE) {
-    // under the button, kept inside the window (positions in the app's own units: the interface zoom divided out)
-    const r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1;
-    p.style.top = (r.bottom + 6) / z + "px";
-    p.style.left = Math.max(8, Math.min(innerWidth - p.offsetWidth * z - 8, r.left)) / z + "px";
-  }
-});
-document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".setwrap")) $("#setPanel").hidden = true; });
+// under the button, kept inside the window (positions in the app's own units: the interface zoom divided out).
+// Runs before the panel shows, so its width comes from the stylesheet rather than its (not yet laid out) box.
+function placeSetPanel() {
+  const p = $("#setPanel"), r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1, w = parseFloat(getComputedStyle(p).width) || 330;
+  p.style.top = (r.bottom + 6) / z + "px";
+  p.style.left = Math.max(8, Math.min(innerWidth - w * z - 8, r.left)) / z + "px";
+}
+function closeSetPanel() {
+  const p = $("#setPanel");
+  if (POPOVER) { if (p.matches(":popover-open")) p.hidePopover(); } else p.hidden = true;
+}
+if (POPOVER) {
+  // the button opens it (popovertarget); Esc or a press anywhere else closes it
+  $("#setPanel").hidden = false;
+  $("#setPanel").addEventListener("beforetoggle", (e) => {
+    $("#setBtn").setAttribute("aria-expanded", String(e.newState === "open"));
+    if (e.newState === "open" && !PHONE) placeSetPanel();
+  });
+} else {
+  $("#setBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    const p = $("#setPanel"); p.hidden = !p.hidden; $("#setBtn").setAttribute("aria-expanded", String(!p.hidden));
+    if (!p.hidden && !PHONE) placeSetPanel();
+  });
+  document.addEventListener("pointerdown", (e) => { if (!e.target.closest(".setwrap")) $("#setPanel").hidden = true; });
+}
 $("#waveSel").value = waveStyle;
 $("#waveSel").addEventListener("change", (e) => {
   waveStyle = e.target.value;
@@ -4096,19 +4137,22 @@ function addToMenu(btn) {
 }
 function popMenu(anchor, items) {
   closeMenus();
-  const m = h("div", { class: "popmenu" });
+  const m = h("div", { class: "popmenu", popover: POPOVER && "auto" });
   for (const [label, fn] of items) {
     if (fn === null) { m.append(h("div", { class: "pmhead" }, label)); continue; }
     const b = h("button", {}, label);
     b.addEventListener("click", (e) => { e.stopPropagation(); closeMenus(); fn(); });
     m.append(b);
   }
-  document.body.append(m);
+  // inside an open sheet the menu has to live in it, or the modal would make it unclickable
+  (anchor.closest("dialog[open]") || document.body).append(m);
+  if (POPOVER) { m.showPopover(); m.addEventListener("toggle", (e) => { if (e.newState === "closed") m.remove(); }); }
   const r = anchor.getBoundingClientRect();
   const top = r.bottom + 4 + m.offsetHeight > innerHeight ? Math.max(8, r.top - m.offsetHeight - 4) : r.bottom + 4;
   m.style.left = Math.max(8, Math.min(innerWidth - m.offsetWidth - 8, r.left)) + "px";
   m.style.top = top + "px";
-  setTimeout(() => document.addEventListener("pointerdown", closeMenusOutside, { capture: true }), 0);
+  // with popover the browser closes it on Esc or a press outside; without, do that here
+  if (!POPOVER) setTimeout(() => document.addEventListener("pointerdown", closeMenusOutside, { capture: true }), 0);
 }
 function closeMenusOutside(e) { if (!e.target.closest(".popmenu")) closeMenus(); }
 function closeMenus() { for (const m of document.querySelectorAll(".popmenu")) m.remove(); document.removeEventListener("pointerdown", closeMenusOutside, { capture: true }); }
@@ -4243,17 +4287,20 @@ function setRbEdit(on) {
 }
 function rbEditDisclaimer() {
   return new Promise((done) => {
-    const close = (ok) => { box.remove(); done(ok); };
-    const box = h("div", { class: "rbwarn", role: "dialog", "aria-modal": "true" },
-      h("div", { class: "panel" },
-        h("h3", {}, "Edit playlists on rekordbox USB sticks?"),
+    // the buttons submit a method="dialog" form, which sets returnValue; Esc or a press outside leave it ""
+    const box = h("dialog", { class: "rbwarn", closedby: "any", "aria-labelledby": "rbwarnTitle" },
+      h("form", { class: "panel", method: "dialog" },
+        h("h3", { id: "rbwarnTitle" }, "Edit playlists on rekordbox USB sticks?"),
         h("p", {}, "This is untested and may damage your USB's rekordbox library. Back up your stick first. Proceed at your own risk."),
         h("div", { class: "row" },
-          h("button", { class: "hbtn", onclick: () => close(false) }, "Cancel"),
-          h("button", { class: "hbtn danger", onclick: () => close(true) }, "I understand, turn it on"))));
-    box.addEventListener("keydown", (e) => { e.stopPropagation(); if (e.key === "Escape") close(false); });
-    $("#setPanel").hidden = true;                           // out of the way while you read
+          h("button", { class: "hbtn", value: "" }, "Cancel"),
+          h("button", { class: "hbtn danger", value: "ok" }, "I understand, turn it on"))));
+    box.addEventListener("close", () => { box.remove(); done(box.returnValue === "ok"); });
+    box.addEventListener("keydown", (e) => e.stopPropagation());   // no deck shortcuts while it's up
+    lightDismiss(box);
+    closeSetPanel();                                        // out of the way while you read
     document.body.append(box);
+    box.showModal();
     box.querySelector("button").focus();
   });
 }
@@ -5766,7 +5813,7 @@ function setupLayerButtons() {
   };
   ask();
 }
-$("#ctlSmart").addEventListener("click", () => { $("#setPanel").hidden = true; setupLayerButtons(); });
+$("#ctlSmart").addEventListener("click", () => { closeSetPanel(); setupLayerButtons(); });
 window.addEventListener("keydown", (e) => { if (e.key === "Escape" && MIDI.capture) { MIDI.capture = null; status("Cancelled", 3000); } });
 
 // ---- MIDI learn: click a control on screen, then move or press it on the controller ----
@@ -6184,15 +6231,14 @@ function reportText() {
 }
 function reportRefresh() { $("#reportPreview").textContent = $("#reportDiag").checked ? reportDiagnostics() : ""; }
 function openReport() {
-  $("#setPanel").hidden = true; $("#setSheet").hidden = true;
+  closeSetPanel(); $("#setSheet").close();
   $("#reportNote").textContent = "No GitHub account? Copy it and send it to the developer.";
   reportRefresh();
-  $("#reportSheet").hidden = false;
-  setTimeout(() => $("#reportWhat").focus(), 50);
+  $("#reportSheet").showModal();                          // focus lands in the first box (autofocus)
 }
 $("#reportOpen").addEventListener("click", openReport);
-$("#reportClose").addEventListener("click", () => { $("#reportSheet").hidden = true; });
-$("#reportSheet").addEventListener("pointerdown", (e) => { if (e.target === e.currentTarget) $("#reportSheet").hidden = true; });
+$("#reportClose").addEventListener("click", () => $("#reportSheet").close());
+for (const sh of document.querySelectorAll("dialog.sheet")) lightDismiss(sh);
 $("#reportDiag").addEventListener("change", reportRefresh);
 // typing in the report must not trigger the deck keyboard shortcuts
 for (const id of ["#reportWhat", "#reportWant"]) $(id).addEventListener("keydown", (e) => e.stopPropagation());
@@ -6217,7 +6263,7 @@ $("#reportCopy").addEventListener("click", async () => {
   }
   $("#reportNote").textContent = ok ? "Copied. Paste it in a message or comment to the developer." : "Couldn't copy here: select the details above and copy them by hand.";
 });
-$("#ctlLearn").addEventListener("click", () => { $("#setPanel").hidden = true; $("#setSheet").hidden = true; startLearn(); });
+$("#ctlLearn").addEventListener("click", () => { closeSetPanel(); $("#setSheet").close(); startLearn(); });
 $("#learnDone").addEventListener("click", stopLearn);
 $("#ctlClear").addEventListener("click", clearLearned);
 $("#ctlExport").addEventListener("click", exportMapping);
@@ -6233,10 +6279,7 @@ $("#ctlIn").addEventListener("change", (e) => { setPref("cb.midiIn", e.target.va
 // Phone layout: same controls, rearranged. Loops, beat jump and the grid editor move into a
 // per-deck sheet (⋯), output/headphone options into the settings sheet (⚙).
 function phoneize() {
-  const openSheet = (id) => { $(id).hidden = false; };
-  for (const sh of document.querySelectorAll(".sheet")) {
-    sh.addEventListener("pointerdown", (e) => { if (e.target === sh || e.target.closest("[data-close]")) sh.hidden = true; });
-  }
+  const openSheet = (id) => $(id).showModal();
   // tabs
   for (const b of document.querySelectorAll(".ptabs button")) b.addEventListener("click", () => {
     document.documentElement.dataset.tab = b.dataset.tab;
@@ -6251,6 +6294,7 @@ function phoneize() {
     field("Headphones", $("#hpSel")),
     h("div", { class: "row" }, $("#cueTest"), $("#masterSlot")),
     $("#setPanel"));
+  $("#setPanel").removeAttribute("popover");                // lives in the sheet now, always shown there
   $("#cueTest").classList.add("sq");
   $("#setOpen").addEventListener("click", () => openSheet("#setSheet"));
   // Beat FX: its own sheet (the phone mixer has no room)
@@ -6266,7 +6310,7 @@ function phoneize() {
       const db = $("#deckBody"); db.innerHTML = "";
       db.append(u.sheetParts);
       u.gridBar.hidden = false;
-      $("#deckSheet").hidden = false;
+      $("#deckSheet").showModal();
     });
     const btns = h("div", { class: "pbtns" }, u.syncBtn, u.mtBtn, u.qtag, more);
     ctrl.prepend(btns);
@@ -6355,7 +6399,7 @@ function tryResume() {
 function checkAudioAlive() {
   if (!A.ctx) return;
   const st = A.ctx.state, stopped = st !== "running" && st !== "closed";
-  $("#resume").hidden = !stopped;
+  overlay($("#resume"), stopped);
   if (stopped) {
     if (!audioStoppedAt) { audioStoppedAt = performance.now(); noteError(`audio: ${st}`); }
     $("#resumeText").textContent = resumeTries < 3 ? "Audio stopped. Starting it again…" : "Audio stopped. Is another app using the controller's sound (rekordbox, Serato, a DAW)? Close it, or check the controller is plugged in, then press Start audio.";
