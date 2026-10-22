@@ -40,7 +40,7 @@ by hand.
    With no domain set up, Resend only sends to your own address, which is all this needs.
 4. **Cloudflare** (free) at dash.cloudflare.com:
    - Storage & Databases → KV → create a namespace called `cratebox`. Paste its id into `wrangler.toml`
-     (`PASTE_KV_NAMESPACE_ID`). The id isn't a secret.
+     (already done: `cratebox`). The id isn't a secret.
    - Workers & Pages → Create → Import a repository → pick `zonahbear/Cratebox`. Leave the root directory as `/`,
      the build command empty and the deploy command `npx wrangler deploy`. Cloudflare reads the rest from wrangler.toml.
    - After the first deploy, open the Worker → Settings → Variables and secrets and add these as **Secret**:

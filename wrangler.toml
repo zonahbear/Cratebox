@@ -13,10 +13,10 @@ binding = "ASSETS"
 # Serve .html paths as-is (no redirects): the player's service worker and manifest point at cratebox.html.
 html_handling = "none"
 
-# Signups, rate limits and cached App Store Connect ids. Paste your namespace id here (not a secret).
+# Signups, rate limits and cached App Store Connect ids (namespace "cratebox"; the id is not a secret).
 [[kv_namespaces]]
 binding = "DB"
-id = "PASTE_KV_NAMESPACE_ID"
+id = "79b878980e2c49279dfee7bb42bb9e47"
 
 # Finishes invites for people who accepted Apple's team email.
 [triggers]
