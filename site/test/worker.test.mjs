@@ -159,6 +159,14 @@ r = await post("/api/remove", { email: "sam@example.com" }); await settle();
 check("remove deletes our record and tells the owner, never calls Apple",
   r.status === 200 && !(await env.DB.get("s:" + id)) && /remove sam@example.com/.test(mails.at(-1).subject) && calls.length === delCalls);
 
+// --- owner status page ---
+r = await worker.fetch(req("/api/status?k=wrong"), env, ctx);
+check("status page hidden without the right key", r.status === 404);
+r = await worker.fetch(req("/api/status?k=test-secret&mail=1&asc=1"), env, ctx);
+const st = await r.json(), stText = JSON.stringify(st);
+check("status page reports secrets, mail test and ASC ids without leaking values",
+  st.secrets.RESEND_API_KEY.startsWith("set") && st.mailTest.ok && st.asc.app === "APP1" && st.asc.internalGroup === "GRP" && !stText.includes("re_test") && !stText.includes("PRIVATE KEY") && !stText.includes("test-secret"));
+
 // --- secrets never leak to the browser ---
 const bodies = await Promise.all([post("/api/signup", { email: "x" }, "3.3.3.3"), post("/api/remove", {})].map((p) => p.then((x) => x.text())));
 check("API responses carry no secrets", !bodies.some((b) => b.includes("test-secret") || b.includes("PRIVATE KEY") || b.includes("re_test")));

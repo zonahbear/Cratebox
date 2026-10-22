@@ -267,6 +267,38 @@ async function remove(req, env, ctx) {
   return json({ ok: true });
 }
 
+// ---- owner-only status page: /api/status?k=<LINK_SECRET>[&mail=1][&asc=1] ----
+// Says which secrets are set (never their values), the last mail error and signup counts; mail=1 sends a test
+// email and shows Resend's answer, asc=1 checks the App Store Connect key, app and internal group.
+async function status(req, env) {
+  const q = new URL(req.url).searchParams;
+  const want = await hmacKey(env), given = enc.encode(q.get("k") || "");
+  const a = await crypto.subtle.sign("HMAC", want, given), b = await crypto.subtle.sign("HMAC", want, enc.encode(env.LINK_SECRET || ""));
+  if (!env.LINK_SECRET || b64u(a) !== b64u(b)) return json({ error: "Not found" }, 404);
+  const names = ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8", "RESEND_API_KEY", "ADMIN_EMAIL", "LINK_SECRET"];
+  const out = {
+    secrets: Object.fromEntries(names.map((n) => [n, env[n] ? `set (${String(env[n]).length} chars)` : "MISSING"])),
+    adminEmail: env.ADMIN_EMAIL ? env.ADMIN_EMAIL.replace(/^(.).*(@.*)$/, "$1…$2") : null,
+    mailFrom: env.MAIL_FROM, siteUrl: env.SITE_URL,
+    lastMailError: await env.DB.get("cfg:mailError", "json"),
+    signups: {},
+  };
+  for (const k of await listRecs(env)) out.signups[k.metadata?.status || "?"] = (out.signups[k.metadata?.status || "?"] || 0) + 1;
+  if (q.get("mail")) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject: "Cratebox test email", html: "<p>The site can email you.</p>" }),
+    }).catch((e) => ({ ok: false, status: 0, text: async () => e.message }));
+    out.mailTest = { ok: r.ok, status: r.status, resend: (await r.text()).slice(0, 400) };
+  }
+  if (q.get("asc")) {
+    try { await env.DB.delete("cfg:app"); await env.DB.delete("cfg:group"); out.asc = { app: await appId(env), internalGroup: await groupId(env) }; }
+    catch (e) { out.asc = { error: e.message }; }
+  }
+  return json(out);
+}
+
 // ---- cron: finish invites for people who accepted Apple's email ----
 async function sweep(env) {
   for (const k of await listRecs(env)) {
@@ -292,6 +324,7 @@ export default {
     if (pathname === "/api/signup" && req.method === "POST") return signup(req, env, ctx);
     if (pathname === "/api/remove" && req.method === "POST") return remove(req, env, ctx);
     if (pathname === "/api/review" && (req.method === "GET" || req.method === "POST")) return review(req, env);
+    if (pathname === "/api/status" && req.method === "GET") return status(req, env);
     if (pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
     // Assets run with html_handling "none" (no redirects for the player's PWA), so folders need their index here.
     if (pathname.endsWith("/")) return env.ASSETS.fetch(new Request(new URL(pathname + "index.html", req.url), req));
