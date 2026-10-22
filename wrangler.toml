@@ -23,7 +23,7 @@ id = "79b878980e2c49279dfee7bb42bb9e47"
 crons = ["*/15 * * * *"]
 
 [vars]
-SITE_URL = "https://cratebox.example.workers.dev"   # set to the real address after the first deploy
+SITE_URL = "https://cratebox.zonahbear.workers.dev"
 ASC_BUNDLE_ID = "com.zonahbear.cratebox.suite"
 ASC_GROUP_NAME = ""          # internal TestFlight group to use; empty = the app's first internal group
 ASC_ROLE = "MARKETING"       # team role for testers; Apple allows MARKETING or DEVELOPER (or higher) for internal testing
