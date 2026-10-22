@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cratebox</title>
+<meta name="description" content="Mix your own music in the browser. Works with most DJ controllers and reads rekordbox USBs. iPhone beta available now, invite-only.">
+<meta name="theme-color" content="#0b0d10">
+<link rel="icon" href="/player/icon-180.png">
+<link rel="apple-touch-icon" href="/player/icon-180.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=Barlow:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one dark column like the app itself; hero is a live two-deck strip, then beta, support, footer. */
+:root {
+  --bg: #0b0d10; --panel: #13161b; --raise: #1b1f26; --line: #272c35; --line2: #343a45;
+  --fg: #e6e9ee; --muted: #8a93a2; --dim: #586070;
+  --d0: #39a7ff; --d1: #ff8a3d; --d2: #2fd3c0; --d3: #e15bd2; --ok: #3ddc84; --cue: #ffb020; --hot: #ff3b55;
+  --f-disp: "Barlow Condensed", "Arial Narrow", system-ui, sans-serif;
+  --f-ui: "Barlow", system-ui, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 16px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+a { color: var(--d0); }
+:focus-visible { outline: 2px solid var(--d0); outline-offset: 2px; }
+
+
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--panel); border-bottom: 1px solid var(--line); }
+header .wrap { display: flex; align-items: center; gap: 20px; height: 56px; }
+.logo { font-family: var(--f-disp); font-weight: 700; font-size: 26px; letter-spacing: .08em; text-decoration: none; color: var(--fg); }
+.logo span { color: var(--d0); }
+nav { display: flex; gap: 18px; margin-left: auto; font-size: 14px; }
+nav a { color: var(--muted); text-decoration: none; }
+nav a:hover { color: var(--fg); }
+@media (max-width: 520px) { nav { gap: 12px; font-size: 13px; } }
+
+h1, h2, h3 { font-family: var(--f-disp); font-weight: 700; letter-spacing: .02em; line-height: 1.05; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(42px, 8vw, 76px); text-transform: uppercase; }
+h2 { font-size: clamp(30px, 5vw, 44px); text-transform: uppercase; }
+h3 { font-size: 22px; }
+.eyebrow { font-family: var(--f-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.lede { color: var(--muted); max-width: 60ch; font-size: 18px; }
+
+.hero { padding-block: 56px 40px; display: grid; gap: 28px; }
+.ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+.btn { display: inline-flex; align-items: center; gap: 8px; height: 46px; padding: 0 20px; border-radius: 4px; font-family: var(--f-disp); font-weight: 700; font-size: 19px; letter-spacing: .06em; text-transform: uppercase; text-decoration: none; border: 1px solid var(--line2); background: var(--raise); color: var(--fg); cursor: pointer; }
+.btn.primary { background: var(--d0); border-color: var(--d0); color: #04121f; }
+.btn.hot { background: transparent; border-color: var(--d1); color: var(--d1); }
+
+/* deck strip: the app's own look, a real-feeling readout */
+.decks { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; background: #000; padding: 8px; border-radius: 6px; border: 1px solid var(--line); }
+.deck { background: var(--panel); border-top: 3px solid var(--c); border-radius: 4px; padding: 10px 12px; display: grid; gap: 8px; min-width: 0; }
+.deck .top { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.dnum { font-family: var(--f-disp); font-weight: 700; font-size: 30px; color: var(--c); line-height: 1; }
+.dtitle { min-width: 0; flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dtitle span { display: block; color: var(--muted); font-size: 12px; }
+.dbpm { font-family: var(--f-mono); font-size: 18px; text-align: right; font-variant-numeric: tabular-nums; }
+.dbpm span { display: block; font-size: 11px; color: var(--muted); }
+.deck canvas { width: 100%; height: 54px; display: block; }
+@media (max-width: 640px) { .decks { grid-template-columns: 1fr; } }
+
+section { scroll-margin-top: 56px; padding-block: 56px; border-top: 1px solid var(--line); }
+.sec-head { display: grid; gap: 10px; margin-bottom: 28px; }
+
+.feats { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.feat { background: var(--panel); padding: 20px; display: grid; gap: 6px; align-content: start; }
+.feat p { margin: 0; color: var(--muted); font-size: 15px; }
+.tag { justify-self: start; font-family: var(--f-disp); font-size: 13px; letter-spacing: .06em; padding: 1px 7px; border-radius: 3px; border: 1px solid var(--line2); color: var(--muted); }
+.tag.web { color: var(--d0); border-color: var(--d0); }
+.tag.ios { color: var(--d1); border-color: var(--d1); }
+
+.beta { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+@media (max-width: 800px) { .beta { grid-template-columns: 1fr; } }
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; counter-reset: s; }
+.steps li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; counter-increment: s; }
+.steps li::before { content: counter(s); font-family: var(--f-mono); font-size: 14px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line2); display: grid; place-items: center; color: var(--d1); }
+.steps b { display: block; }
+.steps span { color: var(--muted); font-size: 15px; }
+
+form.card { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--d1); border-radius: 6px; padding: 22px; display: grid; gap: 14px; }
+label { font-size: 13px; color: var(--muted); display: grid; gap: 6px; }
+input[type=text], input[type=email] { height: 44px; padding: 0 12px; background: var(--raise); border: 1px solid var(--line2); border-radius: 4px; color: var(--fg); font: inherit; }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 420px) { .row2 { grid-template-columns: 1fr; } }
+.check { grid-template-columns: 20px 1fr; align-items: start; color: var(--muted); font-size: 13px; }
+.check input { margin-top: 3px; }
+.fine { font-size: 12px; color: var(--dim); margin: 0; }
+.err { margin: 0; font-size: 14px; color: var(--hot); }
+.hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+.done { display: grid; gap: 8px; }
+.done .pill { justify-self: start; display: inline-flex; align-items: center; gap: 7px; height: 26px; padding: 0 10px; border-radius: 13px; border: 1px solid var(--line2); background: var(--raise); font-size: 12px; }
+.done .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--cue); box-shadow: 0 0 6px var(--cue); }
+
+.support { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.pay { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; padding: 20px; display: grid; gap: 12px; align-content: start; }
+.addr { font-family: var(--f-mono); font-size: 14px; background: var(--raise); border: 1px dashed var(--line2); border-radius: 4px; padding: 10px 12px; overflow-wrap: anywhere; color: var(--muted); }
+.pay .btn { height: 40px; font-size: 16px; justify-self: start; }
+
+
+footer { border-top: 1px solid var(--line); padding-block: 28px; color: var(--dim); font-size: 13px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</head>
+<body>
+
+<header><div class="wrap">
+  <a class="logo" href="#top">CRATE<span>BOX</span></a>
+  <nav><a href="#player">Web player</a><a href="#beta">iOS beta</a><a href="#support">Support</a></nav>
+</div></header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="eyebrow">DJ app · browser + iPhone</div>
+    <h1>Up to four decks.<br>Your music.<br>No install.</h1>
+    <p class="lede">Bring your own music and start mixing right in your browser. Cratebox works with most DJ controllers and reads your rekordbox USBs. iPhone beta available now, invite-only.</p>
+    <div class="ctas">
+      <a class="btn primary" href="/player/cratebox.html">Open the web player</a>
+      <a class="btn hot" href="#beta">Join the iOS beta</a>
+    </div>
+    <div class="decks" aria-label="Example deck readout">
+      <div class="deck" style="--c: var(--d0)">
+        <div class="top"><div class="dnum">1</div><div class="dtitle">Night Drive (Extended Mix)<span>example track</span></div><div class="dbpm">124.00<span>8A · −0.4%</span></div></div>
+        <canvas data-c="#39a7ff" data-seed="3"></canvas>
+      </div>
+      <div class="deck" style="--c: var(--d1)">
+        <div class="top"><div class="dnum">2</div><div class="dtitle">Low Sun<span>example track</span></div><div class="dbpm">124.00<span>9A · +1.2%</span></div></div>
+        <canvas data-c="#ff8a3d" data-seed="7"></canvas>
+      </div>
+      <div class="deck" style="--c: var(--d2)">
+        <div class="top"><div class="dnum">3</div><div class="dtitle">Shoreline Dub<span>example track</span></div><div class="dbpm">124.00<span>8B · +0.8%</span></div></div>
+        <canvas data-c="#2fd3c0" data-seed="11"></canvas>
+      </div>
+      <div class="deck" style="--c: var(--d3)">
+        <div class="top"><div class="dnum">4</div><div class="dtitle">Velvet Room<span>example track</span></div><div class="dbpm">124.00<span>7A · −1.5%</span></div></div>
+        <canvas data-c="#e15bd2" data-seed="19"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <section id="player"><div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Web player</div>
+      <h2>Runs in Chrome or Edge</h2>
+      <p class="lede">Opens straight from this site. Your music stays on your computer: Cratebox reads the folder you pick and never uploads it.</p>
+    </div>
+    <div class="feats">
+      <div class="feat"><span class="tag web">WEB</span><h3>2 or 4 decks</h3><p>Keylock, sync, beat grids, keys, phrases, hot cues and loops.</p></div>
+      <div class="feat"><span class="tag web">WEB</span><h3>Most DJ controllers</h3><p>Plug in your controller and play. Tuned on the DDJ-FLX4.</p></div>
+      <div class="feat"><span class="tag web">WEB</span><h3>Your rekordbox USBs</h3><p>Pop in your stick and your tracks and playlists are right there.</p></div>
+      <div class="feat"><span class="tag web">WEB</span><h3>FX and recording</h3><p>Beat FX, Pad FX, and record your set straight to MP3.</p></div>
+    </div>
+    <p style="margin-top:20px"><a class="btn primary" href="/player/cratebox.html">Launch Cratebox</a></p>
+  </div></section>
+
+  <section id="beta"><div class="wrap beta">
+    <div class="sec-head" style="margin:0">
+      <div class="eyebrow">iOS beta · TestFlight</div>
+      <h2>Get the iPhone app</h2>
+      <p class="lede">The iPhone app is invite only for now. Ask for a spot and you'll join the Cratebox crew, with every new build landing on your phone the day it ships.</p>
+      <div class="feats" style="margin-block:8px 18px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))">
+        <div class="feat"><span class="tag ios">iOS</span><h3>Performance Mode</h3><p>Mix on your phone, with or without a controller.</p></div>
+        <div class="feat"><span class="tag ios">iOS</span><h3>4-channel mode</h3><p>Flip one toggle to go from 2 decks to 4, with deck layers on your controller.</p></div>
+        <div class="feat"><span class="tag ios">iOS</span><h3>Deck Bridge</h3><p>Turns your phone into a MIDI controller for rekordbox.</p></div>
+        <div class="feat"><span class="tag ios">iOS</span><h3>Cratebox USB</h3><p>Check and prep your rekordbox sticks before the gig.</p></div>
+      </div>
+      <ol class="steps">
+        <li><div><b>Send your Apple ID email</b><span>Use the email on your Apple account, or the invite won't match.</span></div></li>
+        <li><div><b>We approve it</b><span>Usually within a day.</span></div></li>
+        <li><div><b>Accept the App Store Connect invite</b><span>Apple emails you a team invite. Accept it and sign in once.</span></div></li>
+        <li><div><b>Install from TestFlight</b><span>A second email from TestFlight unlocks the app. Install TestFlight from the App Store first.</span></div></li>
+      </ol>
+    </div>
+    <form class="card" id="f" novalidate>
+      <h3>Request an invite</h3>
+      <div class="row2">
+        <label for="fn">First name<input id="fn" type="text" autocomplete="given-name" name="first" required></label>
+        <label for="ln">Last name<input id="ln" type="text" autocomplete="family-name" name="last" required></label>
+      </div>
+      <label for="em">Apple ID email<input id="em" type="email" autocomplete="email" name="email" required></label>
+      <label class="check" for="ok"><input id="ok" name="consent" type="checkbox" required><span>I understand this is a beta, and that I'll be added to the Cratebox team on App Store Connect.</span></label>
+      <label class="hp" aria-hidden="true">Leave this empty<input id="web" name="website" type="text" tabindex="-1" autocomplete="off"></label>
+      <button class="btn primary" type="submit" id="go">Request invite</button>
+      <p class="err" id="err" role="alert" hidden></p>
+      <p class="fine">We use your email only to invite you to the beta. Want it deleted? Use the form on the <a href="/privacy.html">privacy page</a>.</p>
+      <div class="done" id="done" hidden>
+        <span class="pill"><i></i>Waiting for approval</span>
+        <p class="fine">Got it. Watch for an email from App Store Connect once you're approved.</p>
+      </div>
+    </form>
+  </div></section>
+
+  <section id="support"><div class="wrap">
+    <div class="sec-head">
+      <div class="eyebrow">Support</div>
+      <h2>Buy me a coffee?</h2>
+      <p class="lede">Cratebox is a one-person project. Every coffee goes toward the Apple developer account and test gear.</p>
+    </div>
+    <div class="support">
+      <div class="pay"><h3>Venmo</h3><div class="addr" style="color:var(--fg)">@cratebox</div><a class="btn" href="https://venmo.com/u/cratebox" target="_blank" rel="noopener">Open Venmo</a></div>
+      <div class="pay"><h3>Bitcoin</h3><div class="addr" id="btc" style="color:var(--fg)">3JJarDxDEvQFFCKxMjmTZWXf45XXDD4VFq</div><button class="btn" type="button" id="cp">Copy address</button></div>
+    </div>
+  </div></section>
+</main>
+
+<footer><div class="wrap"><span>Cratebox</span><a href="/privacy.html">Privacy</a><span>Not affiliated with Pioneer DJ or AlphaTheta.</span></div></footer>
+
+<script>
+// Pre-rendered waveform look, same idea as the app's strips: seeded so it's stable across reloads.
+document.querySelectorAll('.deck canvas').forEach(cv => {
+  const r = cv.getBoundingClientRect(), dpr = devicePixelRatio || 1;
+  cv.width = r.width * dpr; cv.height = r.height * dpr;
+  const g = cv.getContext('2d'), w = cv.width, h = cv.height, mid = h / 2;
+  let s = +cv.dataset.seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+  g.fillStyle = cv.dataset.c;
+  for (let x = 0; x < w; x += 2 * dpr) {
+    const beat = Math.abs(Math.sin(x / (14 * dpr))), env = .35 + .65 * Math.abs(Math.sin(x / w * 5.2));
+    const a = (beat * .7 + rnd() * .3) * env * mid * .95;
+    g.globalAlpha = x < w * .42 ? .45 : 1; g.fillRect(x, mid - a, dpr * 1.4, a * 2);
+  }
+  g.globalAlpha = 1; g.fillStyle = '#fff'; g.fillRect(w * .42, 0, dpr * 2, h);
+});
+// Signup goes to the Worker; it stores the request and asks for approval. The Apple invite comes later.
+const f = document.getElementById('f'), go = document.getElementById('go'), err = document.getElementById('err');
+f.addEventListener('submit', async e => {
+  e.preventDefault(); err.hidden = true;
+  if (!f.reportValidity()) return;
+  go.disabled = true; go.textContent = 'Sending…';
+  try {
+    const r = await fetch('/api/signup', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(Object.fromEntries(new FormData(f))) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(j.error || 'Something went wrong. Try again in a minute.');
+    f.querySelectorAll('input, button').forEach(el => el.disabled = true);
+    go.textContent = 'Requested'; document.getElementById('done').hidden = false;
+  } catch (x) { err.textContent = x.message; err.hidden = false; go.disabled = false; go.textContent = 'Request invite'; }
+});
+// Copy the BTC address; if the clipboard is refused, select it so a long-press/Ctrl+C still works.
+document.getElementById('cp').addEventListener('click', e => {
+  const b = e.target, t = document.getElementById('btc');
+  navigator.clipboard.writeText(t.textContent).then(() => { b.textContent = 'Copied'; }, () => {
+    const r = document.createRange(); r.selectNodeContents(t); const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+    b.textContent = 'Selected, copy it';
+  });
+});
+</script>
+</body>
+</html>
