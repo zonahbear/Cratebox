@@ -14,7 +14,7 @@ const ASC = "https://api.appstoreconnect.apple.com";
 const LINK_DAYS = 7, SEATS = 100;
 const enc = new TextEncoder();
 
-const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json", "cache-control": "no-store" } });
+const json = (o, status = 200) => new Response(JSON.stringify(o), { status, headers: { "content-type": "application/json; charset=utf-8", "cache-control": "no-store" } });
 const b64u = (buf) => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 const b64uStr = (s) => b64u(enc.encode(s));
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -43,6 +43,7 @@ async function listRecs(env) {
 
 // ---- signed approve/decline links: HMAC over "id.action.expiry", so a forwarded email can't be edited ----
 async function hmacKey(env) {
+  if (!env.LINK_SECRET) throw new Error("LINK_SECRET secret is missing");
   return crypto.subtle.importKey("raw", enc.encode(env.LINK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 async function makeToken(env, id, action, now = Date.now()) {
@@ -146,14 +147,25 @@ async function addToGroup(env, rec) {
 }
 
 // ---- email to the owner (Resend). Testers get Apple's own emails, never ours. ----
+// Returns whether Resend took it. The last failure is kept in KV as "cfg:mailError" so it can be read from the
+// Cloudflare dashboard (Workers KV → cratebox) without digging through logs.
 async function mail(env, subject, html) {
-  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) { console.log("mail skipped (no RESEND_API_KEY/ADMIN_EMAIL):", subject); return; }
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject, html }),
-  });
-  if (!r.ok) console.log("mail failed", r.status, await r.text());
+  let err;
+  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) err = "RESEND_API_KEY or ADMIN_EMAIL secret is missing";
+  else {
+    try {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+        body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject, html }),
+      });
+      if (r.ok) return true;
+      err = `Resend ${r.status}: ${(await r.text()).slice(0, 300)}`;
+    } catch (e) { err = "Resend unreachable: " + e.message; }
+  }
+  console.log("mail failed:", err, "|", subject);
+  await env.DB.put("cfg:mailError", JSON.stringify({ at: new Date().toISOString(), subject, error: err }));
+  return false;
 }
 async function seatsUsed(env) {
   return (await listRecs(env)).filter((k) => ["invited", "added"].includes(k.metadata?.status)).length;
@@ -161,12 +173,20 @@ async function seatsUsed(env) {
 const btn = (href, label, bg) => `<a href="${esc(href)}" style="display:inline-block;padding:10px 18px;margin-right:8px;border-radius:4px;background:${bg};color:#000;font:600 15px system-ui;text-decoration:none">${label}</a>`;
 
 async function askOwner(env, rec, base) {
+  try { return await askOwnerInner(env, rec, base); }
+  catch (e) {
+    console.log("askOwner failed:", e.message);
+    await env.DB.put("cfg:mailError", JSON.stringify({ at: new Date().toISOString(), subject: "approval email for " + rec.email, error: e.message }));
+  }
+}
+async function askOwnerInner(env, rec, base) {
   const a = `${base}/api/review?t=${await makeToken(env, rec.id, "approve")}`;
   const d = `${base}/api/review?t=${await makeToken(env, rec.id, "decline")}`;
-  await mail(env, `Cratebox beta request: ${rec.first} ${rec.last}`,
+  rec.notified = await mail(env, `Cratebox beta request: ${rec.first} ${rec.last}`,
     `<p style="font:15px system-ui">${esc(rec.first)} ${esc(rec.last)} (<b>${esc(rec.email)}</b>) asked to join the iOS beta.<br>${await seatsUsed(env)} of ${SEATS} tester seats used.</p>
      <p>${btn(a, "Approve", "#3ddc84")}${btn(d, "Decline", "#cfd4dc")}</p>
      <p style="font:12px system-ui;color:#666">Approve sends an App Store Connect team invite (${esc(env.ASC_ROLE || "MARKETING")} role, Cratebox only). Links expire in ${LINK_DAYS} days and ask you to confirm before anything happens.</p>`);
+  return putRec(env, rec);
 }
 
 // ---- pages for the approve link: GET shows a confirm button (mail scanners prefetch GETs), POST acts ----
@@ -225,8 +245,9 @@ async function signup(req, env, ctx) {
   // Same answer for repeats so the form can't be used to check who signed up.
   const base = env.SITE_URL || new URL(req.url).origin;
   if (old && old.status !== "declined") {
-    // A pending request whose links have expired gets a fresh email; anything else is left alone.
-    if (old.status === "pending" && Date.now() - Date.parse(old.updated) > LINK_DAYS * 86400e3) ctx.waitUntil(putRec(env, old).then(() => askOwner(env, old, base)));
+    // A pending request whose email never went out (e.g. secrets weren't set yet) or whose links have expired
+    // gets a fresh email; anything else is left alone.
+    if (old.status === "pending" && (!old.notified || Date.now() - Date.parse(old.updated) > LINK_DAYS * 86400e3)) ctx.waitUntil(askOwner(env, old, base));
     return json({ ok: true });
   }
   const rec = await putRec(env, { id, email, first, last, status: "pending", created: new Date().toISOString() });
@@ -254,6 +275,39 @@ async function remove(req, env, ctx) {
   return json({ ok: true });
 }
 
+// ---- owner-only status page: /api/status?k=<LINK_SECRET>[&mail=1][&asc=1] ----
+// Says which secrets are set (never their values), the last mail error and signup counts; mail=1 sends a test
+// email and shows Resend's answer, asc=1 checks the App Store Connect key, app and internal group.
+async function status(req, env) {
+  const q = new URL(req.url).searchParams;
+  if (!env.LINK_SECRET) return json({ error: "LINK_SECRET secret is missing, so this page can't check your key" }, 500);
+  const want = await hmacKey(env);
+  const a = await crypto.subtle.sign("HMAC", want, enc.encode(q.get("k") || "")), b = await crypto.subtle.sign("HMAC", want, enc.encode(env.LINK_SECRET));
+  if (b64u(a) !== b64u(b)) return json({ error: "Not found" }, 404);
+  const names = ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8", "RESEND_API_KEY", "ADMIN_EMAIL", "LINK_SECRET"];
+  const out = {
+    secrets: Object.fromEntries(names.map((n) => [n, env[n] ? `set (${String(env[n]).length} chars)` : "MISSING"])),
+    adminEmail: env.ADMIN_EMAIL ? env.ADMIN_EMAIL.replace(/^(.).*(@.*)$/, "$1…$2") : null,
+    mailFrom: env.MAIL_FROM, siteUrl: env.SITE_URL,
+    lastMailError: await env.DB.get("cfg:mailError", "json"),
+    signups: {},
+  };
+  for (const k of await listRecs(env)) out.signups[k.metadata?.status || "?"] = (out.signups[k.metadata?.status || "?"] || 0) + 1;
+  if (q.get("mail")) {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+      body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject: "Cratebox test email", html: "<p>The site can email you.</p>" }),
+    }).catch((e) => ({ ok: false, status: 0, text: async () => e.message }));
+    out.mailTest = { ok: r.ok, status: r.status, resend: (await r.text()).slice(0, 400) };
+  }
+  if (q.get("asc")) {
+    try { await env.DB.delete("cfg:app"); await env.DB.delete("cfg:group"); out.asc = { app: await appId(env), internalGroup: await groupId(env) }; }
+    catch (e) { out.asc = { error: e.message }; }
+  }
+  return json(out);
+}
+
 // ---- cron: finish invites for people who accepted Apple's email ----
 async function sweep(env) {
   for (const k of await listRecs(env)) {
@@ -275,16 +329,26 @@ async function sweep(env) {
 
 export default {
   async fetch(req, env, ctx) {
+    try { return await route(req, env, ctx); }
+    catch (e) {
+      // Error messages here never contain secret values; they name what's missing or what Apple/Resend said.
+      console.log("unhandled:", e.stack || e.message);
+      return json({ error: "Server error: " + e.message }, 500);
+    }
+  },
+  async scheduled(_ev, env, ctx) { ctx.waitUntil(sweep(env)); },
+};
+
+async function route(req, env, ctx) {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/signup" && req.method === "POST") return signup(req, env, ctx);
     if (pathname === "/api/remove" && req.method === "POST") return remove(req, env, ctx);
     if (pathname === "/api/review" && (req.method === "GET" || req.method === "POST")) return review(req, env);
+    if (pathname === "/api/status" && req.method === "GET") return status(req, env);
     if (pathname.startsWith("/api/")) return json({ error: "Not found" }, 404);
     // Assets run with html_handling "none" (no redirects for the player's PWA), so folders need their index here.
     if (pathname.endsWith("/")) return env.ASSETS.fetch(new Request(new URL(pathname + "index.html", req.url), req));
     return env.ASSETS.fetch(req);
-  },
-  async scheduled(_ev, env, ctx) { ctx.waitUntil(sweep(env)); },
-};
+}
 
 export const _test = { makeToken, readToken, ascToken, idFor, sweep, resetJwt: () => { jwtCache = null; } };

@@ -21,6 +21,7 @@
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--f-ui); font-size: 16px; line-height: 1.55; }
 body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--panel); }
@@ -168,12 +169,17 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; }
         <div class="feat"><span class="tag ios">iOS</span><h3>Deck Bridge</h3><p>Turns your phone into a MIDI controller for rekordbox.</p></div>
         <div class="feat"><span class="tag ios">iOS</span><h3>Cratebox USB</h3><p>Check and prep your rekordbox sticks before the gig.</p></div>
       </div>
+      <h3 style="margin-top:6px">Get Cratebox on your iPhone</h3>
+      <p class="fine" style="font-size:14px;color:var(--muted)">Takes just a few minutes, and you only do it once. Use your <b>Apple ID email</b> (find it in Settings → your name).</p>
       <ol class="steps">
-        <li><div><b>Send your Apple ID email</b><span>Use the email on your Apple account, or the invite won't match.</span></div></li>
-        <li><div><b>We approve it</b><span>Usually within a day.</span></div></li>
-        <li><div><b>Accept the App Store Connect invite</b><span>Apple emails you a team invite. Accept it and sign in once.</span></div></li>
-        <li><div><b>Install from TestFlight</b><span>A second email from TestFlight unlocks the app. Install TestFlight from the App Store first.</span></div></li>
+        <li><div><b>Ask for an invite</b><span>Fill in the form on this page. Invites are approved by hand.</span></div></li>
+        <li><div><b>Accept Apple's email</b><span>Once approved, Apple emails you. Tap Accept Invitation and sign in with your Apple ID.</span></div></li>
+        <li><div><b>Get TestFlight</b><span>It's Apple's free app for beta apps. Download it <a href="https://apps.apple.com/us/app/testflight/id899247664" target="_blank" rel="noopener">here</a> from the App Store.</span></div></li>
+        <li><div><b>Open the TestFlight email</b><span>It may take a moment longer than the first one. Open it on your iPhone and tap View in TestFlight.</span></div></li>
+        <li><div><b>Install</b><span>Tap Accept, then Install.</span></div></li>
+        <li><div><b>Open Cratebox</b><span>From TestFlight or your home screen. Start mixing.</span></div></li>
       </ol>
+      <p class="fine" style="font-size:14px;margin-top:14px">No email? Check spam, or just open TestFlight. Cratebox may already be waiting there.</p>
     </div>
     <form class="card" id="f" novalidate>
       <h3>Request an invite</h3>
@@ -198,7 +204,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 8px 24px; }
     <div class="sec-head">
       <div class="eyebrow">Support</div>
       <h2>Buy me a coffee?</h2>
-      <p class="lede">Cratebox is a one-person project. Every coffee goes toward the Apple developer account and test gear.</p>
+      <p class="lede">Cratebox is a one-person project. Every dollar goes toward the Apple developer account and test gear.</p>
     </div>
     <div class="support">
       <div class="pay"><h3>Venmo</h3><div class="addr" style="color:var(--fg)">@cratebox</div><a class="btn" href="https://venmo.com/u/cratebox" target="_blank" rel="noopener">Open Venmo</a></div>

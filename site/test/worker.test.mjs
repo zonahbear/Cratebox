@@ -136,6 +136,18 @@ await post("/api/signup", { ...sam, email: "auto@example.com" }, "8.8.8.8"); awa
 check("auto mode invites without asking", calls.filter((x) => x.url.endsWith("/v1/userInvitations")).length === invBefore + 1 && /auto-invited/.test(mails.at(-1).subject));
 env.AUTO_APPROVE = "false";
 
+// --- an email that failed (missing secret) is retried on the next signup from the same address ---
+const key = env.RESEND_API_KEY; delete env.RESEND_API_KEY;
+const nMails = mails.length;
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+const err = await env.DB.get("cfg:mailError", "json");
+check("missing secret: no email, error kept in KV", mails.length === nMails && /secret is missing/.test(err?.error || ""));
+env.RESEND_API_KEY = key;
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+check("repeat signup retries the owner email once secrets exist", mails.length === nMails + 1 && /early@example.com/.test(mails.at(-1).html));
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+check("…and stays quiet after it was sent", mails.length === nMails + 1);
+
 // --- rate limit ---
 for (let i = 0; i < 5; i++) await post("/api/signup", { ...sam, email: `r${i}@example.com` }, "7.7.7.7");
 r = await post("/api/signup", { ...sam, email: "r9@example.com" }, "7.7.7.7"); await settle();
@@ -146,6 +158,22 @@ const delCalls = calls.length;
 r = await post("/api/remove", { email: "sam@example.com" }); await settle();
 check("remove deletes our record and tells the owner, never calls Apple",
   r.status === 200 && !(await env.DB.get("s:" + id)) && /remove sam@example.com/.test(mails.at(-1).subject) && calls.length === delCalls);
+
+// --- owner status page ---
+r = await worker.fetch(req("/api/status?k=wrong"), env, ctx);
+check("status page hidden without the right key", r.status === 404);
+r = await worker.fetch(req("/api/status?k=test-secret&mail=1&asc=1"), env, ctx);
+const st = await r.json(), stText = JSON.stringify(st);
+check("status page reports secrets, mail test and ASC ids without leaking values",
+  st.secrets.RESEND_API_KEY.startsWith("set") && st.mailTest.ok && st.asc.app === "APP1" && st.asc.internalGroup === "GRP" && !stText.includes("re_test") && !stText.includes("PRIVATE KEY") && !stText.includes("test-secret"));
+
+// --- missing LINK_SECRET: no crash, the reason is recorded and reported ---
+const ls = env.LINK_SECRET; delete env.LINK_SECRET;
+r = await worker.fetch(req("/api/status?k=x"), env, ctx);
+check("status page explains a missing LINK_SECRET instead of crashing", r.status === 500 && /LINK_SECRET/.test((await r.json()).error));
+r = await post("/api/signup", { ...sam, email: "nolink@example.com" }, "4.4.4.4"); await settle();
+check("signup still answers ok and records why no email went out", r.status === 200 && /LINK_SECRET/.test((await env.DB.get("cfg:mailError", "json")).error));
+env.LINK_SECRET = ls;
 
 // --- secrets never leak to the browser ---
 const bodies = await Promise.all([post("/api/signup", { email: "x" }, "3.3.3.3"), post("/api/remove", {})].map((p) => p.then((x) => x.text())));
