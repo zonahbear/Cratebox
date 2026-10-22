@@ -136,6 +136,18 @@ await post("/api/signup", { ...sam, email: "auto@example.com" }, "8.8.8.8"); awa
 check("auto mode invites without asking", calls.filter((x) => x.url.endsWith("/v1/userInvitations")).length === invBefore + 1 && /auto-invited/.test(mails.at(-1).subject));
 env.AUTO_APPROVE = "false";
 
+// --- an email that failed (missing secret) is retried on the next signup from the same address ---
+const key = env.RESEND_API_KEY; delete env.RESEND_API_KEY;
+const nMails = mails.length;
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+const err = await env.DB.get("cfg:mailError", "json");
+check("missing secret: no email, error kept in KV", mails.length === nMails && /secret is missing/.test(err?.error || ""));
+env.RESEND_API_KEY = key;
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+check("repeat signup retries the owner email once secrets exist", mails.length === nMails + 1 && /early@example.com/.test(mails.at(-1).html));
+await post("/api/signup", { ...sam, email: "early@example.com" }, "6.6.6.6"); await settle();
+check("…and stays quiet after it was sent", mails.length === nMails + 1);
+
 // --- rate limit ---
 for (let i = 0; i < 5; i++) await post("/api/signup", { ...sam, email: `r${i}@example.com` }, "7.7.7.7");
 r = await post("/api/signup", { ...sam, email: "r9@example.com" }, "7.7.7.7"); await settle();

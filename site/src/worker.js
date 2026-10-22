@@ -146,14 +146,25 @@ async function addToGroup(env, rec) {
 }
 
 // ---- email to the owner (Resend). Testers get Apple's own emails, never ours. ----
+// Returns whether Resend took it. The last failure is kept in KV as "cfg:mailError" so it can be read from the
+// Cloudflare dashboard (Workers KV → cratebox) without digging through logs.
 async function mail(env, subject, html) {
-  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) { console.log("mail skipped (no RESEND_API_KEY/ADMIN_EMAIL):", subject); return; }
-  const r = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
-    body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject, html }),
-  });
-  if (!r.ok) console.log("mail failed", r.status, await r.text());
+  let err;
+  if (!env.RESEND_API_KEY || !env.ADMIN_EMAIL) err = "RESEND_API_KEY or ADMIN_EMAIL secret is missing";
+  else {
+    try {
+      const r = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { authorization: "Bearer " + env.RESEND_API_KEY, "content-type": "application/json" },
+        body: JSON.stringify({ from: env.MAIL_FROM || "Cratebox <onboarding@resend.dev>", to: [env.ADMIN_EMAIL], subject, html }),
+      });
+      if (r.ok) return true;
+      err = `Resend ${r.status}: ${(await r.text()).slice(0, 300)}`;
+    } catch (e) { err = "Resend unreachable: " + e.message; }
+  }
+  console.log("mail failed:", err, "|", subject);
+  await env.DB.put("cfg:mailError", JSON.stringify({ at: new Date().toISOString(), subject, error: err }));
+  return false;
 }
 async function seatsUsed(env) {
   return (await listRecs(env)).filter((k) => ["invited", "added"].includes(k.metadata?.status)).length;
@@ -163,10 +174,11 @@ const btn = (href, label, bg) => `<a href="${esc(href)}" style="display:inline-b
 async function askOwner(env, rec, base) {
   const a = `${base}/api/review?t=${await makeToken(env, rec.id, "approve")}`;
   const d = `${base}/api/review?t=${await makeToken(env, rec.id, "decline")}`;
-  await mail(env, `Cratebox beta request: ${rec.first} ${rec.last}`,
+  rec.notified = await mail(env, `Cratebox beta request: ${rec.first} ${rec.last}`,
     `<p style="font:15px system-ui">${esc(rec.first)} ${esc(rec.last)} (<b>${esc(rec.email)}</b>) asked to join the iOS beta.<br>${await seatsUsed(env)} of ${SEATS} tester seats used.</p>
      <p>${btn(a, "Approve", "#3ddc84")}${btn(d, "Decline", "#cfd4dc")}</p>
      <p style="font:12px system-ui;color:#666">Approve sends an App Store Connect team invite (${esc(env.ASC_ROLE || "MARKETING")} role, Cratebox only). Links expire in ${LINK_DAYS} days and ask you to confirm before anything happens.</p>`);
+  return putRec(env, rec);
 }
 
 // ---- pages for the approve link: GET shows a confirm button (mail scanners prefetch GETs), POST acts ----
@@ -225,8 +237,9 @@ async function signup(req, env, ctx) {
   // Same answer for repeats so the form can't be used to check who signed up.
   const base = env.SITE_URL || new URL(req.url).origin;
   if (old && old.status !== "declined") {
-    // A pending request whose links have expired gets a fresh email; anything else is left alone.
-    if (old.status === "pending" && Date.now() - Date.parse(old.updated) > LINK_DAYS * 86400e3) ctx.waitUntil(putRec(env, old).then(() => askOwner(env, old, base)));
+    // A pending request whose email never went out (e.g. secrets weren't set yet) or whose links have expired
+    // gets a fresh email; anything else is left alone.
+    if (old.status === "pending" && (!old.notified || Date.now() - Date.parse(old.updated) > LINK_DAYS * 86400e3)) ctx.waitUntil(askOwner(env, old, base));
     return json({ ok: true });
   }
   const rec = await putRec(env, { id, email, first, last, status: "pending", created: new Date().toISOString() });
