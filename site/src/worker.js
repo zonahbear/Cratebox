@@ -43,6 +43,7 @@ async function listRecs(env) {
 
 // ---- signed approve/decline links: HMAC over "id.action.expiry", so a forwarded email can't be edited ----
 async function hmacKey(env) {
+  if (!env.LINK_SECRET) throw new Error("LINK_SECRET secret is missing");
   return crypto.subtle.importKey("raw", enc.encode(env.LINK_SECRET), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
 }
 async function makeToken(env, id, action, now = Date.now()) {
@@ -172,6 +173,13 @@ async function seatsUsed(env) {
 const btn = (href, label, bg) => `<a href="${esc(href)}" style="display:inline-block;padding:10px 18px;margin-right:8px;border-radius:4px;background:${bg};color:#000;font:600 15px system-ui;text-decoration:none">${label}</a>`;
 
 async function askOwner(env, rec, base) {
+  try { return await askOwnerInner(env, rec, base); }
+  catch (e) {
+    console.log("askOwner failed:", e.message);
+    await env.DB.put("cfg:mailError", JSON.stringify({ at: new Date().toISOString(), subject: "approval email for " + rec.email, error: e.message }));
+  }
+}
+async function askOwnerInner(env, rec, base) {
   const a = `${base}/api/review?t=${await makeToken(env, rec.id, "approve")}`;
   const d = `${base}/api/review?t=${await makeToken(env, rec.id, "decline")}`;
   rec.notified = await mail(env, `Cratebox beta request: ${rec.first} ${rec.last}`,
@@ -272,9 +280,10 @@ async function remove(req, env, ctx) {
 // email and shows Resend's answer, asc=1 checks the App Store Connect key, app and internal group.
 async function status(req, env) {
   const q = new URL(req.url).searchParams;
-  const want = await hmacKey(env), given = enc.encode(q.get("k") || "");
-  const a = await crypto.subtle.sign("HMAC", want, given), b = await crypto.subtle.sign("HMAC", want, enc.encode(env.LINK_SECRET || ""));
-  if (!env.LINK_SECRET || b64u(a) !== b64u(b)) return json({ error: "Not found" }, 404);
+  if (!env.LINK_SECRET) return json({ error: "LINK_SECRET secret is missing, so this page can't check your key" }, 500);
+  const want = await hmacKey(env);
+  const a = await crypto.subtle.sign("HMAC", want, enc.encode(q.get("k") || "")), b = await crypto.subtle.sign("HMAC", want, enc.encode(env.LINK_SECRET));
+  if (b64u(a) !== b64u(b)) return json({ error: "Not found" }, 404);
   const names = ["ASC_KEY_ID", "ASC_ISSUER_ID", "ASC_KEY_P8", "RESEND_API_KEY", "ADMIN_EMAIL", "LINK_SECRET"];
   const out = {
     secrets: Object.fromEntries(names.map((n) => [n, env[n] ? `set (${String(env[n]).length} chars)` : "MISSING"])),
@@ -320,6 +329,17 @@ async function sweep(env) {
 
 export default {
   async fetch(req, env, ctx) {
+    try { return await route(req, env, ctx); }
+    catch (e) {
+      // Error messages here never contain secret values; they name what's missing or what Apple/Resend said.
+      console.log("unhandled:", e.stack || e.message);
+      return json({ error: "Server error: " + e.message }, 500);
+    }
+  },
+  async scheduled(_ev, env, ctx) { ctx.waitUntil(sweep(env)); },
+};
+
+async function route(req, env, ctx) {
     const { pathname } = new URL(req.url);
     if (pathname === "/api/signup" && req.method === "POST") return signup(req, env, ctx);
     if (pathname === "/api/remove" && req.method === "POST") return remove(req, env, ctx);
@@ -329,8 +349,6 @@ export default {
     // Assets run with html_handling "none" (no redirects for the player's PWA), so folders need their index here.
     if (pathname.endsWith("/")) return env.ASSETS.fetch(new Request(new URL(pathname + "index.html", req.url), req));
     return env.ASSETS.fetch(req);
-  },
-  async scheduled(_ev, env, ctx) { ctx.waitUntil(sweep(env)); },
-};
+}
 
 export const _test = { makeToken, readToken, ascToken, idFor, sweep, resetJwt: () => { jwtCache = null; } };

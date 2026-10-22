@@ -167,6 +167,14 @@ const st = await r.json(), stText = JSON.stringify(st);
 check("status page reports secrets, mail test and ASC ids without leaking values",
   st.secrets.RESEND_API_KEY.startsWith("set") && st.mailTest.ok && st.asc.app === "APP1" && st.asc.internalGroup === "GRP" && !stText.includes("re_test") && !stText.includes("PRIVATE KEY") && !stText.includes("test-secret"));
 
+// --- missing LINK_SECRET: no crash, the reason is recorded and reported ---
+const ls = env.LINK_SECRET; delete env.LINK_SECRET;
+r = await worker.fetch(req("/api/status?k=x"), env, ctx);
+check("status page explains a missing LINK_SECRET instead of crashing", r.status === 500 && /LINK_SECRET/.test((await r.json()).error));
+r = await post("/api/signup", { ...sam, email: "nolink@example.com" }, "4.4.4.4"); await settle();
+check("signup still answers ok and records why no email went out", r.status === 200 && /LINK_SECRET/.test((await env.DB.get("cfg:mailError", "json")).error));
+env.LINK_SECRET = ls;
+
 // --- secrets never leak to the browser ---
 const bodies = await Promise.all([post("/api/signup", { email: "x" }, "3.3.3.3"), post("/api/remove", {})].map((p) => p.then((x) => x.text())));
 check("API responses carry no secrets", !bodies.some((b) => b.includes("test-secret") || b.includes("PRIVATE KEY") || b.includes("re_test")));
