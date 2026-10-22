@@ -761,6 +761,12 @@ header .tcpanel { top: 48px; }
 #tcGo.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
 #tcMsg:empty { display: none; }
 html.phone .tcwrap { display: revert !important; }
+/* HEAT is hidden until it's unlocked (7 taps on the version line, 21+ notice) and switched on in Settings */
+.tcwrap[hidden], html.phone .tcwrap[hidden], #heatExp[hidden] { display: none !important; }
+#verTap { cursor: default; user-select: none; -webkit-user-select: none; }
+#heatExp { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ff9a4d66; }
+#heatExp > label:first-child { color: #ff9a4d; }
+.age21 { display: inline-block; margin-right: 6px; padding: 0 5px; border: 1px solid #ff9a4d; border-radius: 4px; color: #ff9a4d; font-size: 11px; font-weight: 700; }
 html.phone #tcBtn { height: 26px; font-size: 11px; }
 </style>
 </head>
@@ -823,10 +829,15 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
           <select class="hsel" id="spinSel">
             <option value="0.8">Short</option><option value="1.6">Medium</option><option value="2.5">Long</option><option value="4">Extra long</option><option value="7">Ridiculous</option>
           </select>
-          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote">Cratebox v1.1.1</span></div>
+          <div class="ctlrow" style="margin-top:10px;align-items:center"><button class="hbtn" id="reportOpen">Report a problem…</button><span class="ctlnote" id="verTap">Cratebox v1.1.1</span></div>
+          <div id="heatExp" hidden>
+            <label for="heatSel"><span class="age21">21+</span>Experimental: HEAT button <small>TrueCurve heat curves for a Puffco Peak Pro / Proxy</small></label>
+            <select class="hsel" id="heatSel"><option value="0">Off</option><option value="1">Show in the top bar</option></select>
+            <button class="hbtn" id="heatRelock" style="margin-top:6px">Hide experimental settings</button>
+          </div>
         </div>
       </div>
-    <div class="setwrap tcwrap">
+    <div class="setwrap tcwrap" hidden>
       <button class="hbtn" id="tcBtn" aria-expanded="false" popovertarget="tcPanel" title="TrueCurve: run a heat curve on your Puffco while you play">HEAT ▾</button>
       <div class="setpanel tcpanel" id="tcPanel" popover hidden>
         <label>TrueCurve <small>heat curves for Peak Pro / Proxy</small></label>
@@ -887,6 +898,18 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
 <div id="recPanel" hidden><div class="row"><b id="recTitle">RECORDING SAVED</b><span class="spacer"></span><button class="iconbtn" id="recClose" aria-label="Close">✕</button></div>
   <span class="ctlnote" id="recInfo"></span><pre id="recList"></pre>
   <div class="row"><button class="hbtn" id="recSaveAgain">Save recording again</button><button class="hbtn" id="recSaveList">Save tracklist</button></div></div>
+<dialog class="rbwarn" id="heatSheet" aria-labelledby="heatSheetTitle"><div class="panel">
+  <h3 id="heatSheetTitle"><span class="age21">21+</span>Experimental: HEAT</h3>
+  <p>HEAT runs heat curves on a Puffco Peak Pro or Proxy over Bluetooth while you play. It's an experiment, tested on one Proxy, and it isn't made by or affiliated with Puffco.</p>
+  <ul>
+    <li>For adults 21 and over, where cannabis is legal for you.</li>
+    <li>Uses profile slot 4 while a curve runs and puts it back after.</li>
+    <li>Targets are held to 350–590°F, with a hard cut-off at 600°F.</li>
+    <li>Your device, your call. Don't leave it running unattended.</li>
+  </ul>
+  <label><input type="checkbox" id="heatAge"> I'm 21 or older and I understand this is experimental.</label>
+  <div class="row"><button class="hbtn" id="heatNo">Not now</button><button class="hbtn" id="heatYes" disabled>Unlock</button></div>
+</div></dialog>
 <dialog class="sheet" id="reportSheet" closedby="any" aria-label="Report a problem"><div class="panel report">
   <h3>REPORT A PROBLEM<span class="spacer"></span><button class="iconbtn" id="reportClose" aria-label="Close">✕</button></h3>
   <label for="reportWhat">What happened? What did you do just before?</label>
@@ -6716,6 +6739,7 @@ const TC = (() => {
     go.textContent = S.running ? "Stop" : "Start curve";
     go.classList.toggle("danger", S.running);
     sel.disabled = S.running;
+    $("#heatSel").disabled = S.running;     // HEAT can't be hidden mid-curve (slot 4 would stay swapped)
     $("#tcMsg").textContent = S.msg;
   }
   async function connect(dev) {
@@ -6854,6 +6878,47 @@ const TC = (() => {
   if (!navigator.bluetooth) $("#tcConn").title = "This browser has no Web Bluetooth: use Chrome or Edge on a computer or Android, or Bluefy on iPhone";
   fill(); render();
   return { S, PRESETS, makeCurve, Sim, connect, run, toggle, fill, get dev() { return S.dev; } };
+})();
+
+// HEAT is hidden for everyone by default. Seven taps on the version line in Settings open a 21+ notice;
+// accepting it unlocks an Experimental section whose HEAT switch starts off. Two flags: cb.heatUnlocked (the
+// notice was accepted) and cb.heat (the switch). Web Bluetooth is never touched until the button is visible.
+const HEAT = (() => {
+  const get = (k) => { try { return localStorage.getItem(k) === "1"; } catch (e) { return false; } };
+  const set = (k, v) => { try { localStorage.setItem(k, v ? "1" : "0"); } catch (e) {} };
+  const sheet = $("#heatSheet"), sw = $("#heatSel");
+  let taps = 0, lastTap = 0;
+  function apply() {
+    const unlocked = get("cb.heatUnlocked"), on = unlocked && get("cb.heat");
+    $("#heatExp").hidden = !unlocked;
+    sw.value = on ? "1" : "0";
+    $(".tcwrap").hidden = !on;
+    if (!on && TC.dev && !TC.S.running) TC.dev.disconnect();
+  }
+  $("#verTap").addEventListener("click", () => {
+    if (get("cb.heatUnlocked")) return;
+    const t = performance.now();
+    taps = t - lastTap > 2000 ? 1 : taps + 1;
+    lastTap = t;
+    if (taps >= 7) { taps = 0; $("#heatAge").checked = false; $("#heatYes").disabled = true; sheet.showModal(); }
+    else if (taps >= 3) status(7 - taps === 1 ? "1 more tap" : `${7 - taps} more taps`, 1200);
+  });
+  $("#heatAge").addEventListener("change", (e) => { $("#heatYes").disabled = !e.target.checked; });
+  $("#heatNo").addEventListener("click", () => sheet.close());
+  $("#heatYes").addEventListener("click", () => {
+    set("cb.heatUnlocked", true); set("cb.heat", false); sheet.close(); apply();
+    status("Experimental settings unlocked: the HEAT switch is in Settings, off for now", 6000);
+  });
+  sw.addEventListener("change", () => {
+    if (TC.S.running) { sw.value = "1"; status("Stop the curve before hiding HEAT"); return; }
+    set("cb.heat", sw.value === "1"); apply();
+  });
+  $("#heatRelock").addEventListener("click", () => {
+    if (TC.S.running) { status("Stop the curve before hiding HEAT"); return; }
+    set("cb.heatUnlocked", false); set("cb.heat", false); apply();
+  });
+  apply();
+  return { apply };
 })();
 
 // =====================================================================================
@@ -7094,7 +7159,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC };
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
 </script>
 </body>
 </html>
