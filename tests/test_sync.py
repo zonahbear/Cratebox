@@ -74,6 +74,25 @@ def main():
         check("no drift over 20 s of playing", worst < 0.004, f"worst {worst * 1000:.1f} ms")
         page.evaluate("cratebox.decks.forEach(d => { d.setSync(false); if (d.playing) d.togglePlay(); })")
 
+        # ---- loading the other deck never retimes a playing synced deck (2026-10-23: a 72.5 halved to 36.25).
+        # Deck 2 plays the 92 at half of the 174 (87); deck 1 stops and loads the 126. Before the fix deck 2
+        # followed the stopped 126 with the old halftime: 63.
+        load(0, "174"); load(1, "92")
+        page.evaluate("(() => { const [a, b] = cratebox.decks; a.togglePlay(); b.setSync(true); b.togglePlay(); })()")
+        page.wait_for_timeout(1000)
+        page.evaluate("cratebox.decks[0].togglePlay()")
+        load(0, "126")
+        page.wait_for_timeout(500)
+        e = page.evaluate("cratebox.decks[1].effBpm()")
+        check("loading deck 1 leaves the playing synced deck 2 alone", abs(e - 87) < 0.05, f"{e:.2f} BPM")
+        page.evaluate("cratebox.decks[0].togglePlay()")      # deck 1 played without SYNC: deck 2 keeps the lead
+        page.wait_for_timeout(500)
+        e = page.evaluate("cratebox.decks[1].effBpm()")
+        check("starting the unsynced deck 1 doesn't move deck 2 either", abs(e - 87) < 0.05, f"{e:.2f} BPM")
+        r = page.evaluate("(() => { const a = cratebox.decks[0]; a.togglePlay(); a.setSync(true); return { mult: a.syncMult, eff: a.effBpm() }; })()")
+        check("SYNC on deck 1 then follows the playing deck 2 (126 against 87: double time, 174)", r["mult"] == 2 and abs(r["eff"] - 174) < 0.05, str(r))
+        page.evaluate("cratebox.decks.forEach(d => { d.setSync(false); if (d.playing) d.togglePlay(); })")
+
         # ---- ordinary tempos still sync 1:1 (140 to 126)
         page.wait_for_timeout(200)
         load(0, "126"); load(1, "140")
