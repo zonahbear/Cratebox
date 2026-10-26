@@ -793,7 +793,8 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
         <button class="hbtn" id="setBtn" aria-expanded="false" popovertarget="setPanel">Settings ▾</button>
         <div class="setpanel" id="setPanel" popover hidden>
           <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
-          <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option></select>
+          <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option><option>70-180</option><option value="custom">Custom</option></select>
+          <div id="rangeCustom" hidden><input class="hsel" id="bpmLo" type="number" min="40" max="150" step="1" style="width:5em"> to <input class="hsel" id="bpmHi" type="number" min="79" max="300" step="1" style="width:5em"> BPM</div>
           <label for="waveSel">Waveform</label>
           <select class="hsel" id="waveSel"><option value="rgb">RGB (red lows, green mids, blue highs)</option><option value="3band">3-band</option></select>
           <label for="lockSel">Load lock <small>stops a track loading onto a deck that's playing</small></label>
@@ -2093,12 +2094,22 @@ const ANALYSIS_LANES = (() => {
   return (navigator.hardwareConcurrency || 2) >= 4 ? 2 : 1;
 })();
 // BPM ranges, like Serato's and Traktor's: where half/double-time tempos get folded to
-const BPM_RANGES = { "58-115": [58, 116], "68-135": [68, 136], "78-155": [78, 156], "88-175": [88, 176] };
-let bpmRange = "88-175";
-try { const r = localStorage.getItem("cb.bpmRange"); if (r in BPM_RANGES) bpmRange = r; } catch (e) {}
+// 70-180 is wider than an octave, so most tracks keep the tempo the analyser hears. "custom" = bpmLo..bpmHi.
+const BPM_RANGES = { "58-115": [58, 116], "68-135": [68, 136], "78-155": [78, 156], "88-175": [88, 176], "70-180": [70, 181] };
+let bpmRange = "88-175", bpmLo = 70, bpmHi = 180;
+try {
+  const r = localStorage.getItem("cb.bpmRange"); if (r in BPM_RANGES || r === "custom") bpmRange = r;
+  bpmLo = +(localStorage.getItem("cb.bpmLo") || 70); bpmHi = +(localStorage.getItem("cb.bpmHi") || 180);
+} catch (e) {}
+// a custom range made usable: whole numbers, at least an octave wide so every tempo folds into it; top end inclusive
+function customRange(lo, hi) {
+  lo = Math.min(Math.max(Math.round(lo) || 70, 40), 150);
+  return [lo, Math.min(Math.max(Math.round(hi) || 180, 2 * lo - 1), 300) + 1];
+}
+function curRange() { return bpmRange === "custom" ? customRange(bpmLo, bpmHi) : BPM_RANGES[bpmRange]; }
 function foldBpm(b) {
   if (!b) return b;
-  const [lo, hi] = BPM_RANGES[bpmRange];
+  const [lo, hi] = curRange();
   while (b < lo) b *= 2;
   while (b >= hi) b /= 2;
   return b;
@@ -2213,7 +2224,7 @@ function analyzeMono(mono, fs, opt, background) {
     const tr = [mono.buffer];
     if (opt.xw && opt.xw.buffer !== mono.buffer) tr.push(opt.xw.buffer);
     w.pending++;
-    w.postMessage({ id, mono, fs, range: BPM_RANGES[bpmRange], opt }, tr);
+    w.postMessage({ id, mono, fs, range: curRange(), opt }, tr);
   });
 }
 // a deck starts playing: stop library analysis that's under way (its track goes back in the queue).
@@ -6969,14 +6980,27 @@ setFour(FOUR);
 $("#themeSel").addEventListener("change", (e) => applyTheme(e.target.value, true));
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
-$("#rangeSel").addEventListener("change", (e) => {
-  bpmRange = e.target.value;
-  try { localStorage.setItem("cb.bpmRange", bpmRange); } catch (err) {}
+$("#bpmLo").value = bpmLo; $("#bpmHi").value = bpmHi;
+$("#rangeCustom").hidden = bpmRange !== "custom";
+function rangeChanged() {
+  if (bpmRange === "custom") {
+    [bpmLo, bpmHi] = customRange(+$("#bpmLo").value, +$("#bpmHi").value); bpmHi -= 1;
+    $("#bpmLo").value = bpmLo; $("#bpmHi").value = bpmHi;
+  }
+  try { localStorage.setItem("cb.bpmRange", bpmRange); localStorage.setItem("cb.bpmLo", bpmLo); localStorage.setItem("cb.bpmHi", bpmHi); } catch (err) {}
   for (const t of lib.tracks) if (t.bpm && !t.gridManual) { t.bpm = foldBpm(t.bpm); saveAnalysis(t); }
   for (const d of decks) if (d.ana) { d.ana.bpm = foldBpm(d.ana.bpm); d.sentRate = null; d.sendRate(); }
   applyView(true);
-  status(`BPM range ${bpmRange}: half/double-time tracks now read inside it`);
+  const [lo, hi] = curRange();
+  status(`BPM range ${lo}-${hi - 1}: half/double-time tracks now read inside it`);
+}
+$("#rangeSel").addEventListener("change", (e) => {
+  bpmRange = e.target.value;
+  $("#rangeCustom").hidden = bpmRange !== "custom";
+  rangeChanged();
 });
+$("#bpmLo").addEventListener("change", rangeChanged);
+$("#bpmHi").addEventListener("change", rangeChanged);
 renderList(true);
 
 let lastUi = 0, lastLed = 0;
