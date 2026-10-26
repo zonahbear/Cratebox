@@ -5,6 +5,7 @@ All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MIN
 ## Unreleased
 
 ### Added
+- **BPM range 70-180, and a custom range** (Settings → BPM range). 70-180 is wider than an octave, so most tracks keep the tempo the analyser hears. Custom takes From / To; the top end is kept at least an octave above the bottom so every tempo has a place.
 - **Deck layers: play decks 3 and 4 from the FLX4** (or any 2-channel controller). In 4-deck mode, toggles at the top of the mixer switch the controller's left side between decks 1 and 3 and its right side between 2 and 4. Every control on that side follows (transport, jog, pads, loops, LOAD, tempo, the channel's fader, EQ, TRIM, CFX and CUE), and so do the lights, the VU meter and the BEAT FX CH SELECT lever. The decks being played get an outline in their colour.
 - **Soft takeover** after a switch: faders and knobs only take over once they reach the new deck's setting, so nothing jumps.
 - The toggles are learnable onto hardware buttons. 2 DECKS puts the controller back on decks 1 and 2.
