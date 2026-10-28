@@ -759,7 +759,13 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 header .tcpanel { top: 48px; }
 .tcgo { height: 34px; margin-top: 8px; font-size: 13px; font-weight: 600; }
 #tcGo.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
-#tcMsg:empty { display: none; }
+#tcMsg:empty, #tcPuffInfo:empty { display: none; }
+.tcpanel { max-height: calc(100vh - 64px); overflow-y: auto; }
+#tcHold.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
+.tcbar { height: 8px; border-radius: 3px; background: var(--line2); overflow: hidden; }
+.tcbar > i { display: block; height: 100%; width: 0; background: #ff9a4d; }
+#tcHit.on { background: #8e2b33; border-color: #b33a45; color: #fff; }
+.tcswatch { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--line2); background: #000; }
 html.phone .tcwrap { display: revert !important; }
 /* HEAT is hidden until it's unlocked (7 taps on the version line, 21+ notice) and switched on in Settings */
 .tcwrap[hidden], html.phone .tcwrap[hidden], #heatExp[hidden] { display: none !important; }
@@ -847,6 +853,17 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
         <label for="tcCurve">Curve</label>
         <select class="hsel" id="tcCurve"></select>
         <button class="hbtn tcgo" id="tcGo" disabled>Start curve</button>
+        <label for="tcHoldF">HOLD for PUFF <small>one temperature, no curve</small></label>
+        <div class="ctlrow" style="align-items:center"><input type="number" class="hsel" id="tcHoldF" min="350" max="590" step="5" style="width:72px" aria-label="Hold temperature, °F"><span class="ctlnote">°F</span><span class="spacer"></span>
+          <span class="ctlnote">Full at</span><select class="hsel" id="tcFull" aria-label="Full effect at this temperature drop"><option value="0">Auto</option><option value="4">4°F drop</option><option value="8">8°F drop</option><option value="15">15°F drop</option><option value="25">25°F drop</option><option value="40">40°F drop</option></select></div>
+        <button class="hbtn tcgo" id="tcHold" disabled>HOLD for PUFF</button>
+        <div class="tcbar" id="tcPuffBar" hidden><i></i></div>
+        <p class="ctlnote" id="tcPuffInfo"></p>
+        <button class="hbtn" id="tcHit" hidden>Hold to hit (simulator)</button>
+        <p class="ctlnote">Beat FX → PUFF (on offer while a Puffco is connected). It plays like a theremin: a harder hit drops the bowl temperature further, and the voice glides higher (up to two octaves) and louder over a tape warble. LEVEL caps it.</p>
+        <div class="ctlrow" style="align-items:center"><label style="margin:0" title="The Puffco's lantern drifts through the rainbow and brightens with the music. Paused during a heat run or HOLD"><input type="checkbox" id="tcGlow"> GLOW</label>
+          <span class="ctlnote">FX knob sets</span><select class="hsel" id="tcGlowKnob" aria-label="What the FX knob sets for GLOW"><option value="intensity">brightness</option><option value="speed">speed</option><option value="sensitivity">sensitivity</option><option value="off">nothing</option></select>
+          <span class="tcswatch" id="tcSwatch" hidden></span></div>
         <p class="ctlnote" id="tcMsg"></p>
         <div class="ctlrow"><button class="hbtn" id="tcPaste" title="In TrueCurve, press Copy curves for Cratebox, then this">Paste curves from TrueCurve</button></div>
         <p class="ctlnote">Uses profile slot 4 while it runs and puts it back after. Close this and keep mixing: the button shows the bowl temperature.</p>
@@ -1287,8 +1304,12 @@ class FxSlot {
     this.rev = null;                                     // reverb state
     this.roll = null;                                    // roll: { start, len, pos }
     this.quiet = 0;                                      // samples of silence in the tail
+    // PUFF (HEAT): how hard the Puffco is being hit (0..1, from the page), smoothed; the warble's LFO and the
+    // theremin voice's phase and gliding pitch (Hz)
+    this.mod = 0; this.modS = 0; this.lfo = 0; this.thPh = 0; this.thF = 220;
   }
   set(m) {
+    if (m.mod != null) this.mod = Math.min(1, Math.max(0, m.mod));
     if (m.fx != null && m.fx !== this.fx) { this.fx = m.fx; this.roll = null; this.cfAt = -1; }
     if (m.beats != null) this.beats = m.beats;
     if (m.depth != null) this.depth = m.depth;
@@ -1358,7 +1379,7 @@ class FxUnit extends AudioWorkletProcessor {
     const gStep = 1 / (0.004 * sr);                       // 4 ms fades in and out: no clicks
     let g = s.g, inG = s.inG, peak = 0;
     const delayFamily = fx === "ECHO" || fx === "DELAY" || fx === "PING PONG";
-    if (delayFamily || fx === "FLANGER") s.delayLines();
+    if (delayFamily || fx === "FLANGER" || fx === "PUFF") s.delayLines();
     const dn = s.dL ? s.dL.length : 0;
     const fb = fx === "ECHO" ? 0.6 : fx === "PING PONG" ? 0.55 : 0.32;
     const dSamp = delayFamily ? Math.max(1, Math.min(dn - 2, Math.round(s.beats * spb * sr))) : 0;
@@ -1415,6 +1436,26 @@ class FxUnit extends AudioWorkletProcessor {
           s.dL[w] = xl + dl * 0.6; s.dR[w] = xr + dr * 0.6;
           if (++w === dn) w = 0;
           el = (xl + dl * depth) / (1 + 0.6 * depth); er = (xr + dr * depth) / (1 + 0.6 * depth);
+        } else if (fx === "PUFF") {
+          // HEAT's theremin, played by a Puffco on HOLD: a sine voice whose pitch glides with the hit (A3 220 Hz
+          // light pull ... A5 880 Hz hard rip, ~150 ms portamento, 5.5 Hz vibrato) and whose volume swells with
+          // it, over a gentle tape warble (a sine-swept 1-8 ms delay, no dry mix) that the hit also deepens;
+          // LEVEL/DEPTH caps both. Same as Cratebox OS and Cratebox HEAT on iOS
+          s.modS += (s.mod - s.modS) * (1 / (0.15 * sr));   // ~150 ms glide: BLE readings arrive in steps
+          const a = s.modS * depth;
+          s.lfo += 5.5 / sr; if (s.lfo >= 1) s.lfo -= 1;
+          const vib = Math.sin(2 * Math.PI * s.lfo);
+          const wantF = 220 * Math.pow(2, 2 * s.modS) * Math.pow(2, 0.25 * a * vib / 12);
+          s.thF += (wantF - s.thF) * (1 / (0.04 * sr));
+          s.thPh += s.thF / sr; if (s.thPh >= 1) s.thPh -= 1;
+          // a touch of second harmonic so it sings rather than beeps
+          const voice = (Math.sin(2 * Math.PI * s.thPh) + 0.18 * Math.sin(4 * Math.PI * s.thPh)) * 0.22 * a;
+          const dd = (0.0045 + 0.0025 * a * vib) * sr;
+          let rp = w - dd; if (rp < 0) rp += dn;
+          const i0 = rp | 0, f = rp - i0, i1 = i0 + 1 === dn ? 0 : i0 + 1;
+          s.dL[w] = xl; s.dR[w] = xr;
+          el = s.dL[i0] + (s.dL[i1] - s.dL[i0]) * f + voice; er = s.dR[i0] + (s.dR[i1] - s.dR[i0]) * f + voice;
+          if (++w === dn) w = 0;
         } else if (fx === "FILTER" || fx === "HPF" || fx === "LPF") {
           if ((i & 31) === 0 || !s.cf) {
             let type = "lp", f;
@@ -4873,8 +4914,12 @@ const FX_LIST = {
   "ROLL": { beats: [1 / 16, 1 / 8, 1 / 4, 1 / 2, 1, 2, 4], beat: 1 / 2, depth: 1 },
   "HPF": { beats: null, beat: 1, depth: 0.6 },
   "LPF": { beats: null, beat: 1, depth: 0.6 },
+  // HEAT only, and only on offer while a Puffco (or the simulator) is connected: HOLD's temperature drop plays it
+  "PUFF": { beats: null, beat: 1, depth: 0.7 },
 };
 const FX_NAMES = Object.keys(FX_LIST);
+// the effects on offer right now (PUFF only with a Puffco)
+const fxNames = () => FX_NAMES.filter((n) => n !== "PUFF" || FX.puffReady);
 // PAD FX banks: [effect, beats, depth] per pad; FX1 on PAD FX1, FX2 on PAD FX2 (SHIFT + PAD FX1 on the FLX4)
 const PAD_FX = {
   padfx: [["ECHO", 1 / 2, 0.6], ["ECHO", 1, 0.6], ["REVERB", 1, 0.7], ["ROLL", 1 / 4, 1], ["ROLL", 1 / 2, 1], ["TRANS", 1 / 4, 1], ["HPF", 1, 0.7], ["LPF", 1, 0.7]],
@@ -4885,9 +4930,10 @@ const FX = {
   beat: { fx: "ECHO", beats: Object.fromEntries(FX_NAMES.map((n) => [n, FX_LIST[n].beat])), depth: 0.55, on: false, ch: 0 },
   pad: [],                                      // per deck: { p, bank } while a pad is held
   lastActive: new Map(),                        // insert node -> time it was last on (keeps its beat clock going while tails ring)
+  puffReady: false, mod: 0,                     // HEAT: a Puffco is connected (PUFF on offer); its hit strength 0..1
 };
-try { const sv = JSON.parse(localStorage.getItem("cb.bfx") || "null"); if (sv && FX_LIST[sv.fx]) Object.assign(FX.beat, { fx: sv.fx, beats: { ...FX.beat.beats, ...sv.beats }, depth: sv.depth ?? FX.beat.depth, ch: sv.ch ?? 0 }); } catch (e) {}
-const saveFx = () => { try { localStorage.setItem("cb.bfx", JSON.stringify({ fx: FX.beat.fx, beats: FX.beat.beats, depth: FX.beat.depth, ch: FX.beat.ch })); } catch (e) {} };
+try { const sv = JSON.parse(localStorage.getItem("cb.bfx") || "null"); if (sv && FX_LIST[sv.fx] && sv.fx !== "PUFF") Object.assign(FX.beat, { fx: sv.fx, beats: { ...FX.beat.beats, ...sv.beats }, depth: sv.depth ?? FX.beat.depth, ch: sv.ch ?? 0 }); } catch (e) {}
+const saveFx = () => { try { localStorage.setItem("cb.bfx", JSON.stringify({ fx: FX.beat.fx === "PUFF" ? "ECHO" : FX.beat.fx, beats: FX.beat.beats, depth: FX.beat.depth, ch: FX.beat.ch })); } catch (e) {} };
 const fxNodeFor = (ch) => (ch === "M" ? A.masterFx : A.decks[ch] && A.decks[ch].fx);
 // the beat clock for an insert: its deck's (master: the deck the mix follows), so effects land on that grid
 function clockDeck(ch) {
@@ -4918,14 +4964,21 @@ function sendBeatFx() {
   const b = FX.beat, node = fxNodeFor(b.ch);
   if (!node) return;
   if (b.on) { FX.lastActive.set(b.ch, performance.now()); sendClock(b.ch); }
-  node.port.postMessage({ t: "slot", slot: "beat", fx: b.fx, beats: b.beats[b.fx], depth: b.depth, on: b.on });
+  node.port.postMessage({ t: "slot", slot: "beat", fx: b.fx, beats: b.beats[b.fx], depth: b.depth, on: b.on, mod: FX.mod });
   refreshFxUI();
+}
+// PUFF: the hit strength from HEAT's HOLD (0..1), straight to the BEAT FX insert
+function fxPuff(v) {
+  FX.mod = v;
+  const node = fxNodeFor(FX.beat.ch);
+  if (node) node.port.postMessage({ t: "slot", slot: "beat", mod: v });
 }
 const fxBeatList = () => FX_LIST[FX.beat.fx].beats;
 function fxSelect(step) {
-  const b = FX.beat, k = FX_NAMES.indexOf(b.fx);
+  const b = FX.beat, names = fxNames(), k = names.indexOf(b.fx);
   const was = b.on;
-  b.fx = FX_NAMES[(k + step + FX_NAMES.length) % FX_NAMES.length];
+  const n = names.length, k1 = k < 0 ? 0 : k + step;
+  b.fx = names[((k1 % n) + n) % n];
   b.depth = FX_LIST[b.fx].depth === undefined ? b.depth : b.depth;
   sendBeatFx(); saveFx();
   if (was) status(`Beat FX: ${b.fx}`);
@@ -5491,6 +5544,7 @@ function peakOf(an) {
 }
 const meterState = [0, 0, 0, 0];
 let masterMeterState = 0;
+let masterPeak = 0;                                      // the master's raw peak (0..1), for HEAT's GLOW
 function levelOf(p) { const db = 20 * Math.log10(p + 1e-9); return clamp((db + 42) / 42, 0, 1); }
 function drawMeter(cv, level) {
   const W = cv.width, H = cv.height, segs = 15, sh = H / segs;
@@ -6520,7 +6574,10 @@ const TC = (() => {
   const CH_CMD = "60133d5c-5727-4f2c-9697-d842c5292a3c", CH_REPLY = "8dc5ec05-8f7d-45ad-99db-3fbde65dbd9c", CH_VER = "05434bca-cc7f-4ef6-bbb3-b1c520b9800c";
   const LORAX_KEY = new Uint8Array([0x64, 0xc6, 0x45, 0x62, 0x56, 0xf2, 0x6f, 0x5b, 0x1c, 0xa1, 0x27, 0x37, 0xa5, 0xdd, 0x71, 0xfb]);
   const P = { mode: "/p/app/mc", state: "/p/app/stat/id", temp: "/p/app/htr/temp", tempAlt: "/p/htr/temp", live: "/p/app/thc/temp", slot: "/p/app/hcs", soc: "/p/bat/soc",
-    pTemp: (s) => `/u/app/hc/${s}/temp`, pTime: (s) => `/u/app/hc/${s}/time` };
+    pTemp: (s) => `/u/app/hc/${s}/temp`, pTime: (s) => `/u/app/hc/${s}/time`,
+    // the lantern (mood light): on/off (1 byte) and its colour (r, g, b, 0, mode 1 = static, 0, 0, 0). From community
+    // reverse engineering (HA-Puff puffco_ble, MIT), checked on a Peak Pro there, not on a Proxy
+    lanternCmd: "/p/app/ltrn/cmd", lanternColor: "/p/app/ltrn/colr" };
   class Ble {
     constructor() { this.kind = "ble"; this.seq = 0; this.pending = new Map(); this.q = Promise.resolve(); this.connected = false; this.tempPath = P.temp; this.onDisconnect = null; }
     async connect() {
@@ -6683,6 +6740,8 @@ const TC = (() => {
       const r = await this.read(P.pTime(s), 4);
       return !r || r.length < 4 || Math.abs(new DataView(r.buffer, r.byteOffset, 4).getFloat32(0, true) - secs) <= 1;
     }
+    lantern(on) { return this.write(P.lanternCmd, new Uint8Array([on ? 1 : 0])); }
+    lanternColor(c) { return this.write(P.lanternColor, new Uint8Array([c[0], c[1], c[2], 0, 1, 0, 0, 0])); }
     start() { return this.write(P.mode, new Uint8Array([7])); }
     async stop() { let ok = false; for (let i = 0; i < 3; i++) { if (await this.write(P.mode, new Uint8Array([8]))) ok = true; await sleep(45); } return ok; }
     async probeLiveFormat() {
@@ -6704,6 +6763,7 @@ const TC = (() => {
       this.truth = { tau: 3.0, heatMax: 15, coolK: 0.011, dead: 0.45 };
       this.y = 74; this.state = 5; this.slotIdx = 0; this.u = 74; this.cmds = [];
       this.slots = [0, 1, 2, 3].map(() => ({ temp: 485, time: 45 })); this.endAt = 0;
+      this.airflow = 0;                                   // a pretend draw for PUFF (0..1): extra cooling
     }
     async connect() {
       this.connected = true; let last = now();
@@ -6711,7 +6771,7 @@ const TC = (() => {
         const t = now(), dt = (t - last) / 1000; last = t;
         while (this.cmds.length && this.cmds[0].at <= t) this.u = this.cmds.shift().u;
         const heating = this.state === 7 || this.state === 8;
-        this.y = plantStep(this.y, heating ? this.u : 70, dt, this.truth);
+        this.y = plantStep(this.y, heating ? this.u : 70, dt, this.truth, this.airflow * 12);
         if (this.state === 7 && this.y >= this.u - 6) { this.state = 8; this.endAt = t + this.slots[this.slotIdx].time * 1000; }
         if (this.state === 8 && t >= this.endAt) this.state = 5;
       }, 100);
@@ -6730,7 +6790,79 @@ const TC = (() => {
     async start() { await this._io(); this.state = 7; this.u = this.slots[this.slotIdx].temp; this.cmds = []; return true; }
     async stop() { await this._io(); this.state = 5; return true; }
     async probeLiveFormat() {}
+    async lantern(on) { await this._io(); return true; }
+    async lanternColor(c) { await this._io(); return true; }
     async setLiveTarget(f) { await this._io(); this.cmds.push({ at: now() + this.truth.dead * 1000, u: clamp(f, MIN_F, MAX_F) }); return true; }
+  }
+
+  // PUFF (Beat FX): turns a HOLD's bowl temperature into an effect amount. The device holds one temperature; a
+  // draw cools the bowl and the heater fights back, so the dip below the settled temperature says how hard you're
+  // hitting it. The settled temperature jumps up to any higher reading, stays put while the bowl is falling (a
+  // pull), follows a recovery down in ~1.5 s and drifts to a steady reading in ~10 s. Nothing reads until the bowl
+  // first reaches the hold temperature. A real inhale only dips the bowl a few °F, so the dip also counts how fast
+  // it's falling (half a second ahead, past 2°F/s), and with full = 0 (Auto) the full effect scales to your biggest
+  // dip lately (85% of it, 6°F at least, forgetting over ~a minute). Same as Cratebox OS / Cratebox HEAT (iOS).
+  class PuffDrop {
+    constructor(hold, full = 0) {
+      this.dead = 1.5; this.full = full > 0 ? Math.max(full, this.dead + 1) : 0; this.hold = hold;
+      this.settled = null; this.drop = 0; this.amount = 0; this.rate = 0; this.peak = 0; this.last = null; this.lastY = 0;
+    }
+    scale() { return this.full > 0 ? this.full : clamp(this.peak * 0.85, 6, 80); }
+    // one reading (°F, null = none) at time t (s); returns the amount, 0..1
+    add(t, y) {
+      if (y == null) return this.amount;
+      const dt = this.last == null ? 0 : clamp(t - this.last, 0, 1);
+      this.last = t;
+      let b = this.settled;
+      if (b == null) { if (y >= this.hold - 12) { this.settled = y; this.lastY = y; } return 0; }
+      if (dt > 0) this.rate += ((y - this.lastY) / dt - this.rate) * (1 - Math.exp(-dt / 0.4));
+      this.lastY = y;
+      // never above the hold temperature + a little: an overshoot isn't the new normal
+      if (y > b) b = Math.min(y, this.hold + 10);
+      else if (this.rate >= -1) b += (y - b) * (1 - Math.exp(-dt / (this.rate > 1 ? 1.5 : 10)));
+      this.settled = b;
+      this.drop = Math.max(0, b - y) + Math.max(0, -this.rate - 2) * 0.5;
+      this.peak = Math.max(this.peak * Math.exp(-dt / 60), this.drop);
+      this.amount = clamp((this.drop - this.dead) / (this.scale() - this.dead), 0, 1);
+      return this.amount;
+    }
+  }
+  // GLOW: a slow rainbow on the lantern that breathes with the music (Cratebox OS's heat::Glow). tick() takes the
+  // master level (0..1, peak) and the FX knob (0..1) ~20 times a second and returns a colour when one is worth
+  // sending (at most 5 a second, and only when it has moved: a BLE write takes ~50-100 ms). The knob sets one of
+  // brightness / speed / sensitivity, eased so a twist never jumps.
+  class Glow {
+    constructor() { this.hue = 0; this.env = 0; this.knob = 0.5; this.sent = null; this.at = -10; this.last = null; }
+    color(dt, level, knob, what) {
+      dt = clamp(dt, 0, 0.5);
+      this.knob += (clamp(knob, 0, 1) - this.knob) * (1 - Math.exp(-dt / 0.4));
+      const k = this.knob;
+      let intensity = 0.6, speed = 0.04, sens = 1;
+      if (what === "intensity") intensity = 0.1 + 0.9 * k;
+      else if (what === "speed") speed = 0.005 + 0.3 * k * k;
+      else if (what === "sensitivity") sens = 0.3 + 2.7 * k;
+      // the music's envelope: quick to rise, slow to fall (smooth, not a strobe)
+      const x = Math.pow(Math.min(Math.max(level, 0) * sens, 1), 0.7);
+      this.env += (x - this.env) * (1 - Math.exp(-dt / (x > this.env ? 0.12 : 0.8)));
+      this.hue = (this.hue + 360 * speed * dt * (1 + 0.6 * this.env)) % 360;
+      return hsv(this.hue, 0.85, intensity * (0.2 + 0.8 * this.env));
+    }
+    tick(t, level, knob, what) {
+      const dt = this.last == null ? 0 : t - this.last;
+      this.last = t;
+      const c = this.color(dt, level, knob, what);
+      if (t - this.at < 0.2) return null;
+      const moved = !this.sent || [0, 1, 2].some((i) => Math.abs(this.sent[i] - c[i]) >= 3);
+      if (!moved && t - this.at < 3) return null;
+      this.sent = c; this.at = t;
+      return c;
+    }
+    reset() { this.sent = null; }
+  }
+  function hsv(hh, sat, v) {
+    const c = v * sat, hp = hh / 60, x = c * (1 - Math.abs((hp % 2) - 1)), m = v - c;
+    const rgb = [[c, x, 0], [x, c, 0], [0, c, x], [0, x, c], [x, 0, c], [c, 0, x]][Math.min(5, Math.floor(hp))];
+    return rgb.map((u) => clamp(Math.round((u + m) * 255), 0, 255));
   }
 
   // TrueCurve's presets; Quartz Banger (starts at 520 and trails off to 450) is the default
@@ -6745,7 +6877,12 @@ const TC = (() => {
   // Proxy reports "ready" (10) for most of a heat cycle, not just "heating" (8)
   const HEATING = new Set([7, 8, 10]);
   const S = { dev: null, running: false, abort: false, phase: "idle", live: null, target: null, state: null, t: null, end: 0, battery: null, msg: "",
-    name: store.get("cb.tc.last", "Quartz Banger") };
+    name: store.get("cb.tc.last", "Quartz Banger"),
+    // HOLD for PUFF: the hold temperature, the drop that's the full effect (0 = Auto), the hit now, the dip, the readout
+    holdF: clamp(+store.get("cb.tc.holdF", 500) || 500, MIN_F, MAX_F), puffFull: +store.get("cb.tc.puffFull", 0) || 0, puff: 0, drop: 0, puffInfo: "",
+    // GLOW: on, what the FX knob sets, writes refused in a row
+    glowOn: !!store.get("cb.tc.glow", false), glowKnob: store.get("cb.tc.glowKnob", "intensity"), glowFails: 0 };
+  const glow = new Glow();
   const mine = () => store.get("cb.tc.curves", {});
   const curveDef = (name) => {
     const c = mine()[name];
@@ -6756,7 +6893,7 @@ const TC = (() => {
   const say = (m) => { S.msg = m; render(); };
 
   // ---- panel ----
-  const btn = $("#tcBtn"), panel = $("#tcPanel"), sel = $("#tcCurve"), go = $("#tcGo");
+  const btn = $("#tcBtn"), panel = $("#tcPanel"), sel = $("#tcCurve"), go = $("#tcGo"), holdBtn = $("#tcHold");
   function fill() {
     const saved = mine();
     sel.innerHTML = "";
@@ -6771,15 +6908,25 @@ const TC = (() => {
   // only touches the DOM when the text changes, so a running curve costs the main loop nothing
   function render() {
     const c = !!S.dev, hot = S.running && S.phase !== "prep";
-    const label = !S.running ? "HEAT" : S.phase === "preheat" ? `HEAT ${f0(S.live)}° ↑${f0(S.target)}` : S.phase === "running" ? `HEAT ${f0(S.live)}° ${Math.floor(S.t || 0)}/${Math.round(S.end)}s` : "HEAT…";
+    const label = !S.running ? "HEAT" : S.phase === "preheat" ? `HEAT ${f0(S.live)}° ↑${f0(S.target)}` : S.phase === "running" ? `HEAT ${f0(S.live)}° ${Math.floor(S.t || 0)}/${Math.round(S.end)}s`
+      : S.phase === "hold" ? `HOLD ${f0(S.live)}°` + (S.drop >= 1 ? ` ↓${Math.round(S.drop)}` : "") : "HEAT…";
     if (label !== lastLabel) { btn.textContent = label + " ▾"; lastLabel = label; }
     btn.classList.toggle("on", hot);
     $("#tcConn").hidden = $("#tcSim").hidden = c; $("#tcDisc").hidden = !c;
     $("#tcDev").textContent = c ? `${S.dev.name}${S.battery != null ? " · " + S.battery + "%" : ""} · bowl ${f0(S.live)}°F` : "No device";
-    go.disabled = !c || S.phase === "prep";
-    go.textContent = S.running ? "Stop" : "Start curve";
-    go.classList.toggle("danger", S.running);
+    const holding = S.phase === "hold";
+    go.disabled = !c || S.phase === "prep" || holding;
+    go.textContent = S.running && !holding ? "Stop" : "Start curve";
+    go.classList.toggle("danger", S.running && !holding);
     sel.disabled = S.running;
+    holdBtn.disabled = !c || S.phase === "prep" || (S.running && !holding);
+    holdBtn.textContent = holding ? "Stop HOLD" : "HOLD for PUFF";
+    holdBtn.classList.toggle("danger", holding);
+    $("#tcHoldF").disabled = $("#tcFull").disabled = S.running;
+    $("#tcPuffBar").hidden = !holding; $("#tcPuffBar").firstChild.style.width = Math.round(S.puff * 100) + "%";
+    $("#tcPuffInfo").textContent = holding ? S.puffInfo : "";
+    $("#tcHit").hidden = !(holding && S.dev && S.dev.kind === "sim");
+    $("#tcSwatch").hidden = !(c && S.glowOn);
     $("#heatSel").disabled = S.running;     // HEAT can't be hidden mid-curve (slot 4 would stay swapped)
     $("#tcMsg").textContent = S.msg;
   }
@@ -6787,12 +6934,14 @@ const TC = (() => {
     say(dev.kind === "sim" ? "Starting the simulator…" : "Pick your device in the browser's list…");
     dev.onDisconnect = () => {
       if (S.running) S.abort = true;
-      S.dev = null; say(S.running ? "Connection lost mid-curve; the device finishes its own cycle at its last temperature." : "Disconnected.");
+      S.dev = null; say(S.running ? `Connection lost mid-${S.phase === "hold" ? "HOLD" : "curve"}; the device finishes its own cycle at its last temperature.` : "Disconnected.");
+      FX.puffReady = false; fxPuff(0);
     };
     try {
       await dev.connect();
       S.dev = dev; say(`Connected to ${dev.name}.`);
-      idle();
+      FX.puffReady = true;                      // PUFF is on offer in Beat FX while a Puffco is connected
+      idle(); glowLoop(dev);
     } catch (e) { say(e && e.name === "NotFoundError" ? "" : "Couldn't connect: " + (e.message || e)); }
   }
   async function idle() {
@@ -6878,6 +7027,86 @@ const TC = (() => {
       status(completed ? `Heat curve "${name}" done` : `Heat curve "${name}" stopped`, 5000);
     }
   }
+  // ---- HOLD: one temperature, played with PUFF ----
+  // Same setup and safety as a curve (slot 4 backed up and put back, 600°F cutoff, a lost link leaves the device to
+  // finish its cycle), but the target is written once and never steered: the device's own regulator holds it, and
+  // the dip on a draw is what PUFF plays. One device heat cycle (the slot time, 120 s).
+  async function hold(holdF) {
+    const dev = S.dev, f = clamp(Math.round(holdF), MIN_F, MAX_F), meter = new PuffDrop(f, S.puffFull);
+    let backup = null, origSlot = null, ended = false;
+    Object.assign(S, { running: true, abort: false, phase: "prep", t: null, target: f, puff: 0, drop: 0, puffInfo: "" });
+    say(`Setting up HOLD at ${f}°F…`);
+    try {
+      if (HEATING.has(await dev.readState())) { await dev.stop(); await sleep(1500); }
+      origSlot = await dev.readActiveSlot();
+      backup = await dev.backupSlot(SLOT);
+      if (!(await dev.writeProfileTemp(SLOT, f))) throw new Error("the device refused the temperature");
+      await dev.writeProfileTime(SLOT, 120);
+      await dev.setActiveSlot(SLOT);
+      if (!(await dev.start())) throw new Error("the device didn't accept the start command");
+      S.phase = "hold"; say(`Holding ${f}°F. Pick PUFF in Beat FX and turn it on; hit it once the bowl is up to temperature.`);
+      const t0 = now();
+      let tick = 0, reads = 0, rateAt = t0;
+      while (!S.abort) {
+        const tn = now(), tt = (tn - t0) / 1000;
+        const y = await dev.readTemp();
+        if (tick++ % 5 === 0) {
+          S.state = await dev.readState();
+          if (tt > 6 && !HEATING.has(S.state)) { ended = true; break; }
+        }
+        if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+        S.live = y;
+        if (y != null) reads++;
+        if (tn - rateAt >= 2000) {
+          S.puffInfo = `dip ${meter.drop.toFixed(1)}°F · biggest ${meter.peak.toFixed(1)} · full at ${Math.round(meter.scale())} · ${(reads / ((tn - rateAt) / 1000)).toFixed(1)} reads/s`;
+          reads = 0; rateAt = tn;
+        }
+        const a = meter.add(tt, y);
+        S.drop = meter.drop;
+        if (Math.abs(a - S.puff) > 0.005 || (a === 0 && S.puff !== 0)) { S.puff = a; fxPuff(a); }
+        render();
+        // as fast as the link answers, at most ~10 a second
+        await sleep(Math.max(0, 100 - (now() - tn)));
+      }
+    } catch (e) {
+      say("Stopped: " + (e.message || e));
+    } finally {
+      Object.assign(S, { puff: 0, drop: 0, puffInfo: "" }); fxPuff(0);
+      if (dev.kind === "sim") dev.airflow = 0;
+      if (dev.connected) {
+        try { await dev.stop(); } catch (e) {}
+        if (backup) try { await dev.restoreSlot(SLOT, backup); } catch (e) {}
+        if (origSlot != null) try { await dev.setActiveSlot(origSlot); } catch (e) {}
+      }
+      if (ended) say("The device ended its heat cycle. Hold again for another round.");
+      else if (S.abort && S.dev) say("Stopped.");
+      Object.assign(S, { running: false, phase: "idle", target: null });
+      render();
+      status(ended ? "HOLD: heat cycle over" : "HOLD stopped", 5000);
+    }
+  }
+  function toggleHold() {
+    if (S.running) { if (S.phase === "hold") { S.abort = true; say("Stopping…"); } }
+    else if (S.dev) { hold(S.holdF); if (POPOVER) { if (panel.matches(":popover-open")) panel.hidePopover(); } else panel.hidden = true; }
+  }
+  // GLOW while this device is connected: a colour at most 5 times a second, only when no curve or HOLD runs (heat
+  // comes first; the BLE link is one request at a time), the lantern off again when GLOW goes off. A Puffco that
+  // refuses three writes in a row is left alone until GLOW is switched off and on.
+  async function glowLoop(d) {
+    let lanternOn = false;
+    S.glowFails = 0; glow.reset();
+    while (S.dev === d && d.connected) {
+      await sleep(50);
+      if (S.running) continue;
+      if (!S.glowOn) { if (lanternOn) { lanternOn = false; await d.lantern(false); glow.reset(); } continue; }
+      if (S.glowFails >= 3) continue;
+      const c = glow.tick(now() / 1000, masterPeak, FX.beat.depth, S.glowKnob);
+      if (!c) continue;
+      if (!lanternOn) lanternOn = await d.lantern(true);
+      if (lanternOn && await d.lanternColor(c)) { S.glowFails = 0; $("#tcSwatch").style.background = `rgb(${c[0]},${c[1]},${c[2]})`; }
+      else if (++S.glowFails === 3) say("This Puffco didn't take lantern colours, so GLOW is paused (turn GLOW off and on to try again).");
+    }
+  }
   function toggle() {
     if (S.running) { S.abort = true; say("Stopping…"); }
     // straight back to the decks: the HEAT button carries the temperature from here
@@ -6916,9 +7145,21 @@ const TC = (() => {
   $("#tcSim").addEventListener("click", () => { if (S.dev) S.dev.disconnect(); connect(new Sim()); });
   $("#tcDisc").addEventListener("click", () => { S.abort = true; S.dev && S.dev.disconnect(); });
   $("#tcPaste").addEventListener("click", paste);
+  holdBtn.addEventListener("click", toggleHold);
+  const hf = $("#tcHoldF"), full = $("#tcFull"), gl = $("#tcGlow"), gk = $("#tcGlowKnob"), hit = $("#tcHit");
+  hf.value = S.holdF; full.value = String(S.puffFull); if (full.value === "") { S.puffFull = 0; full.value = "0"; }
+  gl.checked = S.glowOn; gk.value = S.glowKnob; if (gk.value === "") { S.glowKnob = "intensity"; gk.value = "intensity"; }
+  hf.addEventListener("change", () => { S.holdF = clamp(Math.round(+hf.value || 500), MIN_F, MAX_F); hf.value = S.holdF; store.set("cb.tc.holdF", S.holdF); });
+  full.addEventListener("change", () => { S.puffFull = +full.value || 0; store.set("cb.tc.puffFull", S.puffFull); });
+  gl.addEventListener("change", () => { S.glowOn = gl.checked; S.glowFails = 0; store.set("cb.tc.glow", S.glowOn); render(); });
+  gk.addEventListener("change", () => { S.glowKnob = gk.value; store.set("cb.tc.glowKnob", S.glowKnob); });
+  // the simulator's stand-in for a draw: press and hold
+  const hitAt = (on) => { if (S.dev && S.dev.kind === "sim") S.dev.airflow = on ? 1 : 0; hit.classList.toggle("on", on); hit.textContent = on ? "Hitting…" : "Hold to hit (simulator)"; };
+  hit.addEventListener("pointerdown", (e) => { hit.setPointerCapture(e.pointerId); hitAt(true); });
+  for (const ev of ["pointerup", "pointercancel", "lostpointercapture"]) hit.addEventListener(ev, () => hitAt(false));
   if (!navigator.bluetooth) $("#tcConn").title = "This browser has no Web Bluetooth: use Chrome or Edge on a computer or Android, or Bluefy on iPhone";
   fill(); render();
-  return { S, PRESETS, makeCurve, Sim, connect, run, toggle, fill, get dev() { return S.dev; } };
+  return { S, PRESETS, makeCurve, Sim, PuffDrop, Glow, hold, toggleHold, connect, run, toggle, fill, get dev() { return S.dev; } };
 })();
 
 // HEAT is hidden for everyone by default. Seven taps on the version line in Settings open a 21+ notice;
@@ -7098,7 +7339,8 @@ function frame(ts) {
       meterState[i] = Math.max(lv, meterState[i] - 0.03);
       drawMeter(ui[i].meter, meterState[i]);
     }
-    const ml = levelOf(Math.max(peakOf(A.masterMeterL), peakOf(A.masterMeterR)));
+    masterPeak = Math.max(peakOf(A.masterMeterL), peakOf(A.masterMeterR));
+    const ml = levelOf(masterPeak);
     masterMeterState = Math.max(ml, masterMeterState - 0.03);
     drawMeter(A.masterMeterCanvas, masterMeterState);
   }
