@@ -29,7 +29,8 @@ LAYOUT = """(() => {
   const sel = [".deck .round.play", ".deck .round.cue", ".deck .pad", ".deck .jog", ".deck .sync", ".deck .vslider",
                "#mixer .vslider", "#mixer .hslider", "#mixer .cuebtn", "#mixer .knob svg", ".deck .overview", "#lane0", "#lane1"];
   const out = [];
-  for (const s of sel) for (const e of document.querySelectorAll(s)) if (!inView(e)) out.push(s + " " + JSON.stringify(r(e)));
+  // (the SCRATCH face's own CUE / PLAY are hidden until SCR is pressed)
+  for (const s of sel) for (const e of document.querySelectorAll(s)) if (!e.closest(".scrside") && !inView(e)) out.push(s + " " + JSON.stringify(r(e)));
   const l0 = r(document.querySelector("#lane0")), l1 = r(document.querySelector("#lane1"));
   // pads must not overlap each other or the transport buttons
   const boxes = [...document.querySelectorAll(".deck .pad, .deck .round, .deck .sq")].filter((e) => r(e).width > 0).map(r);

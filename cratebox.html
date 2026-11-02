@@ -132,6 +132,18 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel .hsel { max-width: none; width: 100%; }
 .setpanel { width: 330px; }
 /* Settings sits in the header: its panel drops down over the app */
+/* computers and tablets: Settings is a window in the middle of the screen (two columns when there's room), not a drop-down */
+header .setpanel.setpanel { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(780px, calc(100vw / var(--uiz, 1) - 32px)); max-height: calc(var(--vh, 100vh) - 48px);
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 28px; align-content: start; padding: 0 18px 16px; border-radius: 12px; box-shadow: 0 24px 80px #000e; }
+header .setpanel[hidden] { display: none; }
+header .setpanel > .setcol { display: grid; gap: 4px; align-content: start; min-width: 0; }
+header .setpanel .setcol > label:first-child { margin-top: 6px; }
+.setwinhead { display: none; }
+header .setwinhead { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 1;
+  margin: 0 -18px 4px; padding: 10px 12px 10px 18px; background: var(--raise); border-bottom: 1px solid var(--line2); }
+header .setwinhead b { font-family: var(--f-disp); letter-spacing: .08em; font-size: 15px; }
+#setPanel::backdrop { background: #000a; }
+.setgear { font-size: 18px; }
 header .setpanel { position: fixed; inset: auto; margin: 0; color: var(--fg); top: 48px; max-height: calc(var(--vh, 100vh) - 64px); overflow-y: auto; z-index: 40; }
 .ctlpanel { display: grid; gap: 4px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .ctlnote { margin: 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
@@ -411,6 +423,9 @@ html.phone .ctrl > .row { display: none; }
 .pbtns .sq, .pbtns .tag { height: 28px; padding: 0; font-size: 13px; border-radius: 6px; display: flex; align-items: center; justify-content: center; }
 .pbtns .tag { font-family: var(--f-disp); font-weight: 600; border: 1px solid var(--line2); }
 html.phone .modes button { height: 24px; font-size: 11px; border-radius: 6px; }
+/* phones: six pad tabs don't fit beside SCR, so KEY SHIFT is a Touch mode (PADS face) and controller thing there */
+html.phone:not(.tmode) .modes .keytab { display: none; }
+@container deck (max-width: 240px) { .modes .scrtab { display: none; } }   /* iPhone SE: SCRATCH is in ⋯ instead */
 html.phone .pads { gap: 4px; }
 html.phone .pad { height: clamp(28px, calc((100dvh - 320px) / 2), 40px); font-size: 13px; padding: 0; border-radius: 6px; }
 /* mixer: knobs in two columns, faders beside them, crossfader underneath */
@@ -578,6 +593,58 @@ html.phone .pbtns { grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 
 html.phone .pbtns .sq, html.phone .pbtns .tag { min-width: 0; overflow: hidden; }
 html.phone #mixer .cuebtn { height: 26px; }
 html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
+/* Touch mode (phones; Auto = small screens like an SE or Display Zoom): each deck shows one face, PLAY (tempo,
+   platter, CUE / PLAY / SYNC) or PADS (pad mode + 8 pads), with 44 px buttons; ⋯ opens the deck sheet. The mixer
+   keeps faders, meters, CUE and the crossfader; EQ / TRIM / CFX open in a sheet */
+.tface, .eqbtn, .tsync { display: none; }
+html.tmode .tface { display: grid; grid-template-columns: 1fr 1fr 44px; gap: 4px; }
+html.tmode .tface button { height: 32px; border-radius: 7px; border: 1px solid var(--line2); background: var(--raise); color: var(--muted); font-family: var(--f-disp); font-weight: 700; font-size: 14px; letter-spacing: .06em; padding: 0; }
+html.tmode .tface button.on { background: var(--c); border-color: var(--c); color: #000; }
+html.tmode .deck { --jog: clamp(72px, calc(100dvh - 200px), 150px); grid-template-rows: auto auto minmax(0, 1fr) !important; gap: 4px; padding: 5px 6px 6px; }
+html.tmode .deck .dinfo, html.tmode .deck .overview, html.tmode .deck .pbtns { display: none !important; }
+html.tmode .dhead { min-height: 0; }
+html.tmode .dbpm span, html.tmode .dtitle span { display: none; }
+html.tmode .dhead { align-items: center; }
+html.tmode .dnum { font-size: 18px; }
+html.tmode .dbpm b { font-size: 17px; }
+html.phone.tmode #waves { --lane: 26px; }
+html.phone.tmode header { height: 34px; }
+/* PLAY face */
+html.tmode .deck:not(.face-pads) .ctrl { display: none !important; }
+html.tmode .deck:not(.face-pads)[data-i="0"] .dbody { grid-template-columns: 22px minmax(0, 1fr) !important; grid-template-areas: "pitch jog" !important; }
+html.tmode .deck:not(.face-pads)[data-i="1"] .dbody { grid-template-columns: minmax(0, 1fr) 22px !important; grid-template-areas: "jog pitch" !important; }
+html.tmode .deck .jogwrap { flex-direction: row; align-items: center; justify-content: center; gap: 6px; width: 100%; }
+html.tmode .deck[data-i="1"] .jogwrap { flex-direction: row-reverse; }
+html.tmode .deck .jog { display: block !important; width: var(--jog); height: var(--jog); }
+html.tmode .transport { flex-direction: column !important; gap: 5px; }
+html.tmode .round { width: 52px !important; height: 40px !important; border-radius: 12px; }
+html.tmode .tsync { display: block; width: 52px; height: 40px; padding: 0; border-radius: 10px; font-size: 13px; }
+html.tmode .pitchwrap .vslider { height: calc(var(--jog) + 20px) !important; width: 22px; }
+/* PADS face */
+html.tmode .deck.face-pads .pitchwrap, html.tmode .deck.face-pads .jogwrap { display: none !important; }
+html.tmode .deck.face-pads .dbody { grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: "ctrl" !important; }
+html.tmode .deck.face-pads .ctrl { align-content: start; }
+html.tmode .deck.face-pads .modes button { height: 32px; font-size: 12px; }
+html.tmode .deck.face-pads .pad { height: clamp(36px, calc((100dvh - 236px) / 2), 48px); font-size: 14px; }
+html.tmode .deck.face-pads .pads, html.tmode .deck.face-pads .ctrl { gap: 4px; }
+/* the mixer */
+html.tmode #decks { grid-template-columns: minmax(0, 1fr) 128px minmax(0, 1fr) !important; }
+html.tmode #mixer { grid-template-columns: 1fr auto 1fr !important; grid-template-rows: auto minmax(0, 1fr) auto !important; padding: 5px; gap: 4px; }
+html.tmode #mixer > .strip { display: none !important; }
+html.tmode #mixer .eqbtn { display: block; grid-column: 1 / -1; grid-row: 1; height: 34px; width: 100%; border-radius: 7px; border: 1px solid var(--line2); background: var(--raise); font-family: var(--f-disp); font-weight: 700; font-size: 11px; letter-spacing: .02em; padding: 0; }
+html.tmode #mixer .faders > .fcol:first-child { grid-column: 1; grid-row: 2; }
+html.tmode #mixer .faders > .fcol:last-child { grid-column: 3; grid-row: 2; }
+html.tmode #mixer .mcenter { grid-column: 2; grid-row: 2; }
+html.tmode #mixer .mcenter > :not(.mmeters) { display: none !important; }
+html.tmode #mixer .vslider { height: clamp(60px, calc(100dvh - 250px), 150px) !important; }
+html.tmode #mixer .meter { height: clamp(50px, calc(100dvh - 260px), 120px) !important; }
+html.tmode #mixer .xfade { grid-column: 1 / -1; grid-row: 3; }
+html.tmode #mixer .cuebtn { height: 32px !important; }
+#eqBody { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 22px; }
+#eqBody .strip { display: grid !important; grid-template-columns: repeat(5, auto); gap: 6px; align-items: center; padding-top: 4px; border-top: 3px solid var(--c); }
+#eqBody .strip .knob svg { width: clamp(34px, calc((100vw - 140px) / 11), 50px) !important; height: clamp(34px, calc((100vw - 140px) / 11), 50px) !important; }
+.tmrow .tag, .tmrow .sq { height: 36px; min-width: 52px; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; }
+html.tmode .scrtab { display: none; }
 /* SCRATCH (phones): the deck body becomes a big platter beside SCRATCH / CUE / PLAY */
 .scrside { display: none; }
 html.phone .deck.scr .ctrl, html.phone .deck.scr .pitchwrap, html.phone .deck.scr .jogwrap .transport { display: none !important; }
@@ -628,6 +695,8 @@ html.three #mixer, html.three #mixer .faders { grid-template-columns: 1fr 1fr 44
 html.zoomed:not(.phone) #app { zoom: var(--uiz); height: calc(100vh / var(--uiz)); min-width: 0; }
 #fourBtn.on { background: var(--d0); border-color: var(--d0); color: var(--bg); }
 html.four #waves { --lane4: clamp(30px, calc(var(--lane) * .6), 46px); grid-template-rows: repeat(4, var(--lane4)); min-height: calc(4 * var(--lane4) + 6px); }
+/* Booth decks are taller than Classic's, so four stacked lanes on top of them are a little lower (keeps 1440p and 900 pt windows from scrolling) */
+html[data-theme="booth"].four:not(.phone):not(.ownlanes) #waves { --lane4: clamp(30px, calc(var(--lane) * .55), 42px); }
 #waves { min-height: calc(2 * var(--lane) + 2px); }
 html.four #waves canvas { height: var(--lane4); }
 @media (min-width: 1101px) {
@@ -844,8 +913,9 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     <select class="hsel" id="hpDev" hidden></select>
     <button class="hbtn" id="cueTest" title="Beep in the headphones only">Test cue</button>
     <div class="setwrap">
-        <button class="hbtn" id="setBtn" aria-expanded="false" popovertarget="setPanel">Settings ▾</button>
+        <button class="iconbtn setgear" id="setBtn" aria-expanded="false" aria-label="Settings" title="Settings" popovertarget="setPanel">⚙</button>
         <div class="setpanel" id="setPanel" popover hidden>
+          <div class="setwinhead"><b>Settings</b><button class="iconbtn" id="setClose" aria-label="Close settings" title="Close (Esc)">✕</button></div>
           <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option><option>70-180</option><option value="custom">Custom</option></select>
           <div id="rangeCustom" hidden><input class="hsel" id="bpmLo" type="number" min="40" max="150" step="1" style="width:5em"> to <input class="hsel" id="bpmHi" type="number" min="79" max="300" step="1" style="width:5em"> BPM</div>
@@ -865,6 +935,8 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
           <select class="hsel" id="rbEditSel"><option value="0">Read-only (default)</option><option value="1">Editable (writes to the stick)</option></select>
           <label for="themeSel">Look</label>
           <select class="hsel" id="themeSel"><option value="booth">Booth (default)</option><option value="default">Cratebox classic</option></select>
+          <label for="tmodeSel" class="phoneonly">Touch mode <small>one face per deck (PLAY or PADS) with big buttons, for playing on the glass</small></label>
+          <select class="hsel phoneonly" id="tmodeSel"><option value="auto">Auto (small screens)</option><option value="on">On</option><option value="off">Off</option></select>
           <label for="uiSizeSel" class="deskonly">Interface size <small>Auto scales up on big screens</small></label>
           <select class="hsel deskonly" id="uiSizeSel"><option value="auto">Auto</option><option value="1">100%</option><option value="1.15">115%</option><option value="1.3">130%</option><option value="1.5">150%</option><option value="1.75">175%</option></select>
           <div id="ctlPanel" class="ctlpanel">
@@ -919,6 +991,7 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     </div>
     <span id="status"></span>
     <span class="spacer"></span>
+    <button class="hbtn deskonly" id="ejectBtn" hidden title="Finish any playlist save to the USB stick / SD card, then let go of it">⏏ EJECT</button>
     <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
     <button class="hbtn deskonly" id="lanesBtn" title="Waveforms across the top: hide them (each deck then shows its own) or show them">HIDE WAVES</button>
     <button class="hbtn deskonly" id="waveBtn" title="WAVE mode: only the waveforms, as big as the window. Scrolling the library (browse knob, arrow keys) pops it up">WAVE</button>
@@ -994,6 +1067,7 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
   </div>
 </div></dialog>
+<dialog class="sheet" id="eqSheet" closedby="any" aria-label="EQ, trim and filter"><div class="panel"><h3>EQ · TRIM · CFX<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="eqBody"></div></div></dialog>
 <dialog class="sheet" id="fxSheet" closedby="any" aria-label="Beat FX"><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="fxBody"></div></div></dialog>
 <dialog class="sheet" id="deckSheet" closedby="any" aria-labelledby="deckSheetTitle"><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="deckBody"></div></div></dialog>
 <div id="start">
@@ -1143,14 +1217,14 @@ class DeckPlayer extends AudioWorkletProcessor {
     this.amp = 0; this.n = 0; this.ended = false;
     // backspin: after a fling the platter coasts, then the motor pulls it back at spinA (x speed per second)
     this.coast = false; this.spinA = 9 / 2.5;
-    // keylock state
-    this.mt = false;
+    // keylock state; ps = KEY SHIFT as a pitch factor (2^(semitones/12)): grains are read that much faster
+    this.mt = false; this.ps = 1;
     const H = this.H = Math.round(0.023 * sampleRate), Nw = this.Nw = 2 * H;
     this.S = Math.round(0.013 * sampleRate);            // search +/- 13 ms
     this.ramp = Math.round(0.002 * sampleRate);
     this.win = new Float32Array(Nw);
     for (let k = 0; k < Nw; k++) this.win[k] = 0.5 - 0.5 * Math.cos(2 * Math.PI * k / Nw);
-    this.gS = new Float64Array(2); this.gK = new Int32Array(2); this.gF = new Uint8Array(2);
+    this.gS = new Float64Array(2); this.gK = new Int32Array(2); this.gF = new Uint8Array(2); this.gP = new Float64Array([1, 1]);
     this.cur = 0; this.ph = 0; this.prevS = 0; this.fresh = true;
     this.buf = new Float32Array(2 * this.S + H + 8); this.tpl = new Float32Array(H);
     this.flush();
@@ -1191,6 +1265,7 @@ class DeckPlayer extends AudioWorkletProcessor {
       case "jog": this.target += d.v; break;
       case "loop": this.loopOn = d.on; this.loopIn = d.a; this.loopOut = d.b; break;
       case "mt": this.mt = d.v; this.flush(); break;
+      case "ps": this.ps = d.v; this.flush(); break;
     }
   }
   // source index for keylock reads: wraps inside an active loop; -1 = silence
@@ -1203,28 +1278,32 @@ class DeckPlayer extends AudioWorkletProcessor {
     return p >= 0 && p < this.len ? p : -1;
   }
   mono(p) { const j = this.idx(p); return j < 0 ? 0 : this.L[j] + this.R[j]; }
-  startGrain(pos, v) {
+  // st = how fast the grain reads the track: 1 with keylock, times the KEY SHIFT factor (and the tempo when
+  // keylock is off but KEY SHIFT is on). The search still lines grains up on the waveform, read at that step.
+  startGrain(pos, v, st) {
     const H = this.H, S = this.S, slot = this.cur = this.cur ^ 1;
+    this.gP[slot] = st;
     if (this.fresh) {
       const s = Math.round(pos);
       this.gS[slot] = s; this.gK[slot] = 0; this.gF[slot] = 1; this.gK[slot ^ 1] = this.Nw;
-      this.prevS = s; this.fresh = false; return;
+      this.prevS = s; this.prevP = st; this.fresh = false; return;
     }
-    const s0 = Math.round(pos + (v - 1) * H);        // keeps each grain centred on the playhead
-    const nat = this.prevS + H;                       // where the previous grain would continue
+    const s0 = Math.round(pos + (v - st) * H);       // keeps each grain centred on the playhead
+    const nat = Math.round(this.prevS + H * this.prevP);   // where the previous grain would continue
     let best = 0;
-    if (nat >= s0 - S && nat <= s0 + S && Math.abs(v - 1) < 1e-6) best = nat - s0;
+    if (nat >= s0 - S && nat <= s0 + S && Math.abs(v - st) < 1e-6) best = nat - s0;
     else {
       const tpl = this.tpl, buf = this.buf, base = s0 - S;
       let te = 0;
-      for (let k = 0; k < H; k++) { const x = this.mono(nat + k); tpl[k] = x; te += x * x; }
+      for (let k = 0; k < H; k++) { const x = this.mono(nat + Math.round(k * st)); tpl[k] = x; te += x * x; }
       if (te > 1e-9) {
         const B = 2 * S + H;
         for (let k = 0; k < B; k++) buf[k] = this.mono(base + k);
+        // (with a pitch step the template is compared against the track read at the same step)
         let bs = -Infinity;
         const score = (o, step) => {
           let c = 0, e = 1e-9;
-          for (let k = 0; k < H; k += step) { const y = buf[o + k]; c += tpl[k] * y; e += y * y; }
+          for (let k = 0; k < H; k += step) { const y = st === 1 ? buf[o + k] : this.mono(base + o + Math.round(k * st)); c += tpl[k] * y; e += y * y; }
           return c / Math.sqrt(e);
         };
         let bo = S;
@@ -1236,7 +1315,7 @@ class DeckPlayer extends AudioWorkletProcessor {
       }
     }
     const s = s0 + best;
-    this.gS[slot] = s; this.gK[slot] = 0; this.gF[slot] = 0; this.prevS = s;
+    this.gS[slot] = s; this.gK[slot] = 0; this.gF[slot] = 0; this.prevS = s; this.prevP = st;
   }
   process(inputs, outputs) {
     const out = outputs[0], oL = out[0], oR = out[1] || out[0], N = oL.length;
@@ -1251,7 +1330,8 @@ class DeckPlayer extends AudioWorkletProcessor {
     let pos = this.pos, vel = this.vel, amp = this.amp;
     const follow = 1 / (0.012 * sr);     // scratch: catch up with the hand in about 12 ms
     const ampStep = 1 / (0.005 * sr);    // 5 ms fades on start/stop: no clicks
-    const useMT = this.mt && !this.scratching && !this.coast;
+    const useMT = (this.mt || this.ps !== 1) && !this.scratching && !this.coast;
+    const gP = this.gP;
     const sc = this.sc || 1;
     const spinStep = this.spinA / sr;
     const gS = this.gS, gK = this.gK, gF = this.gF, win = this.win, Nw = this.Nw, H = this.H, ramp = this.ramp;
@@ -1272,15 +1352,18 @@ class DeckPlayer extends AudioWorkletProcessor {
       if (want > amp) amp = Math.min(want, amp + ampStep); else if (want < amp) amp = Math.max(want, amp - ampStep);
       if (amp > 0.0001 && pos >= 0 && pos < len - 1) {
         if (useMT) {
-          if (this.ph === 0) this.startGrain(pos, v);
+          if (this.ph === 0) this.startGrain(pos, v, (this.mt ? 1 : Math.abs(v)) * this.ps);
           let l = 0, r = 0;
           for (let g = 0; g < 2; g++) {
             const k = gK[g];
             if (k >= Nw) continue;
-            const j = this.idx(gS[g] + k);
-            if (j >= 0) {
-              const w = gF[g] && k < H ? (k < ramp ? k / ramp : 1) : win[k];
-              l += L[j] * w; r += R[j] * w;
+            const w = gF[g] && k < H ? (k < ramp ? k / ramp : 1) : win[k];
+            if (gP[g] === 1) {
+              const j = this.idx(gS[g] + k);
+              if (j >= 0) { l += L[j] * w; r += R[j] * w; }
+            } else {
+              const x = gS[g] + k * gP[g], j = this.idx(x);
+              if (j >= 0 && j + 1 < len) { const f = x - Math.floor(x); l += (L[j] + (L[j + 1] - L[j]) * f) * w; r += (R[j] + (R[j + 1] - R[j]) * f) * w; }
             }
             gK[g] = k + 1;
           }
@@ -2585,6 +2668,7 @@ class Deck {
     this.loopInDown = 0;
     this.sentRate = null;
     this.coasting = false; this.coastHold = 0; this.startedAt = 0;
+    this.keyShift = 0;                      // KEY SHIFT in semitones (-12..12): the key moves, the tempo doesn't
     this.mt = true;                         // master tempo (keylock), on by default
     try { this.mt = localStorage.getItem(`cb.mt${i}`) !== "0"; } catch (e) {}
   }
@@ -2698,8 +2782,19 @@ class Deck {
   // with master tempo off, speeding up raises the key: 6% is about a semitone
   keyNow() {
     if (!this.ana || this.ana.key == null || this.ana.key < 0) return -1;
-    return this.mt ? this.ana.key : shiftKey(this.ana.key, Math.round(12 * Math.log2(this.rate())));
+    return shiftKey(this.ana.key, (this.mt ? 0 : Math.round(12 * Math.log2(this.rate()))) + this.keyShift);
   }
+  // KEY SHIFT: the audio thread reads each keylock grain 2^(n/12) times faster, so the pitch moves and the
+  // tempo stays (with master tempo off it moves on top of the tempo's own pitch change)
+  setKeyShift(n) {
+    n = clamp(Math.round(n), -12, 12);
+    if (n === this.keyShift) return;
+    this.keyShift = n;
+    this.post({ t: "ps", v: Math.pow(2, n / 12) });
+    status(`Deck ${this.i + 1} key ${n ? (n > 0 ? "+" : "−") + Math.abs(n) : "back to the original"}${this.ana && this.ana.key >= 0 ? ": " + (camelot(this.keyNow()) || {}).label : ""}`);
+    refreshDeckUI(this.i);
+  }
+  keyPad(p) { const k = KEY_PADS[p]; this.setKeyShift(this.keyShift === k ? 0 : k); }
   onReport(d) {
     if (d.freed) return;                          // the previous track's audio, handed back to be dropped
     // d.t is the audio clock when the worklet finished this block: a shared reference for both decks
@@ -2759,6 +2854,7 @@ class Deck {
       this.sr = dec.sr;
       this.duration = dec.duration;
       this.post({ t: "load", L, R, mt: this.mt, spin: spinSecs }, [L.buffer, R.buffer]);
+      if (this.keyShift) this.post({ t: "ps", v: Math.pow(2, this.keyShift / 12) });
       this.pos = 0; this.posT = A.ctx.currentTime; this.speed = 0;
       this.loop = { on: false, a: null, b: null };
       this.previewing = false;
@@ -3529,14 +3625,24 @@ function setBrowse(on) {
 }
 // under the button, kept inside the window (positions in the app's own units: the interface zoom divided out).
 // Runs before the panel shows, so its width comes from the stylesheet rather than its (not yet laid out) box.
+// (now a centred window: the stylesheet places it, so this only clears positions an older version set)
 function placeSetPanel() {
-  const p = $("#setPanel"), r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1, w = parseFloat(getComputedStyle(p).width) || 330;
-  p.style.top = (r.bottom + 6) / z + "px";
-  p.style.left = Math.max(8, Math.min(innerWidth - w * z - 8, r.left)) / z + "px";
+  const p = $("#setPanel");
+  p.style.top = p.style.left = "";
 }
 function closeSetPanel() {
   const p = $("#setPanel");
   if (POPOVER) { if (p.matches(":popover-open")) p.hidePopover(); } else p.hidden = true;
+}
+$("#setClose").addEventListener("click", (e) => { e.stopPropagation(); closeSetPanel(); });
+// the window's two columns: playing and analysis on the left, look, controller and the rest from "Look" on
+if (!PHONE) {
+  const p = $("#setPanel"), split = p.querySelector('label[for="themeSel"]');
+  const kids = [...p.children].filter((k) => !k.classList.contains("setwinhead"));
+  const a = h("div", { class: "setcol" }), b = h("div", { class: "setcol" });
+  let right = false;
+  for (const k of kids) { if (k === split) right = true; (right ? b : a).append(k); }
+  if (split) p.append(a, b); else p.append(a, ...b.children);
 }
 if (POPOVER) {
   // the button opens it (popovertarget); Esc or a press anywhere else closes it
@@ -4244,6 +4350,7 @@ function toggleOpen(r) {
   renderTree();
 }
 function renderTree() {
+  ejectLabel();
   const box = document.getElementById("tree");
   if (!box) return;
   const rows = PL.treeRows = treeRows();
@@ -4467,6 +4574,30 @@ function removeFromPlaylist() {
 }
 
 // ---- rekordbox USB / SD ----
+// EJECT, as in the iOS app: finish any playlist save to the stick, then let go of it (it stays remembered, so
+// opening Cratebox with it plugged in brings it back). A browser can't unmount a drive, so the computer's own
+// eject still comes after; the message says so. Shown while a stick is open; with several, it asks which.
+function ejectLabel() {
+  const b = document.getElementById("ejectBtn");
+  if (!b) return;
+  b.hidden = !PL.devices.length;
+  b.textContent = PL.devices.length > 1 ? "⏏ EJECT ▾" : "⏏ EJECT";
+  b.title = PL.devices.length === 1 ? `Finish any playlist save to ${PL.devices[0].name}, then let go of it` : "Pick a USB stick / SD card to let go of";
+}
+function ejectPressed(btn) {
+  if (PL.devices.length === 1) ejectDevice(PL.devices[0]);
+  else if (PL.devices.length > 1) popMenu(btn, PL.devices.map((d) => [`Eject ${d.name}`, () => ejectDevice(d)]));
+}
+async function ejectDevice(d) {
+  if (decks.some((k) => k.track && k.track.device === d.id)) { status(`A deck is playing from ${d.name}: load something else first`, 7000); return false; }
+  if (d.unsaved && !d.saving) { clearTimeout(d.saveT); devWrite(d); }
+  if (d.saving || d.unsaved) status(`Finishing the save to ${d.name}…`, 3000);
+  for (let n = 0; n < 40 && d.saving; n++) await new Promise((r) => setTimeout(r, 250));
+  if (d.saving || d.unsaved) { status(`Couldn't finish saving to ${d.name}. Not ejected: it isn't safe to unplug yet.`, 10000); return false; }
+  closeDevice(d.id, true);
+  status(`${d.name}: Cratebox is done with it. Eject it in Finder / File Explorer too, then unplug.`, 9000);
+  return true;
+}
 async function openDevice() {
   let dir;
   try { dir = await window.showDirectoryPicker({ id: "cratebox-usb", mode: "read" }); }
@@ -4952,7 +5083,7 @@ function buildDeck(i) {
   u.qtag = h("button", { class: "tag on", title: "Quantize: snap cues and loops to the beat grid", onclick: () => { d.quant = !d.quant; refreshDeckUI(i); } }, "Q");
   u.mtag = h("span", { class: "tag mastertag", title: "This deck is the tempo master" }, "MASTER");
   u.phaseTag = h("span", { class: "phasetag", title: "Beat lock: how far this deck's beats are from the master's. Near 0 = locked. If it reads 0 but you hear the beats drift, the beat grid is off: fix it with GRID." }, "");
-  u.keyTag = h("span", { class: "keytag", title: "Key (Camelot)" }, "");
+  u.keyTag = h("span", { class: "keytag", title: "Key (Camelot)", onclick: () => d.setKeyShift(0) }, "");
   u.gridBtn = h("button", { class: "tag", title: "Edit the beat grid", onclick: () => { u.gridBar.hidden = !u.gridBar.hidden; u.gridBtn.classList.toggle("on", !u.gridBar.hidden); } }, "GRID");
   u.mtBtn = h("button", { class: "tag", title: "Master tempo (keylock): change tempo without changing the key", onclick: () => d.setMT(!d.mt) }, "MT");
   el.append(h("div", { class: "dinfo" }, u.elapsed, u.remain, u.beats, u.phraseTag, h("span", { class: "spacer" }), u.phaseTag, u.keyTag, u.mtag, u.gridBtn, u.mtBtn, u.qtag));
@@ -5019,9 +5150,10 @@ function buildDeck(i) {
   u.modes = {};
   const modes = h("div", { class: "modes" });
   // long and short labels: a narrow deck (container query) shows the short ones
-  for (const [m, label, short] of [["hotcue", "HOT CUE", "CUES"], ["beatloop", "BEAT LOOP", "LOOP"], ["beatjump", "BEAT JUMP", "JUMP"], ["padfx", "PAD FX", "FX"]]) {
+  for (const [m, label, short] of [["hotcue", "HOT CUE", "CUES"], ["beatloop", "BEAT LOOP", "LOOP"], ["beatjump", "BEAT JUMP", "JUMP"], ["padfx", "PAD FX", "FX"], ["keyshift", "KEY SHIFT", "KEY"]]) {
     u.modes[m] = h("button", { title: m === "padfx" ? "PAD FX: hold a pad for an effect (press again for the second bank)" : label,
       onclick: () => { d.padMode = m === "padfx" && d.padMode === "padfx" ? "padfx2" : m; refreshDeckUI(i); } }, h("span", { class: "lg" }, label), h("span", { class: "sh" }, short));
+    if (m === "keyshift") u.modes[m].classList.add("keytab");
     modes.append(u.modes[m]);
   }
   // phones: SCR after FX turns this deck into one big platter with SCRATCH (lit: tap to go back), CUE and PLAY;
@@ -5056,7 +5188,16 @@ function buildDeck(i) {
     pads.append(b);
   }
   const ctrl = h("div", { class: "ctrl" }, loopRow, jumpRow, modes, pads);
-  el.append(h("div", { class: "dbody" }, pitchwrap, h("div", { class: "jogwrap" }, u.jog, h("div", { class: "transport" }, u.cueBtn, u.playBtn)), ctrl, u.scrSide || ""));
+  if (PHONE) {
+    // Touch mode: PLAY | PADS | ⋯ over the deck, and a SYNC under CUE / PLAY on the PLAY face
+    u.tSync = holdSync(h("button", { class: "sq tsync" }, "SYNC"), d);
+    const face = (pads) => { el.classList.toggle("face-pads", pads); u.tPlay.classList.toggle("on", !pads); u.tPads.classList.toggle("on", pads); };
+    u.tPlay = h("button", { class: "on", onclick: () => face(false) }, "PLAY");
+    u.tPads = h("button", { onclick: () => face(true) }, "PADS");
+    u.tMore = h("button", { "aria-label": "More: loop, beat jump, tempo range, grid, SCRATCH" }, "⋯");
+    el.append(h("div", { class: "tface" }, u.tPlay, u.tPads, u.tMore));
+  }
+  el.append(h("div", { class: "dbody" }, pitchwrap, h("div", { class: "jogwrap" }, u.jog, h("div", { class: "transport" }, u.cueBtn, u.playBtn, u.tSync || "")), ctrl, u.scrSide || ""));
   // the deck's "screen": header, info, (Booth look: its own scrolling waveform), overview.
   // display: contents in the default look, so it changes nothing there
   u.lanehost = h("div", { class: "lanehost" });
@@ -5217,12 +5358,15 @@ function refreshPadFx(i) {
 }
 const LOOP_SIZES = [0.25, 0.5, 1, 2, 4, 8, 16, 32];
 const JUMPS = [-1, 1, -2, 2, -4, 4, -8, 8];
+// KEY SHIFT pads: the top row raises the key 1-4 semitones, the bottom row lowers it; the lit pad again = back to 0
+const KEY_PADS = [1, 2, 3, 4, -1, -2, -3, -4];
 function padPress(i, p, shift) {
   const d = decks[i];
   if (d.padMode === "padfx" || d.padMode === "padfx2") return pfxDown(i, d.padMode, p);
   if (d.padMode === "hotcue") shift ? d.clearHot(p) : d.hotcue(p);
   else if (d.padMode === "beatloop") d.beatLoop(LOOP_SIZES[p]);
   else if (d.padMode === "beatjump") d.beatJump(JUMPS[p]);
+  else if (d.padMode === "keyshift") shift ? d.setKeyShift(0) : d.keyPad(p);
 }
 // phones: SCRATCH on / off for one deck. The platter takes the deck body's height (same height as before)
 function setScratch(i, on) {
@@ -5477,6 +5621,7 @@ function wavePopLoad(i) {
 }
 $("#wavePop").addEventListener("wheel", (e) => { e.preventDefault(); moveSel(Math.sign(e.deltaY)); }, { passive: false });
 $("#lanesBtn").addEventListener("click", () => setTopWaves(!topWaves));
+$("#ejectBtn").addEventListener("click", (e) => ejectPressed(e.currentTarget));
 $("#waveBtn").addEventListener("click", () => setWaveMode(!waveMode));
 // does the layout fit the window? If not (decks taller than the window leaves room for), let the page scroll
 function fitApp() {
@@ -5529,6 +5674,7 @@ function refreshDeckUI(i) {
   u.playBtn.classList.toggle("lit", d.playing);
   if (u.scrPlay) { u.scrPlay.classList.toggle("lit", d.playing); u.modes.scr.classList.toggle("on", !!document.querySelector(`.deck.scr[data-i="${i}"]`)); }
   u.syncBtn.classList.toggle("lit", d.sync);
+  if (u.tSync) u.tSync.classList.toggle("lit", d.sync);
   if (u.miniPlay) { u.miniPlay.classList.toggle("lit", d.playing); u.miniSync.classList.toggle("lit", d.sync); u.miniLoop.classList.toggle("lit", d.loop.on); }
   u.qtag.classList.toggle("on", d.quant);
   u.mtBtn.classList.toggle("on", d.mt);
@@ -5555,10 +5701,15 @@ function refreshDeckUI(i) {
       const s = LOOP_SIZES[p];
       b.textContent = s < 1 ? `1/${1 / s}` : String(s);
       if (d.loop.on && Math.abs(d.loopBeats() - s) < 0.01) b.classList.add("on");
+    } else if (d.padMode === "keyshift") {
+      const k = KEY_PADS[p];
+      b.textContent = (k > 0 ? "+" : "−") + Math.abs(k);
+      if (d.keyShift === k) b.classList.add("on");
     } else {
       const j = JUMPS[p];
       b.textContent = (j < 0 ? "◀ " : "") + Math.abs(j) + (j > 0 ? " ▶" : "");
     }
+    b.dataset.learn = d.padMode === "keyshift" ? `key:${p}` : `hot:${p}`;
   });
   const lb = d.loopBeats();
   u.loopInfo.textContent = d.loop.a == null ? "no loop" : d.loop.b == null ? "loop in…" : `${lb < 1 ? "1/" + Math.round(1 / lb) : +lb.toFixed(2)} beat${lb === 1 ? "" : "s"}`;
@@ -5893,7 +6044,7 @@ function drawMeter(cv, level) {
 // controls, the data1 of the LSB message (0 if none).
 // Actions: play playCue cue start sync syncOn range touch jogTop jogSide jogSearch tempo
 //   loopIn loopOut reloop reloopStop loopHalf loopDouble callPrev callNext jump:N pfl quant keylock
-//   mode:M hot:I hotClear:I loop:SIZE load fader trim hi mid low cfx xfader headMix master
+//   mode:M hot:I hotClear:I key:I keyUp keyDown keyReset loop:SIZE load fader trim hi mid low cfx xfader headMix master
 //   browse browsePress browseShift browseUp browseDown zoom unsupported:WHAT
 
 // generated by tools/mixxx2cratebox.py from Mixxx's controller mappings (mixxx.org)
@@ -5923,6 +6074,9 @@ function ddjRekordboxMap(deckChs = [0, 1], padChs = [[0x97, 0x98], [0x99, 0x9a]]
       m.push([pn, 0x20 + p, `jump:${JUMPS[p]}`, d, 0]);
       m.push([pn, 0x10 + p, `pfx:${p}`, d, 0], [ps, 0x10 + p, `pfx:${p}`, d, 0]);        // PAD FX1 pads
       m.push([pn, 0x50 + p, `pfx2:${p}`, d, 0], [ps, 0x50 + p, `pfx2:${p}`, d, 0]);      // PAD FX2 pads
+      // KEY SHIFT pads (SHIFT + SAMPLER): notes 0x70-0x77 by the FLX4's pad-bank pattern (0x00 hot cue, 0x10 pad FX1,
+      // 0x20 beat jump, 0x50 pad FX2, 0x60 beat loop). Not yet checked on the hardware.
+      m.push([pn, 0x70 + p, `key:${p}`, d, 0], [ps, 0x70 + p, "keyReset", d, 0]);
     }
   });
   m.push([0x96, 0x46, "load", 0, 0], [0x96, 0x47, "load", 1, 0], [0x96, 0x48, "load", 0, 0], [0x96, 0x49, "load", 1, 0],
@@ -6079,7 +6233,7 @@ function midiIn(data) {
 const ABS_ACTIONS = new Set(["tempo", "fader", "trim", "hi", "mid", "low", "cfx", "xfader", "headMix", "master", "fxDepth"]);
 const REL_ACTIONS = new Set(["jogTop", "jogSide", "jogSearch", "browse", "zoom"]);
 const LED_ACTIONS = /^(play|cue|sync|pfl|loopIn|loopOut|reloop|keylock|quant|mode:|hot:|loop:|pfx:|pfx2:|fxOn|layer)/;
-const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump", "padfx", "padfx2"]);
+const PAD_MODES_OK = new Set(["hotcue", "beatloop", "beatjump", "padfx", "padfx2", "keyshift"]);
 function runEntry(e, type, v, isLsb) {
   const [, , action, side, lsb] = e;
   const colon = action.indexOf(":"), name = colon < 0 ? action : action.slice(0, colon), arg = colon < 0 ? "" : action.slice(colon + 1);
@@ -6205,6 +6359,10 @@ function pressAction(name, arg, d, deck, on) {
       return;
     case "hot": if (on) d.hotcue(+arg); return;
     case "hotClear": if (on) d.clearHot(+arg); return;
+    case "key": if (on) d.keyPad(+arg); return;
+    case "keyReset": if (on) d.setKeyShift(0); return;
+    case "keyUp": if (on) d.setKeyShift(d.keyShift + 1); return;
+    case "keyDown": if (on) d.setKeyShift(d.keyShift - 1); return;
     case "loop": if (on) d.beatLoop(+arg); return;
     case "load": if (on) loadSelected(deck); return;
     case "browsePress": if (on) treePress(); return;
@@ -6244,6 +6402,7 @@ function updateLeds() {
       case "quant": v = d.quant; break;
       case "mode": v = d.padMode === arg; break;
       case "hot": v = d.padMode === "hotcue" && d.hot[+arg] != null; break;
+      case "key": v = d.padMode === "keyshift" && d.keyShift === KEY_PADS[+arg]; break;
       case "loop": v = d.padMode === "beatloop" && d.loop.on && Math.abs(d.loopBeats() - +arg) < 0.01; break;
       case "pfx": case "pfx2": { const bank = name === "pfx" ? "padfx" : "padfx2"; v = d.padMode === bank && !!FX.pad[deck] && FX.pad[deck].p === +arg && FX.pad[deck].bank === bank; break; }
       default: continue;
@@ -6285,7 +6444,8 @@ const LEARN_LABEL = { play: "Play", cue: "Cue", sync: "Sync", loopIn: "Loop in",
   tempo: "Tempo fader", jog: "Jog wheel", pfl: "Headphone cue", masterCue: "Master cue", fxOn: "Beat FX on/off", fxSelect: "Beat FX select",
   fxBeatDown: "Beat FX beat ◀", fxBeatUp: "Beat FX beat ▶", fxDepth: "Beat FX level/depth", fader: "Channel fader", trim: "Trim", hi: "EQ high",
   mid: "EQ mid", low: "EQ low", cfx: "Filter (CFX)", xfader: "Crossfader", headMix: "Cue/master mix", master: "Master level",
-  browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)", layer: "Deck layer (1⇄3 / 2⇄4)" };
+  browse: "Browse knob", browsePress: "Browse knob press", load: "Load", keylock: "Master tempo", quant: "Quantize", jogSide: "Jog side (nudge)", layer: "Deck layer (1⇄3 / 2⇄4)",
+  keyUp: "Key shift up", keyDown: "Key shift down", keyReset: "Key shift reset" };
 function startLearn() {
   if (!MIDI.profile) useProfile("learn");
   document.documentElement.classList.add("learning");
@@ -6306,7 +6466,7 @@ function learnPick(el) {
   el.classList.add("learn-target");
   const action = el.dataset.learn, deck = el.dataset.deck == null ? -1 : +el.dataset.deck;
   MIDI.learning.target = { action, deck, el, got: {} };
-  const who = (deck >= 0 ? `Deck ${deck + 1} ` : "") + (LEARN_LABEL[action] || (action.startsWith("hot:") ? `Pad ${+action.slice(4) + 1}` : action));
+  const who = (deck >= 0 ? `Deck ${deck + 1} ` : "") + (LEARN_LABEL[action] || (action.startsWith("hot:") ? `Pad ${+action.slice(4) + 1}` : action.startsWith("key:") ? `Key shift pad ${+action.slice(4) + 1}` : action));
   learnHint(action === "jog" ? `${who}: touch the top of the platter, then turn it.` : `${who}: now move or press it on the controller.`);
 }
 function learnCapture(st, d1, d2) {
@@ -6539,7 +6699,7 @@ function tagLearnables() {
     const u = ui[i];
     tag(u.playBtn, "play", i); tag(u.cueBtn, "cue", i); tag(u.syncBtn, "sync", i);
     tag(u.inBtn, "loopIn", i); tag(u.outBtn, "loopOut", i); tag(u.reloopBtn, "reloop", i);
-    tag(u.mtBtn, "keylock", i); tag(u.qtag, "quant", i); tag(u.jog, "jog", i); tag(u.pfl, "pfl", i);
+    tag(u.mtBtn, "keylock", i); tag(u.qtag, "quant", i); tag(u.keyTag, "keyReset", i); tag(u.jog, "jog", i); tag(u.pfl, "pfl", i);
     u.pads.forEach((b, p) => tag(b, `hot:${p}`, i));
     for (const k of ["fader", "trim", "hi", "mid", "low", "cfx"]) tag(widgets[`${k}${i}`] && widgets[`${k}${i}`].el, k, i);
     tag(widgets[`pitch${i}`] && widgets[`pitch${i}`].el, "tempo", i);
@@ -6772,10 +6932,20 @@ function phoneize() {
       $("#deckSheetTitle").firstChild.textContent = `DECK ${i + 1}`;
       const db = $("#deckBody"); db.innerHTML = "";
       db.append(u.sheetParts);
+      // SCRATCH here too: a small phone's deck has no room for the SCR tab (Touch mode's ⋯ adds its own row)
+      if (!document.documentElement.classList.contains("tmode"))
+        db.prepend(h("div", { class: "row tmrow" }, h("button", { class: "sq", onclick: () => { $("#deckSheet").close(); setScratch(i, true); } }, "SCRATCH")));
       u.gridBar.hidden = false;
       $("#deckSheet").showModal();
     });
     const btns = h("div", { class: "pbtns" }, u.syncBtn, u.mtBtn, u.qtag, more);
+    // Touch mode's ⋯: the same deck sheet, with MT / Q / SCRATCH on top (the PLAY face has no room for them)
+    u.tMore.addEventListener("click", () => {
+      more.click();
+      $("#deckBody").prepend(h("div", { class: "row tmrow" }, u.mtBtn, u.qtag,
+        h("button", { class: "sq", onclick: () => { $("#deckSheet").close(); setScratch(i, true); } }, "SCRATCH")));
+    });
+    $("#deckSheet").addEventListener("close", () => { if (u.mtBtn.parentElement && u.mtBtn.parentElement.classList.contains("tmrow")) { btns.insertBefore(u.mtBtn, more); btns.insertBefore(u.qtag, more); } });
     ctrl.prepend(btns);
     // everything else goes into the deck sheet
     const loopRow = ctrl.querySelector(".row"), jumpRow = ctrl.querySelectorAll(".row")[1];
@@ -6788,6 +6958,23 @@ function phoneize() {
   }
   // mixer: CUE buttons under the faders, channel meters next to the master meter
   const mx = $("#mixer"), fcols = mx.querySelectorAll(".faders > .fcol");
+  // Touch mode: the channel strips (TRIM, EQ, CFX) live in a sheet while it's open
+  const eqBtn = h("button", { class: "eqbtn" }, "EQ · TRIM · CFX");
+  mx.prepend(eqBtn);
+  const strips = [mx.querySelector('.strip[data-i="0"]'), mx.querySelector('.strip[data-i="1"]')], homes = strips.map((st) => st.nextSibling);
+  eqBtn.addEventListener("click", () => { $("#eqBody").append(...strips); $("#eqSheet").showModal(); });
+  $("#eqSheet").addEventListener("close", () => strips.forEach((st, k) => mx.insertBefore(st, homes[k])));
+  // Touch mode: Settings → Look → Touch mode (auto: small screens, like an SE or a phone with Display Zoom)
+  let tmode = "auto";
+  try { tmode = localStorage.getItem("cb.tmode") || "auto"; } catch (e) {}
+  const applyTmode = () => {
+    const on = tmode === "on" || (tmode === "auto" && (innerWidth < 640 || innerHeight < 360));
+    document.documentElement.classList.toggle("tmode", on);
+  };
+  $("#tmodeSel").value = tmode;
+  $("#tmodeSel").addEventListener("change", (e) => { tmode = e.target.value; try { localStorage.setItem("cb.tmode", tmode); } catch (err) {} applyTmode(); });
+  window.addEventListener("resize", applyTmode);
+  applyTmode();
   fcols[0].append(ui[0].pfl); fcols[2].append(ui[1].pfl);
   const mm = h("div", { class: "mmeters" }, ui[0].meter, A.masterMeterCanvas, ui[1].meter);
   mx.querySelector(".mcenter").append(mm);
@@ -7698,10 +7885,11 @@ function frame(ts) {
       u.bpm.textContent = d.bpm ? d.effBpm().toFixed(2) : "--.--";
       if (!u.gridBar.hidden && document.activeElement !== u.bpmIn) u.bpmIn.value = d.bpm ? d.bpm.toFixed(2) : "";
       const kn = d.keyNow(), kc = camelot(kn), k0 = d.ana ? camelot(d.ana.key) : null;
-      const kt = kc ? (k0 && k0.label !== kc.label ? `${kc.label} (${k0.label})` : kc.label) : "";
+      const ks = d.keyShift ? ` ${d.keyShift > 0 ? "+" : "−"}${Math.abs(d.keyShift)}` : "";
+      const kt = kc ? (k0 && k0.label !== kc.label ? `${kc.label}${ks} (${k0.label})` : kc.label) : "";
       if (u.keyTag.textContent !== kt) {
         u.keyTag.textContent = kt; u.keyTag.hidden = !kt;
-        if (kc) { u.keyTag.style.color = keyColor(kc); u.keyTag.title = `${kc.name}` + (k0 && k0.label !== kc.label ? ` (pitched from ${k0.name}; turn MT on to keep the original key)` : ""); }
+        if (kc) { u.keyTag.style.color = keyColor(kc); u.keyTag.title = `${kc.name}` + (d.keyShift ? ` (KEY SHIFT ${ks.trim()} from ${k0 && k0.name}; click to reset)` : k0 && k0.label !== kc.label ? ` (pitched from ${k0.name}; turn MT on to keep the original key)` : ""); }
       }
       const pct = (d.rate() - 1) * 100;
       u.tempo.textContent = `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%  ${d.range === 100 ? "WIDE" : "±" + d.range + "%"}`;
@@ -7719,7 +7907,7 @@ function frame(ts) {
         u.phaseTag.style.color = pe == null ? "" : d.phaseHeld ? "var(--muted)" : Math.abs(pe) < 0.006 ? "var(--ok, #3ddc84)" : Math.abs(pe) < 0.02 ? "#ffb020" : "#ff3b55";
       }
       const st = d.sync && d.syncMult !== 1 ? (d.syncMult < 1 ? "SYNC ½" : "SYNC ×2") : "SYNC";
-      if (u.syncBtn.textContent !== st) u.syncBtn.textContent = st;
+      if (u.syncBtn.textContent !== st) { u.syncBtn.textContent = st; if (u.tSync) u.tSync.textContent = st; }
       u.playBtn.classList.toggle("lit", d.playing);
       u.cueBtn.classList.toggle("lit", d.loaded && Math.abs(t - d.cue) < 0.03);
     }
@@ -7804,7 +7992,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour: (on) => setDecks(on ? 4 : 2), setDecks, get NUSE() { return NUSE; }, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour: (on) => setDecks(on ? 4 : 2), setDecks, get NUSE() { return NUSE; }, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, ejectDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
 </script>
 </body>
 </html>
