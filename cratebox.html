@@ -1226,7 +1226,9 @@ class DeckPlayer extends AudioWorkletProcessor {
     for (let k = 0; k < Nw; k++) this.win[k] = 0.5 - 0.5 * Math.cos(2 * Math.PI * k / Nw);
     this.gS = new Float64Array(2); this.gK = new Int32Array(2); this.gF = new Uint8Array(2); this.gP = new Float64Array([1, 1]);
     this.cur = 0; this.ph = 0; this.prevS = 0; this.fresh = true;
-    this.buf = new Float32Array(2 * this.S + H + 8); this.tpl = new Float32Array(H);
+    this.prevP = 1;
+    // room for a grain read at up to 4x (KEY SHIFT +12 on a deck pitched up with keylock off); faster ones read the track directly
+    this.buf = new Float32Array(2 * this.S + 4 * H + 8); this.tpl = new Float32Array(H);
     this.flush();
     this.port.onmessage = (e) => this.msg(e.data);
   }
@@ -1297,13 +1299,15 @@ class DeckPlayer extends AudioWorkletProcessor {
       let te = 0;
       for (let k = 0; k < H; k++) { const x = this.mono(nat + Math.round(k * st)); tpl[k] = x; te += x * x; }
       if (te > 1e-9) {
-        const B = 2 * S + H;
+        // with a pitch step the template is compared against the track read at the same step: the window is
+        // copied once (H * st long) so the search reads the array, not the track with its loop wrap
+        const inBuf = st <= 4, B = 2 * S + Math.ceil(H * Math.min(st, 4)) + 2;
         for (let k = 0; k < B; k++) buf[k] = this.mono(base + k);
-        // (with a pitch step the template is compared against the track read at the same step)
         let bs = -Infinity;
         const score = (o, step) => {
           let c = 0, e = 1e-9;
-          for (let k = 0; k < H; k += step) { const y = st === 1 ? buf[o + k] : this.mono(base + o + Math.round(k * st)); c += tpl[k] * y; e += y * y; }
+          if (st === 1) for (let k = 0; k < H; k += step) { const y = buf[o + k]; c += tpl[k] * y; e += y * y; }
+          else for (let k = 0; k < H; k += step) { const q = (k * st + 0.5) | 0, y = inBuf ? buf[o + q] : this.mono(base + o + q); c += tpl[k] * y; e += y * y; }
           return c / Math.sqrt(e);
         };
         let bo = S;
@@ -4589,11 +4593,13 @@ function ejectPressed(btn) {
   else if (PL.devices.length > 1) popMenu(btn, PL.devices.map((d) => [`Eject ${d.name}`, () => ejectDevice(d)]));
 }
 async function ejectDevice(d) {
-  if (decks.some((k) => k.track && k.track.device === d.id)) { status(`A deck is playing from ${d.name}: load something else first`, 7000); return false; }
+  if (decks.some((k) => k.track && k.track.device === d.id)) { status(`A deck has a track from ${d.name}: load something else first`, 7000); return false; }
   if (d.unsaved && !d.saving) { clearTimeout(d.saveT); devWrite(d); }
   if (d.saving || d.unsaved) status(`Finishing the save to ${d.name}…`, 3000);
   for (let n = 0; n < 40 && d.saving; n++) await new Promise((r) => setTimeout(r, 250));
   if (d.saving || d.unsaved) { status(`Couldn't finish saving to ${d.name}. Not ejected: it isn't safe to unplug yet.`, 10000); return false; }
+  if (!PL.devices.includes(d)) return false;                  // a second press got there first
+  if (decks.some((k) => k.track && k.track.device === d.id)) { status(`A deck has a track from ${d.name}: load something else first`, 7000); return false; }
   closeDevice(d.id, true);
   status(`${d.name}: Cratebox is done with it. Eject it in Finder / File Explorer too, then unplug.`, 9000);
   return true;
@@ -5562,10 +5568,20 @@ function applyLaneSize() {
     g = { y: e.clientY, h0: lanes[0].clientHeight, rows, own };
     grip.setPointerCapture(e.pointerId); grip.classList.add("drag");
   });
+  // pointer events can come several times a frame: the newest one is applied once per frame, so the resize
+  // and its layout checks run at the screen's rate, not the mouse's
+  let pendY = null;
   grip.addEventListener("pointermove", (e) => {
     if (!g) return;
+    if (pendY == null) requestAnimationFrame(gripStep);
+    pendY = e.clientY;
+  });
+  const gripStep = () => {
+    const y = pendY; pendY = null;
+    if (!g || y == null) return;
     const z = UIZ || 1, lib = $("#library");
-    const want = clamp(Math.round(g.h0 + (e.clientY - g.y) / z / g.rows), 28, 600);
+    const want = clamp(Math.round(g.h0 + (y - g.y) / z / g.rows), 28, 600);
+    if (want === (g.own ? blaneH : laneH)) return;
     const prev = g.own ? blaneH : laneH;
     if (g.own) blaneH = want; else laneH = want;
     applyLaneSize();
@@ -5573,7 +5589,7 @@ function applyLaneSize() {
     const app = $("#app"), tall = document.documentElement.classList.contains("tallapp");
     if (want > prev && (lib.getBoundingClientRect().height < 124 * z || (!tall && app.scrollHeight > app.clientHeight + 2))) { if (g.own) blaneH = prev; else laneH = prev; applyLaneSize(); }
     renderList(true);
-  });
+  };
   const end = () => {
     if (!g) return;
     g = null; grip.classList.remove("drag");
@@ -5619,7 +5635,13 @@ function wavePopLoad(i) {
   if (!deckActive(i)) return;
   loadSelected(i); wavePopClose();
 }
-$("#wavePop").addEventListener("wheel", (e) => { e.preventDefault(); moveSel(Math.sign(e.deltaY)); }, { passive: false });
+let wavePopWheel = 0;
+$("#wavePop").addEventListener("wheel", (e) => {
+  e.preventDefault();
+  wavePopWheel += e.deltaMode === 1 ? e.deltaY * 40 : e.deltaY;    // lines → pixels
+  const n = Math.trunc(wavePopWheel / 40);
+  if (n) { wavePopWheel -= n * 40; moveSel(clamp(n, -5, 5)); }
+}, { passive: false });
 $("#lanesBtn").addEventListener("click", () => setTopWaves(!topWaves));
 $("#ejectBtn").addEventListener("click", (e) => ejectPressed(e.currentTarget));
 $("#waveBtn").addEventListener("click", () => setWaveMode(!waveMode));
@@ -7841,12 +7863,12 @@ function laneInfo(i) {
   const title = d.track ? (d.loading ? "Loading… " : "") + d.track.title : "No track loaded", artist = d.track ? d.track.artist || "" : "";
   const sig = title + "|" + artist;
   if (b.t._sig !== sig) { b.t._sig = sig; b.t.textContent = title; if (artist) b.t.append(h("small", {}, artist)); }
-  const set = (e, v) => { if (e.textContent !== v) e.textContent = v; };
+  const set = (e, v) => { if (e.textContent === v) return false; e.textContent = v; return true; };
   set(b.bpm, d.bpm ? d.effBpm().toFixed(2) : "--.--");
   const pct = (d.rate() - 1) * 100;
   set(b.pct, d.bpm ? `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%` + (d.sync ? " SYNC" : "") : "");
   const kc = camelot(d.keyNow());
-  set(b.key, kc ? kc.label : ""); b.key.style.color = kc ? keyColor(kc) : "";
+  if (set(b.key, kc ? kc.label : "")) b.key.style.color = kc ? keyColor(kc) : "";
   set(b.rem, d.loaded ? "-" + fmtTime(d.duration - t) : "");
   set(b.st, d.playing ? "▶" : d.loaded ? "❙❙" : "");
 }

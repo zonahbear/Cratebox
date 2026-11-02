@@ -17,3 +17,12 @@ Next:
 - Mixxx-derived maps have no key controls: add pitch_up/pitch_down/reset_key rules to tools/mixxx2cratebox.py, or rely on MIDI learn.
 - The iOS suite's copy of cratebox.html needs a sync after merge; KEY SHIFT should go to iOS (Swift) too.
 - Fix the two old test failures above.
+
+## 2026-11-02 (later): self-review of PR #13
+- Keylock grain search with KEY SHIFT read the track through idx() per sample (~20k calls a grain); now copies the
+  window once (buf sized for steps up to 4x) and reads the array.
+- Library grip: resize + layout checks once per frame (rAF), not per pointer event.
+- WAVE pop-up: trackpad wheel deltas add up (one row per 40 px) instead of a row per event.
+- WAVE strips: key colour only written when the key changes.
+- EJECT: re-checks the decks after waiting for a save (a stick track loaded meanwhile now refuses).
+- Still open (also on main): 1280x800 with 4 decks scrolls ~70 px (tallapp fallback). 1440x900 4-deck now fits.
