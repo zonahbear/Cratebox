@@ -131,7 +131,8 @@ def main():
         r = page.evaluate("cratebox.decks[0].rate()")
         check("tempo fader centre = 0%", abs(r - 1) < 0.001)
 
-        # deck 2: play, then SYNC to deck 1
+        # deck 2: play, then SYNC to deck 1 (140 to 126 is -10%: deck 2's tempo range has to allow it, so ±10%)
+        page.evaluate("cratebox.decks[1].rangeIdx = 1")
         midi(0x91, 0x0B, 0x7F)
         page.wait_for_timeout(300)
         midi(0x91, 0x58, 0x7F)

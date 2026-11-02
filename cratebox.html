@@ -54,6 +54,37 @@ header { min-width: 0; overflow: hidden; }
 /* fixed heights: a canvas sized "100%" can grow every time it's redrawn on iOS Safari */
 #waves canvas { width: 100%; height: var(--lane); display: block; }
 
+/* lane info strips: only in WAVE mode (title, tempo, key, time over each deck's waveform) */
+.laneinfo { display: none; }
+html.wavemode .laneinfo { display: flex; align-items: center; gap: 12px; height: 24px; padding: 0 10px 0 12px; background: var(--panel); border-left: 4px solid var(--c, var(--d0)); font-size: 13px; white-space: nowrap; overflow: hidden; }
+#laneinfo0 { --c: var(--d0); } #laneinfo1 { --c: var(--d1); } #laneinfo2 { --c: var(--d2); } #laneinfo3 { --c: var(--d3); }
+.laneinfo .ln { font-weight: 700; color: var(--c); font-size: 15px; min-width: 12px; }
+.laneinfo .lt { overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1 1 auto; }
+.laneinfo .lt small { color: var(--muted); margin-left: 6px; }
+.laneinfo .lm { font-family: var(--f-mono); color: var(--fg); }
+.laneinfo .lm.dim { color: var(--muted); }
+.laneinfo .lp { color: var(--ok); font-size: 11px; }
+/* WAVE mode: decks, mixer and library fold away; the waveforms share the whole window */
+html.wavemode:not(.phone) #app { grid-template-rows: 42px minmax(0, 1fr) !important; height: 100% !important; }
+html.wavemode #decks, html.wavemode #library { display: none !important; }
+html.wavemode #waves { display: flex !important; flex-direction: column; min-height: 0; gap: 2px; }
+html.wavemode #waves canvas { flex: 1 1 0; min-height: 0; height: auto !important; }
+html.wavemode.three.four #lane3, html.wavemode.three.four #laneinfo3 { display: none !important; }
+#waveBtn.on, #lanesBtn.on { background: var(--d0); border-color: var(--d0); color: var(--bg); }
+/* the pop-up library (WAVE mode): scrolling the library opens it over the waveforms; it goes after 6 s idle */
+#wavePop { position: fixed; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(620px, 92vw); z-index: 40; background: var(--panel);
+  border: 1px solid var(--line2); border-radius: 10px; padding: 10px 10px 8px; box-shadow: 0 12px 40px #000c; display: grid; gap: 6px; }
+#wavePop[hidden] { display: none; }
+#wavePopRows > div { display: grid; grid-template-columns: minmax(0, 1fr) 64px 40px; gap: 8px; align-items: center; height: 26px; padding: 0 8px 0 10px; border-radius: 4px; color: var(--muted); cursor: pointer; font-size: 14px; }
+#wavePopRows > div span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#wavePopRows > div .num { font-family: var(--f-mono); text-align: right; font-size: 12px; }
+#wavePopRows > div.on { background: var(--raise); color: var(--fg); box-shadow: inset 3px 0 0 var(--d0); }
+#wavePop small { color: var(--muted); }
+/* the library's top edge: drag it to trade library rows for waveform height */
+#libGrip { position: absolute; left: 0; right: 0; top: -4px; height: 8px; cursor: ns-resize; z-index: 5; touch-action: none; }
+#libGrip::after { content: ""; position: absolute; left: 50%; top: 2px; width: 44px; height: 4px; margin-left: -22px; border-radius: 2px; background: var(--line2); opacity: .7; }
+#libGrip:hover::after, #libGrip.drag::after { background: var(--d0); opacity: 1; }
+
 /* decks + mixer */
 #decks { display: grid; grid-template-columns: minmax(0, 1fr) 300px minmax(0, 1fr); gap: 8px; padding: 8px; background: var(--bg); }
 .deck { background: var(--panel); border: 1px solid var(--line); border-top: 3px solid var(--c); border-radius: 4px; padding: 10px; display: grid; gap: 8px; min-width: 0; }
@@ -547,6 +578,16 @@ html.phone .pbtns { grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 
 html.phone .pbtns .sq, html.phone .pbtns .tag { min-width: 0; overflow: hidden; }
 html.phone #mixer .cuebtn { height: 26px; }
 html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
+/* SCRATCH (phones): the deck body becomes a big platter beside SCRATCH / CUE / PLAY */
+.scrside { display: none; }
+html.phone .deck.scr .ctrl, html.phone .deck.scr .pitchwrap, html.phone .deck.scr .jogwrap .transport { display: none !important; }
+html.phone .deck.scr .dbody { align-items: center; justify-items: center; }
+html.phone .deck.scr[data-i="0"] .dbody { grid-template-columns: minmax(0, 1fr) 64px !important; grid-template-areas: "jog side" !important; }
+html.phone .deck.scr[data-i="1"] .dbody { grid-template-columns: 64px minmax(0, 1fr) !important; grid-template-areas: "side jog" !important; }
+html.phone .deck.scr .jog { display: block !important; width: var(--scrj, 120px) !important; height: var(--scrj, 120px) !important; }
+html.phone .deck.scr .scrside { grid-area: side; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+html.phone .deck.scr .scrback { height: 28px; padding: 0 4px; font-size: 11px; border-radius: 6px; width: 64px; }
+html.phone .deck.scr .scrback.lit { background: var(--c); color: #000; border-color: var(--c); }
 /* narrow phones (iPhone SE, mini): a jog that small is no use, so the deck drops it and stacks CUE over PLAY */
 @container deck (max-width: 300px) {
   html.phone .jog { display: none; }
@@ -879,14 +920,18 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     <span id="status"></span>
     <span class="spacer"></span>
     <button class="hbtn deskonly" id="recBtn" title="Record your set (master output)">● REC</button>
+    <button class="hbtn deskonly" id="lanesBtn" title="Waveforms across the top: hide them (each deck then shows its own) or show them">HIDE WAVES</button>
+    <button class="hbtn deskonly" id="waveBtn" title="WAVE mode: only the waveforms, as big as the window. Scrolling the library (browse knob, arrow keys) pops it up">WAVE</button>
     <button class="hbtn deskonly" id="fourBtn" title="Show decks 3 and 4 (4-channel mixer)">4 DECKS</button>
     <div id="masterSlot"></div>
     <button class="iconbtn phoneonly" id="fxOpen" aria-label="Beat FX">FX</button>
     <button class="iconbtn phoneonly" id="setOpen" aria-label="Settings">⚙</button>
   </header>
-  <section id="waves"><canvas id="lane0"></canvas><canvas id="lane1"></canvas><canvas id="lane2" class="ch34"></canvas><canvas id="lane3" class="ch34"></canvas></section>
+  <section id="waves"><div class="laneinfo" id="laneinfo0"></div><canvas id="lane0"></canvas><div class="laneinfo" id="laneinfo1"></div><canvas id="lane1"></canvas><div class="laneinfo ch34" id="laneinfo2"></div><canvas id="lane2" class="ch34"></canvas><div class="laneinfo ch34" id="laneinfo3"></div><canvas id="lane3" class="ch34"></canvas></section>
   <section id="decks"></section>
+  <div id="wavePop" hidden><b id="wavePopHead"></b><div id="wavePopRows"></div><small id="wavePopFoot"></small></div>
   <section id="library">
+    <div id="libGrip" class="deskonly" title="Drag up or down: a bigger library, or bigger waveforms. Double-click: back to the usual size"></div>
     <div class="ltool">
       <button class="hbtn" id="addFolder">Add music folder</button>
       <button class="hbtn" id="reconnect" hidden>Reconnect saved folder</button>
@@ -3615,9 +3660,11 @@ function moveSel(d) {
   if (y < box.scrollTop + ROW) box.scrollTop = y - ROW * 2;
   else if (y > box.scrollTop + box.clientHeight - ROW) box.scrollTop = y - box.clientHeight + ROW;
   renderList();
+  if (waveMode) wavePopOpen();
 }
 function loadSelected(i) {
   const t = lib.view[lib.sel];
+  if (typeof wavePopClose === "function") wavePopClose();
   if (t && t.missing) return status(`"${t.title}" isn't in a connected folder or device right now`);
   if (t) decks[i].load(t);
 }
@@ -4977,6 +5024,17 @@ function buildDeck(i) {
       onclick: () => { d.padMode = m === "padfx" && d.padMode === "padfx" ? "padfx2" : m; refreshDeckUI(i); } }, h("span", { class: "lg" }, label), h("span", { class: "sh" }, short));
     modes.append(u.modes[m]);
   }
+  // phones: SCR after FX turns this deck into one big platter with SCRATCH (lit: tap to go back), CUE and PLAY;
+  // the mixer and the other deck stay as they are (like the iOS app's SCRATCH)
+  if (PHONE) {
+    u.modes.scr = h("button", { class: "scrtab", title: "SCRATCH: this deck becomes one big platter", onclick: () => setScratch(i, true) }, h("span", { class: "lg" }, "SCR"), h("span", { class: "sh" }, "SCR"));
+    modes.append(u.modes.scr);
+    u.scrCue = h("button", { class: "round cue" }, "CUE");
+    u.scrCue.addEventListener("pointerdown", () => d.cueDown());
+    for (const ev of ["pointerup", "pointerleave"]) u.scrCue.addEventListener(ev, () => d.cueUp());
+    u.scrPlay = h("button", { class: "round play", onclick: () => d.togglePlay() }, "▶ ❙❙");
+    u.scrSide = h("div", { class: "scrside" }, h("button", { class: "sq scrback lit", onclick: () => setScratch(i, false) }, "SCRATCH"), u.scrCue, u.scrPlay);
+  }
   u.pads = [];
   const pads = h("div", { class: "pads" });
   for (let p = 0; p < 8; p++) {
@@ -4998,7 +5056,7 @@ function buildDeck(i) {
     pads.append(b);
   }
   const ctrl = h("div", { class: "ctrl" }, loopRow, jumpRow, modes, pads);
-  el.append(h("div", { class: "dbody" }, pitchwrap, h("div", { class: "jogwrap" }, u.jog, h("div", { class: "transport" }, u.cueBtn, u.playBtn)), ctrl));
+  el.append(h("div", { class: "dbody" }, pitchwrap, h("div", { class: "jogwrap" }, u.jog, h("div", { class: "transport" }, u.cueBtn, u.playBtn)), ctrl, u.scrSide || ""));
   // the deck's "screen": header, info, (Booth look: its own scrolling waveform), overview.
   // display: contents in the default look, so it changes nothing there
   u.lanehost = h("div", { class: "lanehost" });
@@ -5166,6 +5224,21 @@ function padPress(i, p, shift) {
   else if (d.padMode === "beatloop") d.beatLoop(LOOP_SIZES[p]);
   else if (d.padMode === "beatjump") d.beatJump(JUMPS[p]);
 }
+// phones: SCRATCH on / off for one deck. The platter takes the deck body's height (same height as before)
+function setScratch(i, on) {
+  const el = document.querySelector(`.deck[data-i="${i}"]`);
+  if (!el || !PHONE) return;
+  el.classList.toggle("scr", on);
+  fitScratch();
+  refreshDeckUI(i);
+}
+function fitScratch() {
+  for (const el of document.querySelectorAll("html.phone .deck.scr")) {
+    const b = el.querySelector(".dbody").getBoundingClientRect(), z = UIZ || 1;
+    el.style.setProperty("--scrj", Math.max(80, Math.floor(Math.min(b.height, b.width - 80) / z)) + "px");
+  }
+}
+window.addEventListener("resize", () => fitScratch());
 function setupMouseJog(cv, d) {
   let last = null;
   cv.addEventListener("pointerdown", (e) => {
@@ -5284,23 +5357,133 @@ function refreshMixerUI() {
 // everyone who never chose one gets the current default
 let THEME = "booth";
 try { if (localStorage.getItem("cb.themeChosen") === "1") THEME = localStorage.getItem("cb.theme") || "booth"; } catch (e) {}
+// Where the scrolling waveforms go (computers and tablets): across the top, stacked like the classic look
+// (topWaves, the default in both looks), or each deck's own (HIDE WAVES). WAVE mode always stacks them.
+let topWaves = true, waveMode = false;
+try { topWaves = localStorage.getItem("cb.topWaves") !== "0"; waveMode = !PHONE && localStorage.getItem("cb.waveMode") === "1"; } catch (e) {}
 function applyTheme(t, chosen = false) {
   THEME = t === "default" ? "default" : "booth";
   if (chosen) try { localStorage.setItem("cb.theme", THEME); localStorage.setItem("cb.themeChosen", "1"); } catch (e) {}
   document.documentElement.dataset.theme = THEME;
-  const own = THEME === "booth" && !PHONE;          // phones keep their layout and take the colours only
+  const own = !PHONE && !waveMode && !topWaves;     // phones keep their layout and take the colours only
   document.documentElement.classList.toggle("ownlanes", own);
-  for (let i = 0; i < NDECKS; i++) (own ? ui[i].lanehost : $("#waves")).append($("#lane" + i));
+  document.documentElement.classList.toggle("wavemode", waveMode && !PHONE);
+  for (let i = 0; i < NDECKS; i++) { const cv = $("#lane" + i); if (own) ui[i].lanehost.append(cv); else $("#laneinfo" + i).after(cv); }
+  if ($("#lanesBtn")) {
+    $("#lanesBtn").textContent = topWaves ? "HIDE WAVES" : "SHOW WAVES";
+    $("#lanesBtn").hidden = waveMode;
+    $("#waveBtn").classList.toggle("on", waveMode);
+  }
+  applyLaneSize();
   $("#themeSel").value = THEME;
   readThemeColours();
   overviewBase.fill(null);
   fitApp();
 }
+function setTopWaves(on) {
+  topWaves = on;
+  try { localStorage.setItem("cb.topWaves", on ? "1" : "0"); } catch (e) {}
+  applyTheme(THEME);
+}
+function setWaveMode(on) {
+  if (PHONE) return;
+  waveMode = on;
+  try { localStorage.setItem("cb.waveMode", on ? "1" : "0"); } catch (e) {}
+  if (!on) wavePopClose();
+  applyTheme(THEME);
+  renderList(true);
+}
+// the library's grip: dragging it changes the waveform height and the library (the grid's 1fr row) takes the
+// rest. Stacked lanes: one height for every lane (cb.laneH); a deck's own lane: cb.blaneH. Double-click resets.
+let laneH = 0, blaneH = 0;
+try { laneH = +localStorage.getItem("cb.laneH") || 0; blaneH = +localStorage.getItem("cb.blaneH") || 0; } catch (e) {}
+function applyLaneSize() {
+  const w = $("#waves");
+  if (laneH && !PHONE) { w.style.setProperty("--lane", laneH + "px"); w.style.setProperty("--lane4", laneH + "px"); }
+  else { w.style.removeProperty("--lane"); w.style.removeProperty("--lane4"); }
+  for (const el of document.querySelectorAll("#decks > .deck")) {
+    if (blaneH && !PHONE && !el.classList.contains("compact")) el.style.setProperty("--blane", blaneH + "px"); else el.style.removeProperty("--blane");
+  }
+}
+(() => {
+  const grip = $("#libGrip");
+  let g = null;
+  const visLanes = () => [...document.querySelectorAll("#waves canvas, .lanehost canvas")].filter((c) => c.offsetParent && c.clientHeight > 0);
+  grip.addEventListener("pointerdown", (e) => {
+    const lanes = visLanes();
+    if (!lanes.length) return;
+    const own = document.documentElement.classList.contains("ownlanes");
+    // own lanes: decks 1/2 sit side by side, so one lane per row; stacked: every visible lane is a row
+    const rows = own ? Math.max(1, Math.ceil(lanes.filter((c) => !c.closest(".compact")).length / 2)) : lanes.length;
+    g = { y: e.clientY, h0: lanes[0].clientHeight, rows, own };
+    grip.setPointerCapture(e.pointerId); grip.classList.add("drag");
+  });
+  grip.addEventListener("pointermove", (e) => {
+    if (!g) return;
+    const z = UIZ || 1, lib = $("#library");
+    const want = clamp(Math.round(g.h0 + (e.clientY - g.y) / z / g.rows), 28, 600);
+    const prev = g.own ? blaneH : laneH;
+    if (g.own) blaneH = want; else laneH = want;
+    applyLaneSize();
+    // never squeeze the library under its toolbar and a few rows
+    const app = $("#app"), tall = document.documentElement.classList.contains("tallapp");
+    if (want > prev && (lib.getBoundingClientRect().height < 124 * z || (!tall && app.scrollHeight > app.clientHeight + 2))) { if (g.own) blaneH = prev; else laneH = prev; applyLaneSize(); }
+    renderList(true);
+  });
+  const end = () => {
+    if (!g) return;
+    g = null; grip.classList.remove("drag");
+    try { localStorage.setItem("cb.laneH", String(laneH)); localStorage.setItem("cb.blaneH", String(blaneH)); } catch (err) {}
+    overviewBase.fill(null); fitApp();
+  };
+  grip.addEventListener("pointerup", end); grip.addEventListener("pointercancel", end);
+  grip.addEventListener("dblclick", () => {
+    laneH = blaneH = 0; applyLaneSize();
+    try { localStorage.removeItem("cb.laneH"); localStorage.removeItem("cb.blaneH"); } catch (err) {}
+    renderList(true); fitApp();
+  });
+})();
+// WAVE mode's pop-up library: moving the selection (browse knob, arrow keys) opens it over the waveforms with
+// the rows around the selection; 1-4 load onto that deck, Enter onto a stopped deck, Esc closes; 6 s idle closes
+let wavePopT = null;
+function wavePopOpen() {
+  if (!waveMode || PHONE) return;
+  const pop = $("#wavePop");
+  pop.hidden = false;
+  clearTimeout(wavePopT); wavePopT = setTimeout(wavePopClose, 6000);
+  const n = 11, v = lib.view, start = clamp(lib.sel - (n >> 1), 0, Math.max(0, v.length - n));
+  $("#wavePopHead").textContent = "LOAD · " + ($("#viewName").textContent || "Collection");
+  const rows = $("#wavePopRows");
+  rows.textContent = "";
+  if (!v.length) rows.append(h("div", {}, h("span", {}, "Nothing in this view")));
+  for (let k = start; k < Math.min(v.length, start + n); k++) {
+    const t = v[k], kc = camelot(t.key);
+    const r = h("div", { class: k === lib.sel ? "on" : "" },
+      h("span", {}, t.artist ? `${t.title} – ${t.artist}` : t.title),
+      h("span", { class: "num" }, t.bpm ? foldBpm(t.bpm).toFixed(1) : ""),
+      h("span", { class: "num" }, kc ? kc.label : ""));
+    if (kc) r.lastChild.style.color = keyColor(kc);
+    r.addEventListener("click", () => { lib.sel = lib.anchor = k; lib.selIds = new Set(); renderList(); wavePopOpen(); });
+    r.addEventListener("dblclick", () => { lib.sel = k; wavePopLoad(); });
+    rows.append(r);
+  }
+  $("#wavePopFoot").textContent = `Keys ${Array.from({ length: NUSE }, (_, i) => i + 1).join(" / ")}: load on that deck · Enter loads · Esc closes`;
+}
+function wavePopClose() { clearTimeout(wavePopT); $("#wavePop").hidden = true; }
+function wavePopLoad(i) {
+  if (i == null) { const k = decks.findIndex((d) => deckActive(d.i) && !d.playing); i = k < 0 ? 0 : k; }
+  if (!deckActive(i)) return;
+  loadSelected(i); wavePopClose();
+}
+$("#wavePop").addEventListener("wheel", (e) => { e.preventDefault(); moveSel(Math.sign(e.deltaY)); }, { passive: false });
+$("#lanesBtn").addEventListener("click", () => setTopWaves(!topWaves));
+$("#waveBtn").addEventListener("click", () => setWaveMode(!waveMode));
 // does the layout fit the window? If not (decks taller than the window leaves room for), let the page scroll
 function fitApp() {
   if (PHONE) return;
   const html = document.documentElement;
   html.classList.remove("tallapp");
+  if (waveMode) return;
   if (innerWidth <= 1100) return;                   // the stacked layout scrolls anyway
   const app = $("#app"), lib = $("#library");
   requestAnimationFrame(() => {
@@ -5344,12 +5527,13 @@ function refreshDeckUI(i) {
   u.title.textContent = d.track ? (d.loading ? "Loading… " : "") + d.track.title : "No track loaded";
   u.artist.textContent = d.track ? d.track.artist || "Unknown artist" : emptyDeckHint();
   u.playBtn.classList.toggle("lit", d.playing);
+  if (u.scrPlay) { u.scrPlay.classList.toggle("lit", d.playing); u.modes.scr.classList.toggle("on", !!document.querySelector(`.deck.scr[data-i="${i}"]`)); }
   u.syncBtn.classList.toggle("lit", d.sync);
   if (u.miniPlay) { u.miniPlay.classList.toggle("lit", d.playing); u.miniSync.classList.toggle("lit", d.sync); u.miniLoop.classList.toggle("lit", d.loop.on); }
   u.qtag.classList.toggle("on", d.quant);
   u.mtBtn.classList.toggle("on", d.mt);
   u.range.textContent = d.range === 100 ? "WIDE" : `±${d.range}%`;
-  for (const m in u.modes) u.modes[m].classList.toggle("on", d.padMode === m || (m === "padfx" && d.padMode === "padfx2"));
+  for (const m in u.modes) if (m !== "scr") u.modes[m].classList.toggle("on", d.padMode === m || (m === "padfx" && d.padMode === "padfx2"));
   if (u.modes.padfx) { const two = d.padMode === "padfx2"; u.modes.padfx.firstChild.textContent = two ? "PAD FX 2" : "PAD FX"; u.modes.padfx.lastChild.textContent = two ? "FX2" : "FX"; }
   u.pads.forEach((b, p) => {
     b.className = "pad";
@@ -7458,6 +7642,27 @@ function controlTick() {
 function startControl() { if (!controlTimer) controlTimer = setInterval(controlTick, 20); }
 // drawing backs off when frames get slow (a weak computer, a 4K screen): the waveforms skip every other frame
 let drawCost = 0, frameNo = 0;
+// WAVE mode's strip over each lane: deck, title / artist, tempo and pitch, key, time left, playing
+function laneInfo(i) {
+  const el = $("#laneinfo" + i), d = decks[i];
+  if (!el._b) {
+    el._b = { n: h("span", { class: "ln" }, String(i + 1)), t: h("span", { class: "lt" }), bpm: h("span", { class: "lm" }), pct: h("span", { class: "lm dim" }),
+      key: h("span", { class: "lm" }), rem: h("span", { class: "lm" }), st: h("span", { class: "lp" }) };
+    el.append(...Object.values(el._b));
+  }
+  const b = el._b, t = d.loaded ? d.now() : 0;
+  const title = d.track ? (d.loading ? "Loading… " : "") + d.track.title : "No track loaded", artist = d.track ? d.track.artist || "" : "";
+  const sig = title + "|" + artist;
+  if (b.t._sig !== sig) { b.t._sig = sig; b.t.textContent = title; if (artist) b.t.append(h("small", {}, artist)); }
+  const set = (e, v) => { if (e.textContent !== v) e.textContent = v; };
+  set(b.bpm, d.bpm ? d.effBpm().toFixed(2) : "--.--");
+  const pct = (d.rate() - 1) * 100;
+  set(b.pct, d.bpm ? `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%` + (d.sync ? " SYNC" : "") : "");
+  const kc = camelot(d.keyNow());
+  set(b.key, kc ? kc.label : ""); b.key.style.color = kc ? keyColor(kc) : "";
+  set(b.rem, d.loaded ? "-" + fmtTime(d.duration - t) : "");
+  set(b.st, d.playing ? "▶" : d.loaded ? "❙❙" : "");
+}
 function frame(ts) {
   requestAnimationFrame(frame);                     // first: an error below can't stop the next frame
   frameNo++;
@@ -7483,6 +7688,7 @@ function frame(ts) {
   }
   if (ts - lastUi > 66) {
     lastUi = ts;
+    if (waveMode) for (let i = 0; i < NUSE; i++) laneInfo(i);
     for (let i = 0; i < NDECKS; i++) {
       if (!deckActive(i)) continue;
       const d = decks[i], u = ui[i];
@@ -7537,6 +7743,12 @@ let slowSince = 0;
 
 window.addEventListener("keydown", (e) => {
   if (e.target.tagName === "INPUT") return;
+  if (!$("#wavePop").hidden) {
+    const n = +e.key;
+    if (n >= 1 && n <= 4 && !e.ctrlKey && !e.metaKey && !e.altKey) { e.preventDefault(); return wavePopLoad(n - 1); }
+    if (e.key === "Enter") { e.preventDefault(); return wavePopLoad(); }
+    if (e.key === "Escape") { e.preventDefault(); return wavePopClose(); }
+  }
   if ((e.key === "Delete" || e.key === "Backspace") && viewPl()) { e.preventDefault(); removeFromPlaylist(); }
   else if ((e.key === "a" || e.key === "A") && (e.ctrlKey || e.metaKey)) { e.preventDefault(); lib.selIds = new Set(lib.view.map((t) => t.id)); renderList(); }
   else if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); }
