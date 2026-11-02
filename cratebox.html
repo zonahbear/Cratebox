@@ -2494,6 +2494,12 @@ function applyAllMixer() { for (let i = 0; i < NDECKS; i++) applyMixer(i); apply
 //  Decks
 // =====================================================================================
 const RANGES = [6, 10, 16, 100];
+// SYNC's half/double time: of 1/2x, 1x and 2x the master's tempo (r = master / ours), the one nearest our own
+// that our tempo range allows (WIDE: any of them); null when none fits. Ties go to 1x.
+function pickMult(r, range = 100) {
+  const fits = [1, 0.5, 2].filter((k) => range >= 100 || Math.abs(r * k - 1) <= range / 100 + 1e-9);
+  return fits.length ? fits.reduce((a, b) => Math.abs(Math.log(r * b)) < Math.abs(Math.log(r * a)) ? b : a) : null;
+}
 class Deck {
   constructor(i) {
     this.i = i;
@@ -2509,6 +2515,9 @@ class Deck {
     this.syncMult = 1;       // 2 = we run at double the master's tempo, 0.5 = half (halftime/double-time mixing)
     this.syncTrim = 0;       // tiny speed correction that keeps the beats locked while synced
     this.phaseErr = null;    // beat offset from the master, in seconds (null = not locked)
+    this.phaseFree = false;  // the user moved this synced deck off the beat by hand (jog): beat lock leaves it
+    this.phaseHeld = false;  // ... and it's more than a quarter beat off, so the tag says TEMPO
+    this.heldAt = -1e9;      // when SYNC was last held (makeMaster): the release that follows isn't a press
     this.cue = 0;
     this.hot = new Array(8).fill(null);
     this.loop = { on: false, a: null, b: null };
@@ -2802,20 +2811,59 @@ class Deck {
       const m = this.pickMaster();
       this.syncWith = m; this.syncTrack = m ? m.track : null;
       this.syncRate = 1 + this.pitch * this.range / 100;     // with nothing to follow: stay at the fader's tempo
-      if (!m) { status("Load a track on the other deck to sync to"); }
+      if (!m) status(this.playing ? `Deck ${this.i + 1} leads: no other deck is playing, so it keeps its tempo and the next deck you sync follows it.` : `Deck ${this.i + 1}: load a track on another deck to sync to`);
       else {
         // halftime / double time: of 1/2x, 1x and 2x the master's tempo, take the one nearest our own
         // (a 70 against a 140 stays at 70 and locks every other beat, instead of being sped up to 140)
+        // (only the ones this deck's tempo range allows; none fits = SYNC stays off and says why)
         const r = m.effBpm() / this.bpm;
-        this.syncMult = [0.5, 1, 2].reduce((best, k) => Math.abs(Math.log(r * k)) < Math.abs(Math.log(r * best)) ? k : best, 1);
+        const k = pickMult(r, this.range);
+        if (k == null) {
+          this.sync = false; this.syncWith = null; this.syncTrack = null; this.phaseFree = false;
+          this.syncOutOfRange(m, r); this.sendRate(); refreshDeckUI(this.i); return;
+        }
+        this.syncMult = k;
         this.syncRate = clamp(r * this.syncMult, 0.5, 2);
         this.syncTrim = 0;
         this.sendRate();
         if (this.playing && m.playing) this.alignPhase();
         if (this.syncMult !== 1) status(`Deck ${this.i + 1} synced at ${this.syncMult < 1 ? "half" : "double"} time: ${(this.bpm * this.syncRate).toFixed(2)} against ${m.effBpm().toFixed(2)}`);
       }
-    } else { this.syncTrim = 0; this.phaseErr = null; }
+    } else { this.syncTrim = 0; this.phaseErr = null; this.phaseHeld = false; }
+    this.phaseFree = false;
     this.sendRate();
+    refreshDeckUI(this.i);
+  }
+  // SYNC refused: following m needs more than this deck's tempo range
+  syncOutOfRange(m, r) {
+    const need = [1, 0.5, 2].map((k) => (r * k - 1) * 100).reduce((a, b) => Math.abs(b) < Math.abs(a) ? b : a);
+    status(`Deck ${this.i + 1} can't sync to deck ${m.i + 1}: ${this.bpm.toFixed(2)} against ${m.effBpm().toFixed(2)} needs ${need >= 0 ? "+" : ""}${need.toFixed(1)}% at best, outside its ±${this.range}% range. Tap the range until it says WIDE to allow it.`, 8000);
+  }
+  // SYNC as the button sees it: a tap toggles it, but not the release that ends a hold (makeMaster)
+  syncPressed() {
+    if (performance.now() - this.heldAt < 2000) { this.heldAt = -1e9; return; }
+    this.setSync(!this.sync);
+  }
+  // hold SYNC: this deck becomes the master. It keeps its tempo (synced or not) and every other synced deck
+  // follows it from here, at 1/2x, 1x or 2x as its tempo range allows (one that can't is unsynced and says so)
+  makeMaster() {
+    if (!this.loaded || !this.bpm) return;
+    this.heldAt = performance.now();
+    if (this.sync) {
+      this.syncWith = null; this.syncTrack = null; this.syncTrim = 0; this.phaseFree = false; this.phaseErr = null; this.phaseHeld = false;
+      this.syncSince = Math.min(...decks.map((o) => o.syncSince)) - 1;      // the oldest sync: nobody it would follow
+      this.sendRate();
+    }
+    for (const o of decks) {
+      if (o === this || !o.sync || !deckActive(o.i) || !o.loaded || !o.bpm) continue;
+      const r = this.effBpm() / o.bpm, k = pickMult(r, o.range);
+      if (k == null) { o.setSync(false); o.syncOutOfRange(this, r); continue; }
+      o.syncWith = this; o.syncTrack = this.track; o.syncMult = k; o.syncTrim = 0; o.phaseFree = false;
+      o.syncRate = clamp(r * k, 0.5, 2); o.sendRate();
+      if (o.playing && this.playing) o.alignPhase();
+      refreshDeckUI(o.i);
+    }
+    status(`Deck ${this.i + 1} is the master: synced decks follow it`);
     refreshDeckUI(this.i);
   }
   alignPhase() {
@@ -2840,13 +2888,14 @@ class Deck {
         if (this.playing) this.syncSince = Math.min(...decks.map((o) => o.syncSince)) - 1;
       }
       if (this.syncTrim) { this.syncTrim = 0; this.sendRate(); }
-      this.phaseErr = null;
+      this.phaseErr = null; this.phaseHeld = false;
       return;
     }
     // a different master, or a new track on it: pick half/normal/double time again
     if (this.syncWith !== m || m.track !== this.syncTrack) {
-      const r0 = m.effBpm() / this.bpm;
-      this.syncMult = [0.5, 1, 2].reduce((best, k) => Math.abs(Math.log(r0 * k)) < Math.abs(Math.log(r0 * best)) ? k : best, 1);
+      const r0 = m.effBpm() / this.bpm, k = pickMult(r0, this.range);
+      if (k == null) { this.setSync(false); this.syncOutOfRange(m, r0); return; }
+      this.syncMult = k;
     }
     this.syncWith = m; this.syncTrack = m.track;
     const r = clamp(m.effBpm() * this.syncMult / this.bpm, 0.5, 2);
@@ -2854,18 +2903,21 @@ class Deck {
     this.lockPhase(m);
   }
   // Beat lock: while both decks play, measure how far our beats are from the master's (on the grids)
-  // and correct with a tiny speed change, like rekordbox's beat sync. Rounding, timing jitter and nudges
-  // on the master then never add up to drift. A deliberate offset of more than a quarter beat (a beat
-  // jump with Q off, a big nudge) is left alone; turning SYNC off and on re-locks it.
+  // and correct with a tiny speed change (up to 0.6%), like rekordbox's beat sync. Rounding, timing jitter and
+  // nudges on the master then never add up to drift. An offset of more than a quarter beat is left alone only
+  // when the user made it by hand (jog: phaseFree); any other (a jump, a tempo change) is pulled back in at up
+  // to 2%, so a synced deck can't drift away while it says SYNC.
   lockPhase(m) {
     const live = this.playing && m.playing && !this.touch && !m.touch && !this.coasting && !m.coasting && !this.previewing && this.loaded && m.loaded;
-    if (!live) { if (this.syncTrim) { this.syncTrim = 0; this.sendRate(); } this.phaseErr = null; return; }
+    if (!live) { if (this.syncTrim) { this.syncTrim = 0; this.sendRate(); } this.phaseErr = null; this.phaseHeld = false; return; }
     let err = this.beatAt(this.now()) - m.beatAt(m.now()) * this.syncMult;
     err -= Math.round(err);                                  // in beats, -0.5..0.5
     const errSec = err * this.spb / Math.max(0.05, this.rate());
-    this.phaseErr = errSec;
+    if (this.phaseFree && Math.abs(errSec) < 0.002) this.phaseFree = false;      // back on the beat: locked again
+    const held = Math.abs(err) >= 0.25 && this.phaseFree;
+    this.phaseErr = errSec; this.phaseHeld = held;
     let want = 0;
-    if (Math.abs(err) < 0.25 && Math.abs(errSec) > 0.0015) want = clamp(-errSec / 1.5, -0.006, 0.006);   // pull it back over ~1.5 s
+    if (!held && Math.abs(errSec) > 0.0015) { const lim = Math.abs(err) < 0.25 ? 0.006 : 0.02; want = clamp(-errSec / 1.5, -lim, lim); }   // pull it back over ~1.5 s
     const trim = this.syncTrim + (want - this.syncTrim) * 0.2;
     if (Math.abs(trim - this.syncTrim) > 1e-6 || (want === 0 && this.syncTrim !== 0)) { this.syncTrim = Math.abs(trim) < 1e-5 ? 0 : trim; this.sendRate(); }
   }
@@ -2886,6 +2938,7 @@ class Deck {
   jogTouch(on, noCoast) {
     if (!this.loaded) return;
     this.touch = on;
+    if (on && this.sync && this.playing) this.phaseFree = true;     // a hand on the platter: the offset it makes is meant
     // the jog keeps turning after a fling: ignore its untouched ticks until the coast ends
     if (!on && !noCoast) { this.coasting = true; this.coastHold = performance.now() + 120; } else this.coasting = false;
     this.post({ t: "scratch", v: on, noCoast: !!noCoast });
@@ -2897,7 +2950,7 @@ class Deck {
     if (kind === "scratch" && this.touch) this.post({ t: "jog", v: ticks * tickSec * this.sr });
     else if (this.coasting) return;
     else if (kind === "search") this.seek(this.now() + ticks * 0.08);
-    else if (this.playing) this.post({ t: "bend", v: ticks * 0.004 });
+    else if (this.playing) { if (this.sync) this.phaseFree = true; this.post({ t: "bend", v: ticks * 0.004 }); }
     else this.seek(this.now() + ticks * tickSec);
   }
 
@@ -4801,6 +4854,16 @@ function hslider(id, value, onInput) {
 // =====================================================================================
 //  Build the deck + mixer panels
 // =====================================================================================
+// SYNC buttons: a tap toggles SYNC, holding it half a second makes that deck the master (Deck.makeMaster)
+function holdSync(btn, d) {
+  let t = null;
+  const stop = () => { clearTimeout(t); t = null; };
+  btn.addEventListener("pointerdown", () => { stop(); t = setTimeout(() => { t = null; d.makeMaster(); }, 500); });
+  btn.addEventListener("pointerup", stop); btn.addEventListener("pointerleave", stop); btn.addEventListener("pointercancel", stop);
+  btn.addEventListener("click", () => d.syncPressed());
+  btn.title = "SYNC (hold: make this deck the master)";
+  return btn;
+}
 const ui = Array.from({ length: NDECKS }, () => ({}));
 function buildDeck(i) {
   const d = decks[i];
@@ -4882,7 +4945,7 @@ function buildDeck(i) {
   u.cueBtn.addEventListener("pointerleave", () => d.cueUp());
   u.playBtn = h("button", { class: "round play", onclick: () => d.togglePlay() }, "▶ ❙❙");
 
-  u.syncBtn = h("button", { class: "sq sync", onclick: () => d.setSync(!d.sync) }, "SYNC");
+  u.syncBtn = holdSync(h("button", { class: "sq sync" }, "SYNC"), d);
   u.inBtn = h("button", { class: "sq", onclick: () => d.loopIn() }, "IN");
   u.outBtn = h("button", { class: "sq", onclick: () => d.loopOut() }, "OUT");
   u.reloopBtn = h("button", { class: "sq", onclick: () => d.reloopExit() }, "RELOOP");
@@ -4940,7 +5003,7 @@ function buildDeck(i) {
     u.miniCue.addEventListener("pointerup", () => d.cueUp());
     u.miniCue.addEventListener("pointerleave", () => d.cueUp());
     u.miniPlay = h("button", { class: "sq mplay", onclick: () => d.togglePlay() }, "▶ ❙❙");
-    u.miniSync = h("button", { class: "sq msync", onclick: () => d.setSync(!d.sync) }, "SYNC");
+    u.miniSync = holdSync(h("button", { class: "sq msync" }, "SYNC"), d);
     u.miniLoop = h("button", { class: "sq", title: "4-beat loop / exit", onclick: () => (d.loop.on ? d.reloopExit() : d.beatLoop(4)) }, "LOOP 4");
     u.miniPitch = h("span", { class: "mpitch" }, "");
     const bend = (k) => h("button", { class: "sq", title: k < 0 ? "Tempo −0.1% (hold Shift: −1%)" : "Tempo +0.1% (hold Shift: +1%)",
@@ -7428,10 +7491,10 @@ function frame(ts) {
       u.mtag.classList.toggle("on", d.loaded && decks.some((o) => o !== d && deckActive(o.i) && o.sync && o.master() === d));
       if (u.miniPitch) { const pt = `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`; if (u.miniPitch.textContent !== pt) u.miniPitch.textContent = pt; u.miniPlay.classList.toggle("lit", d.playing); u.miniCue.classList.toggle("lit", d.loaded && Math.abs(t - d.cue) < 0.03); }
       const pe = d.sync ? d.phaseErr : null;
-      const ptx = pe == null ? "" : `${pe >= 0 ? "+" : "−"}${Math.round(Math.abs(pe) * 1000)} ms`;
+      const ptx = pe == null ? "" : `${d.phaseHeld ? "TEMPO " : ""}${pe >= 0 ? "+" : "−"}${Math.round(Math.abs(pe) * 1000)} ms`;
       if (u.phaseTag.textContent !== ptx) {
         u.phaseTag.textContent = ptx;
-        u.phaseTag.style.color = pe == null ? "" : Math.abs(pe) < 0.006 ? "var(--ok, #3ddc84)" : Math.abs(pe) < 0.02 ? "#ffb020" : "#ff3b55";
+        u.phaseTag.style.color = pe == null ? "" : d.phaseHeld ? "var(--muted)" : Math.abs(pe) < 0.006 ? "var(--ok, #3ddc84)" : Math.abs(pe) < 0.02 ? "#ffb020" : "#ff3b55";
       }
       const st = d.sync && d.syncMult !== 1 ? (d.syncMult < 1 ? "SYNC ½" : "SYNC ×2") : "SYNC";
       if (u.syncBtn.textContent !== st) u.syncBtn.textContent = st;
