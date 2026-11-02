@@ -236,7 +236,8 @@ body.browse #mixer, body.browse .dbody { display: none; }
 #progress { font-size: 12px; color: var(--muted); }
 #list { overflow-y: auto; position: relative; min-height: 0; }
 #list .hdr { position: sticky; top: 0; z-index: 2; display: grid; background: var(--raise); border-bottom: 1px solid var(--line2); }
-.cols { grid-template-columns: 44px minmax(200px, 3fr) minmax(140px, 2fr) 76px 64px 70px 72px; }
+.cols { grid-template-columns: 44px minmax(200px, 3fr) minmax(140px, 2fr) 76px 64px 64px 70px 72px; }
+.mcell { font-family: var(--f-mono); font-weight: 600; }
 .kcell { font-family: var(--f-mono); font-weight: 600; }
 .phasetag { font-family: var(--f-mono); font-size: 11px; min-width: 52px; text-align: right; }
 .phrasetag { font-family: var(--f-disp); font-weight: 600; font-size: 13px; letter-spacing: .05em; white-space: nowrap; }
@@ -430,7 +431,7 @@ dialog.sheet { position: fixed; inset: auto 0 0; margin: 0 auto; width: fit-cont
   opacity: 0; pointer-events: none; transition: opacity .2s; }
 #toast.show { opacity: 1; }
 /* library rows on a phone: big and thumb-friendly */
-.prow { display: grid; grid-template-columns: minmax(0, 1fr) 54px 40px 52px 44px 44px; gap: 6px; align-items: center; }
+.prow { display: grid; grid-template-columns: minmax(0, 1fr) 54px 40px 36px 52px 44px 44px; gap: 6px; align-items: center; }
 html.phone #list .trow { padding: 0 10px; border-bottom: 1px solid var(--line); }
 html.phone #list .hdr { height: 26px; padding: 0 10px; }
 .prow .tt { min-width: 0; }
@@ -3231,7 +3232,7 @@ async function analysisLane(lane, off, st) {
 
 // ---- track list (virtualised) ----
 const ROW = typeof PHONE !== "undefined" && PHONE ? 50 : 26;
-const COLS = [["#", null], ["Title", "title"], ["Artist", "artist"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["Deck", null]];
+const COLS = [["#", null], ["Title", "title"], ["Artist", "artist"], ["BPM", "bpm"], ["Key", "keySort"], ["Match", "match"], ["Time", "duration"], ["Deck", null]];
 function applyView(keepSel) {
   const q = lib.query.toLowerCase();
   const selId = lib.view[lib.sel] && lib.view[lib.sel].id;
@@ -3239,7 +3240,8 @@ function applyView(keepSel) {
   // the current view (collection, a playlist, a device) in its own order, then search, then sort
   let v = viewTracks().map((t, i) => ({ t, i: t.missing && t.pos != null ? t.pos : i }))
     .filter(({ t }) => !q || (t.title || "").toLowerCase().includes(q) || (t.artist || "").toLowerCase().includes(q) || ck(t) === q);
-  for (const { t } of v) { const c = camelot(t.key); t.keySort = c ? c.sort : 99; }
+  const mref = matchRef();
+  for (const { t } of v) { const c = camelot(t.key); t.keySort = c ? c.sort : 99; const m = mref && matchScore(mref, t); t.match = m ? m.score : -1; }
   if (lib.sort) {
     const k = lib.sort, d = lib.dir;
     v.sort((a, b) => {
@@ -3261,7 +3263,63 @@ function refKey() {
   p.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
   return p[0].keyNow();
 }
-let lastRef = -2;
+let lastRef = "";
+// ---- MATCH: how well a track would follow what's playing (port of cratebox-iOS-suite tools/next_track.js) ----
+// tempo 35% (½×/1×/2× only if the target deck's range reaches it, like SYNC), key 30% (Camelot moves, after the
+// pitch change when master tempo is off); energy/sound/genre aren't known for library tracks here yet, so they drop out
+function nextKeyScore(a, b) {
+  const x = camelot(a), y = camelot(b);
+  if (!x || !y) return { s: 0.5, why: "key ?" };
+  const d = ((y.num - x.num) % 12 + 12) % 12, step = Math.min(d, 12 - d), xm = x.letter === "A", ym = y.letter === "A";
+  if (xm === ym) {
+    if (d === 0) return { s: 1, why: "same key" };
+    if (step === 1) return { s: 0.9, why: d === 1 ? "+1" : "−1" };
+    if (step === 2) return { s: 0.6, why: d === 2 ? "+2" : "−2" };
+    if (d === 7) return { s: 0.55, why: "+1 semitone" };
+    if (d === 5) return { s: 0.45, why: "−1 semitone" };
+  } else {
+    if (d === 0) return { s: 0.85, why: "relative" };
+    if ((!xm && d === 11) || (xm && d === 1)) return { s: 0.6, why: "diagonal" };
+  }
+  return { s: 0.1, why: "clash" };
+}
+function nextTempoFit(ref, bpm, range) {
+  if (!(ref > 0) || !(bpm > 0)) return null;
+  const r = ref / bpm, fits = [1, 0.5, 2].filter((k) => range >= 100 || Math.abs(r * k - 1) <= range / 100 + 1e-9);
+  if (!fits.length) return null;
+  const k = fits.reduce((a, b) => (Math.abs(Math.log(r * b)) < Math.abs(Math.log(r * a)) ? b : a));
+  return { mult: k, rate: r * k, pct: (r * k - 1) * 100 };
+}
+// what MATCH compares against: the deck that started playing most recently, loading onto the first other shown
+// deck that isn't playing (as a double-click would). null when nothing is playing
+function matchRef() {
+  const p = decks.filter((d) => d.playing && d.loaded && d.bpm > 0);
+  if (!p.length) return null;
+  p.sort((a, b) => (b.startedAt || 0) - (a.startedAt || 0));
+  const on = p[0], to = decks.find((d) => d !== on && deckActive(d.i) && !d.playing) || decks.find((d) => d !== on && deckActive(d.i));
+  if (!to) return null;
+  return { id: on.track && on.track.id, bpm: on.effBpm(), key: on.keyNow(), range: to.range, mt: to.mt, to: to.i };
+}
+function matchSig() { const m = matchRef(); return m ? `${m.id}|${m.bpm.toFixed(1)}|${m.range}|${m.mt}|${m.to}` : ""; }
+function matchScore(m, t) {
+  if (!t || t.id === m.id || !(t.bpm > 0)) return null;
+  const fit = nextTempoFit(m.bpm, t.bpm, m.range);
+  if (!fit) return null;
+  const keyAfter = m.mt || t.key == null || t.key < 0 ? (t.key == null ? -1 : t.key) : shiftKey(t.key, Math.floor(12 * Math.log2(fit.rate) + 0.5));
+  const k = nextKeyScore(m.key, keyAfter);
+  const tempo = Math.max(0, 1 - Math.abs(fit.pct) / Math.min(m.range, 8)) * (fit.mult === 1 ? 1 : 0.85);
+  let score = (tempo * 0.35 + k.s * 0.3) / 0.65 * 100;
+  if (k.why === "clash") score *= 0.6;
+  const why = (fit.mult === 0.5 ? "½× " : fit.mult === 2 ? "2× " : "") + (fit.pct >= 0 ? "+" : "") + fit.pct.toFixed(1) + "% · " + k.why + (keyAfter !== t.key ? " (pitched)" : "");
+  return { score, why };
+}
+function matchCell(t, m) {
+  const r = m && matchScore(m, t);
+  if (!r) return h("div", { class: "num mcell", title: m && t.bpm > 0 && t.id !== m.id ? `Deck ${m.to + 1} can't reach this tempo on its range` : "" }, m && t.id !== m.id && t.bpm > 0 ? "–" : "");
+  const s = Math.round(r.score), el = h("div", { class: "num mcell", title: `Match for deck ${m.to + 1}: ${r.why}` }, String(s));
+  el.style.color = s >= 80 ? "#3ddc84" : s >= 60 ? "#ffd23f" : s >= 40 ? "#f2a33a" : "#ff6b6b";
+  return el;
+}
 function keyCell(t, ref) {
   const c = camelot(t.key);
   if (!c) return h("div", { class: "num kcell" }, t.key === -1 ? "?" : t.bpm == null ? "…" : "");
@@ -3274,9 +3332,9 @@ function renderList(full) {
   if (full || !listInner) {
     box.innerHTML = "";
     const hdr = h("div", { class: "hdr " + (PHONE ? "prow" : "cols") });
-    (PHONE ? [["Title", "title"], ["BPM", "bpm"], ["Key", "keySort"], ["Time", "duration"], ["", null], ["", null]] : COLS).forEach(([label, key]) => {
+    (PHONE ? [["Title", "title"], ["BPM", "bpm"], ["Key", "keySort"], ["Mix", "match"], ["Time", "duration"], ["", null], ["", null]] : COLS).forEach(([label, key]) => {
       const c = h("div", { class: lib.sort === key && key ? "sorted" : "" }, label + (lib.sort === key && key ? (lib.dir > 0 ? " ▴" : " ▾") : ""));
-      if (key) c.onclick = () => { lib.dir = lib.sort === key ? -lib.dir : 1; lib.sort = key; rememberSort(); applyView(true); };
+      if (key) c.onclick = () => { lib.dir = lib.sort === key ? -lib.dir : key === "match" ? -1 : 1; lib.sort = key; rememberSort(); applyView(true); };
       else if (label === "#") { c.title = "Back to the list's own order"; c.onclick = () => { lib.sort = null; rememberSort(); applyView(true); }; }
       hdr.append(c);
     });
@@ -3294,7 +3352,7 @@ function renderList(full) {
   const top = Math.max(0, box.scrollTop - 30);
   const first = Math.floor(top / ROW), count = Math.ceil(box.clientHeight / ROW) + 4;
   listInner.innerHTML = "";
-  const ref = camelot(refKey());
+  const ref = camelot(refKey()), mref = matchRef();
   for (let i = first; i < Math.min(lib.view.length, first + count); i++) {
     const t = lib.view[i];
     const onDeck = decks.findIndex((d) => d.track && d.track.id === t.id);
@@ -3303,7 +3361,7 @@ function renderList(full) {
       const row = h("div", { class: `trow prow${i === lib.sel ? " sel" : ""}${onDeck >= 0 ? " on" + onDeck : ""}`, style: `top:${i * ROW}px;height:${ROW}px` },
         h("div", { class: "tt" }, h("b", {}, t.title), h("span", {}, t.artist || "")),
         h("div", { class: "num" + (t.gridManual ? " manual" : "") }, t.bpm ? t.bpm.toFixed(t.bpm % 1 ? 2 : 0) : t.bpm === 0 ? "?" : "…"),
-        keyCell(t, ref),
+        keyCell(t, ref), matchCell(t, mref),
         h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
         ld(0), ld(1));
       if (t.missing) row.classList.add("missing");
@@ -3318,7 +3376,7 @@ function renderList(full) {
       h("div", { class: "t" }, t.title),
       h("div", {}, t.artist),
       h("div", { class: "num" + (t.gridManual ? " manual" : ""), title: t.gridManual ? "Beat grid edited by hand" : "" }, t.bpm ? t.bpm.toFixed(t.bpm % 1 ? 2 : 0) : t.bpm === 0 ? "?" : "…"),
-      keyCell(t, ref),
+      keyCell(t, ref), matchCell(t, mref),
       h("div", { class: "num" }, t.duration ? fmtTime(t.duration).replace(/\.\d$/, "") : ""),
       h("div", { class: "num" }, onDeck >= 0 ? String(onDeck + 1) : ""));
     row.onclick = (e) => selectRow(i, e);
@@ -7383,7 +7441,7 @@ function frame(ts) {
   }
   if (REC.on && ts - (REC.lastTick || 0) > 500) { REC.lastTick = ts; $("#recBtn").textContent = "■ " + recClock(); }
   if (ts - lastLed > 50) { lastLed = ts; updateLeds(); }
-  if (ts - lastUi < 20) { const rk = refKey(); if (rk !== lastRef) { lastRef = rk; renderList(); } }
+  if (ts - lastUi < 20) { const rk = refKey() + "|" + matchSig(); if (rk !== lastRef) { lastRef = rk; if (lib.sort === "match") applyView(true); else renderList(); } }
   drawCost = drawCost * 0.9 + (performance.now() - t0) * 0.1;
   // Auto waveform detail: if drawing has stayed slow for 3 seconds, draw the waveforms at 1x for the
   // rest of the session (a weak computer, or a browser drawing without the graphics card)
