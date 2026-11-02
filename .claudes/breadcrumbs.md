@@ -25,4 +25,4 @@ Next:
 - WAVE pop-up: trackpad wheel deltas add up (one row per 40 px) instead of a row per event.
 - WAVE strips: key colour only written when the key changes.
 - EJECT: re-checks the decks after waiting for a save (a stick track loaded meanwhile now refuses).
-- Still open (also on main): 1280x800 with 4 decks scrolls ~70 px (tallapp fallback). 1440x900 4-deck now fits.
+- 4 decks fit at 1280x800 (library min 86 px there) and 1440x900; under ~800 px tall it still scrolls (tallapp).

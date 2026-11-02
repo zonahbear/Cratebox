@@ -567,6 +567,8 @@ html:not(.phone) #waves { --lane: clamp(50px, calc((100vh - 590px) / 2), 74px); 
   html:not(.phone) #mixer .strip { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 4px; align-items: center; justify-items: center; align-content: start; }
   html:not(.phone) #mixer .strip .cuebtn { width: 100%; max-width: 56px; }
   html:not(.phone) #mixer .mcenter .meter { height: 86px !important; }
+  /* 4 decks with the four lanes stacked on top (1280 x 800): the library gives up a row so nothing scrolls */
+  html.four:not(.phone):not(.ownlanes):not(.wavemode) #app { grid-template-rows: 42px auto auto minmax(86px, 1fr); }
 }
 @media (min-width: 1101px) and (max-width: 1399px) {
   html:not(.phone) #decks { grid-template-columns: minmax(0, 1fr) 260px minmax(0, 1fr); }
@@ -697,6 +699,7 @@ html.zoomed:not(.phone) #app { zoom: var(--uiz); height: calc(100vh / var(--uiz)
 html.four #waves { --lane4: clamp(30px, calc(var(--lane) * .6), 46px); grid-template-rows: repeat(4, var(--lane4)); min-height: calc(4 * var(--lane4) + 6px); }
 /* Booth decks are taller than Classic's, so four stacked lanes on top of them are a little lower (keeps 1440p and 900 pt windows from scrolling) */
 html[data-theme="booth"].four:not(.phone):not(.ownlanes) #waves { --lane4: clamp(30px, calc(var(--lane) * .55), 42px); }
+@media (max-height: 860px) { html[data-theme="booth"].four:not(.phone):not(.ownlanes) #waves { --lane4: 30px; } }
 #waves { min-height: calc(2 * var(--lane) + 2px); }
 html.four #waves canvas { height: var(--lane4); }
 @media (min-width: 1101px) {
