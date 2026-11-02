@@ -29,7 +29,8 @@ LAYOUT = """(() => {
   const sel = [".deck .round.play", ".deck .round.cue", ".deck .pad", ".deck .jog", ".deck .sync", ".deck .vslider",
                "#mixer .vslider", "#mixer .hslider", "#mixer .cuebtn", "#mixer .knob svg", ".deck .overview", "#lane0", "#lane1"];
   const out = [];
-  for (const s of sel) for (const e of document.querySelectorAll(s)) if (!inView(e)) out.push(s + " " + JSON.stringify(r(e)));
+  // (the SCRATCH face's own CUE / PLAY are hidden until SCR is pressed)
+  for (const s of sel) for (const e of document.querySelectorAll(s)) if (!e.closest(".scrside") && !inView(e)) out.push(s + " " + JSON.stringify(r(e)));
   const l0 = r(document.querySelector("#lane0")), l1 = r(document.querySelector("#lane1"));
   // pads must not overlap each other or the transport buttons
   const boxes = [...document.querySelectorAll(".deck .pad, .deck .round, .deck .sq")].filter((e) => r(e).width > 0).map(r);
@@ -55,7 +56,7 @@ def main():
     errors = []
     check = T.check
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 956, "height": 440}, screen={"width": 440, "height": 956},
                             is_mobile=True, has_touch=True, user_agent=IPHONE_UA, device_scale_factor=3)
         ctx.add_init_script(STRIP)

@@ -17,7 +17,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch()
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}))
         def look(init):
             ctx = b.new_context(viewport={"width": 1440, "height": 900})
             if init:
