@@ -41,7 +41,7 @@ def main():
     music = os.path.join(T.ROOT, "tests", "music")
     files = [os.path.join(music, n) for n in sorted(os.listdir(music)) if n.endswith(("126.wav", "140.wav"))]
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 915, "height": 412}, screen={"width": 412, "height": 915},
                             is_mobile=True, has_touch=True, user_agent=PIXEL_UA, device_scale_factor=2.625)
         ctx.add_init_script(FAKE_FLX4)

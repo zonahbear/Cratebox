@@ -568,6 +568,12 @@ html.phone #waves { --lane: clamp(36px, calc(100dvh / 8 - 6px), 46px); }
 }
 /* ---- 4-deck mode (computers and tablets): decks 3 and 4 under 1 and 2, mixer channels 3 1 2 4 ---- */
 html:not(.four) .ch34 { display: none !important; }
+/* 3 decks: deck 4, its lane, channel strip, fader, layer cell and Beat FX channel button are hidden */
+html.three.four:not(.phone) .deck[data-i="3"], html.three.four:not(.phone) #lane3, html.three.four:not(.phone) #mixer .strip.s3,
+html.three.four:not(.phone) #mixer .fcol.f3, html.three.four:not(.phone) #mixer .meter.m3,
+html.three.four:not(.phone) .layercell[data-d="3"], html.three.four:not(.phone) .bfxc[data-ch="3"] { display: none !important; }
+html.three #waves { grid-template-rows: repeat(3, var(--lane4)); min-height: calc(3 * var(--lane4) + 6px); }
+html.three #mixer, html.three #mixer .faders { grid-template-columns: 1fr 1fr 44px 1fr; }
 /* set recording */
 #recBtn { font-weight: 600; }
 #recBtn.on { background: #b3202f; border-color: #e0364a; color: #fff; animation: recblink 1.2s steps(2, start) infinite; }
@@ -994,10 +1000,15 @@ const PHONE = (matchMedia("(pointer: coarse)").matches || IOS) && Math.min(scree
 // decode one track at a time and use bigger audio buffers
 // decks 3 and 4: on computers and tablets (phones keep two); shown when 4-deck mode is on
 const NDECKS = PHONE ? 2 : 4;
-let FOUR = false;
-try { FOUR = !PHONE && localStorage.getItem("cb.four") === "1"; } catch (e) {}
+// NUSE = decks in use: 2, 3 (decks 1 and 3 share the left side, 2 stays on the right) or 4. FOUR = more than two
+let NUSE = 2, FOUR = false;
+try {
+  const n = +localStorage.getItem("cb.decks") || (localStorage.getItem("cb.four") === "1" ? 4 : 2);
+  NUSE = PHONE ? 2 : Math.min(4, Math.max(2, n)); FOUR = NUSE > 2;
+} catch (e) {}
 document.documentElement.classList.toggle("four", FOUR);
-const deckActive = (i) => i < 2 || FOUR;
+document.documentElement.classList.toggle("three", NUSE === 3);
+const deckActive = (i) => i < NUSE;
 // jog sensitivity: scales every jog movement (scratch, nudge, search) from the controller and the on-screen jog
 let jogSens = 1;
 try { jogSens = parseFloat(localStorage.getItem("cb.jogsens")) || 1; } catch (e) {}
@@ -2355,7 +2366,7 @@ async function initAudio(ctxOverride) {
   const sp = ctx.createChannelSplitter(2);
   A.limiter.connect(sp);
   sp.connect(A.masterMeterL, 0); sp.connect(A.masterMeterR, 1);
-  for (let i = 0; i < (FOUR ? NDECKS : 2); i++) A.decks.push(buildDeckChain(i));
+  for (let i = 0; i < (FOUR ? NDECKS : 2); i++) A.decks.push(buildDeckChain(i));     // 3 decks: deck 4's chain idles
   routeOutput("off");
   applyAllMixer();
   A.currentSink = "";
@@ -5219,7 +5230,7 @@ function buildMixer() {
   for (let i = 2; i < NDECKS; i++) mx.append(Object.assign(strip(i), { className: `strip ch34 s${i}` }));
   const faders = h("div", { class: "faders" });
   for (let i = 0; i < NDECKS; i++) {
-    const meter = h("canvas", { class: "meter" + (i >= 2 ? " ch34" : ""), width: "16", height: "300" });
+    const meter = h("canvas", { class: "meter" + (i >= 2 ? ` ch34 m${i}` : ""), width: "16", height: "300" });
     ui[i].meter = meter;
     const fcol = h("div", { class: "fcol" + (i >= 2 ? ` ch34 f${i}` : "") }, vslider(`fader${i}`, M.fader[i], (v) => { M.fader[i] = v; applyMixer(i); }, { height: 112 }), h("span", { class: "slabel" }, `CH ${i + 1}`));
     if (i === 0) faders.append(fcol, h("div", { class: "fcol mcol", style: "flex-direction:row;gap:6px;justify-content:center" }, meter));
@@ -5241,7 +5252,7 @@ function buildMixer() {
   A.bfx.chBtns = {};
   for (const ch of [2, 0, "M", 1, 3]) {
     if (typeof ch === "number" && ch >= NDECKS) continue;
-    const b = h("button", { class: "bfxc" + (typeof ch === "number" && ch >= 2 ? " ch34" : ""), title: ch === "M" ? "Beat FX on the master" : `Beat FX on channel ${ch + 1}`, onclick: () => fxChannel(ch) }, ch === "M" ? "M" : String(ch + 1));
+    const b = h("button", { class: "bfxc" + (typeof ch === "number" && ch >= 2 ? " ch34" : ""), "data-ch": String(ch), title: ch === "M" ? "Beat FX on the master" : `Beat FX on channel ${ch + 1}`, onclick: () => fxChannel(ch) }, ch === "M" ? "M" : String(ch + 1));
     A.bfx.chBtns[ch] = b;
     A.bfx.chs.append(b);
   }
@@ -5298,25 +5309,30 @@ function fitApp() {
     if (short) renderList(true);
   });
 }
-// 2 / 4 decks (computers and tablets)
-function setFour(on) {
+// 2 / 3 / 4 decks (computers and tablets). The header button cycles 2 → 3 → 4 → 2 and says how many are shown.
+// 3 decks: deck 3 shares the controller's left side with deck 1 (layer button), deck 2 keeps the right.
+function setDecks(n) {
   if (PHONE) return;
-  // the music never stops: decks 3/4 can't be hidden while they play
-  const busy = !on && decks.slice(2).find((d) => d.playing);
-  if (busy) { status(`Deck ${busy.i + 1} is playing: stop it (or fade it out) before going back to 2 decks`, 6000); return; }
+  n = Math.min(4, Math.max(2, n | 0));
+  // the music never stops: a deck can't be hidden while it plays
+  const busy = decks.slice(n).find((d) => d.playing);
+  if (busy) { status(`Deck ${busy.i + 1} is playing: stop it (or fade it out) before going to ${n} decks`, 6000); return; }
+  const on = n > 2;
   if (on && A.ctx) while (A.decks.length < NDECKS) A.decks.push(buildDeckChain(A.decks.length));
-  FOUR = on;
-  try { localStorage.setItem("cb.four", on ? "1" : "0"); } catch (e) {}
+  NUSE = n; FOUR = on;
+  try { localStorage.setItem("cb.decks", String(n)); localStorage.setItem("cb.four", on ? "1" : "0"); } catch (e) {}
   document.documentElement.classList.toggle("four", on);
+  document.documentElement.classList.toggle("three", n === 3);
   $("#fourBtn").classList.toggle("on", on);
-  $("#fourBtn").textContent = on ? "2 DECKS" : "4 DECKS";
-  $("#fourBtn").title = on ? "Back to 2 decks" : "Show decks 3 and 4 (4-channel mixer)";
+  $("#fourBtn").textContent = `${n} DECKS`;
+  $("#fourBtn").title = `${n} decks shown. Click for ${n === 4 ? 2 : n + 1}.`;
   const xl = $("#mixer .xl"), xr = $("#mixer .xr");
-  if (xl) { xl.textContent = on ? "1·3" : "1"; xr.textContent = on ? "2·4" : "2"; }
-  for (const d of decks.slice(2)) if (d.sync && !on) d.setSync(false);
+  if (xl) { xl.textContent = on ? "1·3" : "1"; xr.textContent = n === 4 ? "2·4" : "2"; }
+  for (const d of decks.slice(n)) if (d.sync) d.setSync(false);
   if (!on) { MIDI.side = [0, 1]; MIDI.pickup.clear(); }
+  else if (MIDI.side[1] >= n) { MIDI.side[1] = 1; MIDI.pickup.clear(); }
   refreshLayerUI();
-  if (!on && typeof FX.beat.ch === "number" && FX.beat.ch >= 2) fxChannel(0);
+  if (typeof FX.beat.ch === "number" && FX.beat.ch >= n) fxChannel(0);
   applyAllMixer();
   overviewBase.fill(null);
   renderList(true);
@@ -5927,7 +5943,7 @@ function pickedUp(name, deck, val) {
   return false;
 }
 function setSide(side, deck) {
-  if (deck === MIDI.side[side] || !FOUR && deck >= 2) return;
+  if (deck === MIDI.side[side] || deck >= NUSE) return;
   const old = decks[MIDI.side[side]];
   if (old && old.touch) old.jogTouch(false);                // let go of the platter on the deck being left
   MIDI.side[side] = deck;
@@ -7330,7 +7346,7 @@ const HEAT = (() => {
 const deckEls = [buildDeck(0), buildMixer(), buildDeck(1)];
 for (let i = 2; i < NDECKS; i++) deckEls.push(buildDeck(i));
 $("#decks").append(...deckEls);
-$("#fourBtn").addEventListener("click", () => setFour(!FOUR));
+$("#fourBtn").addEventListener("click", () => setDecks(NUSE === 4 ? 2 : NUSE + 1));
 $("#masterSlot").append(knob("master", "Master", M.master, (v) => { M.master = v; applyMaster(); }, { size: 30 }));
 if (PHONE) phoneize();
 tagLearnables();
@@ -7338,7 +7354,7 @@ useProfile("ddj-flx4");
 for (let i = 0; i < NDECKS; i++) refreshDeckUI(i);
 refreshMixerUI();
 applyTheme(THEME);
-setFour(FOUR);
+setDecks(NUSE);
 $("#themeSel").addEventListener("change", (e) => applyTheme(e.target.value, true));
 $("#addFolder").addEventListener("click", pickFolder);
 $("#rangeSel").value = bpmRange;
@@ -7526,7 +7542,7 @@ window.addEventListener("keydown", (e) => {
   else if (e.key === "ArrowDown") { e.preventDefault(); moveSel(1); }
   else if (e.key === "ArrowUp") { e.preventDefault(); moveSel(-1); }
   else if (e.key === "ArrowLeft" && e.shiftKey) loadSelected(FOUR && (e.ctrlKey || e.metaKey) ? 2 : 0);
-  else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(FOUR && (e.ctrlKey || e.metaKey) ? 3 : 1);
+  else if (e.key === "ArrowRight" && e.shiftKey) loadSelected(NUSE === 4 && (e.ctrlKey || e.metaKey) ? 3 : 1);
 });
 window.addEventListener("resize", () => { applyUiSize(); overviewBase.fill(null); renderList(true); fitApp(); });
 $("#uiSizeSel").value = uiSize;
@@ -7576,7 +7592,7 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
-window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour: (on) => setDecks(on ? 4 : 2), setDecks, get NUSE() { return NUSE; }, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
 </script>
 </body>
 </html>

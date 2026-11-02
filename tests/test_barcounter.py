@@ -20,7 +20,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 1440, "height": 900})
         page = ctx.new_page()
         page.on("pageerror", lambda e: errors.append(str(e)))
@@ -55,7 +55,7 @@ def main():
         # bars count from the start of the track (like rekordbox), so the playhead becomes the first beat of *a* bar
         check("BAR 1 HERE: the playhead becomes a downbeat (x.1)", page.evaluate('cratebox.decks[1].barShown').endswith(".1"), page.evaluate('cratebox.decks[1].barShown'))
         # compact decks show it too
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(4)")
         load_all(page, 4)
         page.evaluate("(() => { const d = cratebox.decks[2]; d.seek(d.timeOfBeat(13.5)); })()")
         page.wait_for_timeout(300)

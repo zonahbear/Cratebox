@@ -23,7 +23,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 1440, "height": 900})
         page = ctx.new_page()
         page.on("pageerror", lambda e: errors.append(str(e)))
@@ -35,7 +35,7 @@ def main():
         load_all(page, 2)
 
         # beat lock with the screen frozen: stop requestAnimationFrame entirely, then knock deck 2 off the beat
-        page.evaluate("cratebox.decks[0].togglePlay(); cratebox.decks[1].setSync(true); cratebox.decks[1].togglePlay()")
+        page.evaluate("cratebox.decks[0].togglePlay(); cratebox.decks[1].rangeIdx = 3; cratebox.decks[1].setSync(true); cratebox.decks[1].togglePlay()")
         page.wait_for_timeout(1500)
         page.evaluate("window.requestAnimationFrame = () => 0")      # drawing stops, like a hidden tab
         page.wait_for_timeout(300)
@@ -66,18 +66,18 @@ def main():
         page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
         page.click("#startBtn")
         page.wait_for_function("window.cratebox && cratebox.A.ctx")
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(4)")
         check("4 DECKS builds the audio chains for decks 3 and 4", page.evaluate("cratebox.A.decks.length") == 4)
         load_all(page, 4)
         page.evaluate("cratebox.decks[2].togglePlay()")
         page.wait_for_timeout(300)
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(2)")
         st = page.evaluate("({ four: document.documentElement.classList.contains('four'), playing: cratebox.decks[2].playing, gain: cratebox.A.decks[2].xf.gain.value, status: document.querySelector('#status').textContent })")
         check("2 DECKS while deck 3 plays: refused, deck 3 keeps playing and stays audible", st["four"] and st["playing"] and st["gain"] > 0.5 and "playing" in st["status"], str(st))
         page.evaluate("cratebox.decks[2].togglePlay()")
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(2)")
         check("...and allowed once it's stopped", not page.evaluate("document.documentElement.classList.contains('four')"))
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(4)")
 
         # recorder: buffers come back to the audio thread (no garbage made there while recording)
         page.evaluate("cratebox.decks[0].togglePlay()")

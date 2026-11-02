@@ -32,7 +32,7 @@ def main():
     music = os.path.join(T.ROOT, "tests", "music")
     names = sorted(n for n in os.listdir(music) if n.endswith(("126.wav", "140.wav")))
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 1440, "height": 900}, accept_downloads=True)
         page = ctx.new_page()
         page.on("pageerror", lambda e: errors.append(str(e)))

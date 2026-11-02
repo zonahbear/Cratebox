@@ -33,7 +33,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         ctx = b.new_context(viewport={"width": 1440, "height": 900})
         page = ctx.new_page()
         page.on("pageerror", lambda e: errors.append(str(e)))
@@ -41,9 +41,17 @@ def main():
         page.click("#startBtn")
         page.wait_for_function("window.cratebox && cratebox.A.ctx")
         vis = lambda sel: page.evaluate(f"(() => {{ const e = document.querySelector('{sel}'); return !!e && e.getBoundingClientRect().height > 0; }})()")
-        check("starts in 2-deck mode: decks 3/4 and lanes 3/4 hidden", not vis('.deck[data-i="2"]') and not vis("#lane3") and page.inner_text("#fourBtn") == "4 DECKS")
+        check("starts in 2-deck mode: decks 3/4 and lanes 3/4 hidden", not vis('.deck[data-i="2"]') and not vis("#lane3") and page.inner_text("#fourBtn") == "2 DECKS")
         page.click("#fourBtn")
-        check("4 DECKS shows decks 3 and 4, four lanes, a 4-channel mixer", vis('.deck[data-i="2"]') and vis('.deck[data-i="3"]') and vis("#lane3") and vis("#mixer .strip.s3") and page.inner_text("#fourBtn") == "2 DECKS")
+        check("DECKS button → 3 decks: deck 3, three lanes, a 3-channel mixer (3 1 2), deck 4 hidden",
+              vis('.deck[data-i="2"]') and not vis('.deck[data-i="3"]') and vis("#lane2") and not vis("#lane3") and vis("#mixer .strip.s2") and not vis("#mixer .strip.s3")
+              and not vis('#mixer .f3') and page.inner_text("#fourBtn") == "3 DECKS")
+        order3 = page.evaluate("[...document.querySelectorAll('#mixer > .strip')].filter(s => s.getBoundingClientRect().width > 0).sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(s => +s.dataset.i + 1)")
+        check("3 decks: mixer channels left to right 3 1 2", order3 == [3, 1, 2], str(order3))
+        sides = page.evaluate("(() => { const M = cratebox.MIDI; const s0 = M.side.slice(); document.querySelector('.layercell[data-d=\"2\"]').click(); const s1 = M.side.slice(); document.querySelector('.layercell[data-d=\"0\"]').click(); return [s0, s1, M.side.slice()]; })()")
+        check("3 decks: the left side switches 1 ⇄ 3, the right stays on 2", sides == [[0, 1], [2, 1], [0, 1]], str(sides))
+        page.click("#fourBtn")
+        check("DECKS button → 4 decks shows decks 3 and 4, four lanes, a 4-channel mixer", vis('.deck[data-i="2"]') and vis('.deck[data-i="3"]') and vis("#lane3") and vis("#mixer .strip.s3") and page.inner_text("#fourBtn") == "4 DECKS")
         order = page.evaluate("[...document.querySelectorAll('#mixer > .strip')].sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(s => +s.dataset.i + 1)")
         check("mixer channels left to right: 3 1 2 4", order == [3, 1, 2, 4], str(order))
         fo = page.evaluate("[...document.querySelectorAll('#mixer .faders .vslider')].sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left).map(e => e.parentElement.querySelector('.slabel').textContent)")
@@ -61,7 +69,7 @@ def main():
         check("crossfader left: decks 1 and 3 audible, 2 and 4 shut", gains[0] > 0.9 and gains[2] > 0.9 and gains[1] < 0.01 and gains[3] < 0.01, str(gains))
 
         # deck 3 syncs to deck 1 (playing, not synced) and holds the beat
-        page.evaluate("cratebox.decks[2].setSync(true)")
+        page.evaluate("cratebox.decks[2].rangeIdx = 3; cratebox.decks[2].setSync(true)")
         page.wait_for_timeout(2500)
         s3 = page.evaluate("(() => { const d = cratebox.decks[2], m = d.master(); return { m: m && m.i, bpm: d.effBpm(), mb: m && m.effBpm(), mult: d.syncMult, pe: d.phaseErr, lit: document.querySelector('.deck[data-i=\"2\"] .msync').classList.contains('lit') }; })()")
         ratio = s3["bpm"] / s3["mb"] if s3["mb"] else 0
@@ -77,10 +85,10 @@ def main():
 
         # back to 2 decks (once deck 3 is stopped: a playing deck is never cut off): muted, sync off, remembered
         page.evaluate("cratebox.decks[2].togglePlay()")
-        page.click("#fourBtn")
+        page.click("#fourBtn")      # 4 → 2
         st = page.evaluate("({ playing: cratebox.decks[2].playing, sync: cratebox.decks[2].sync, xf: cratebox.A.decks[2].xf.gain.value, pref: localStorage.getItem('cb.four') })")
         check("2 DECKS: deck 3 muted, sync off, choice saved", not st["playing"] and not st["sync"] and st["pref"] == "0", str(st))
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(4)")
         page.reload()
         page.click("#startBtn")
         page.wait_for_function("window.cratebox && cratebox.A.ctx")
@@ -88,7 +96,7 @@ def main():
         load_all(page, 4)
         # decks 3 and 4 expanded (⤢): the full deck layout, like decks 1 and 2 (tempo | jog | controls,
         # mirrored on deck 4), with nothing on top of anything else
-        page.click("#fourBtn") if not page.evaluate("document.documentElement.classList.contains('four')") else None
+        page.evaluate("cratebox.setDecks(4)") if not page.evaluate("document.documentElement.classList.contains('four')") else None
         for i in (2, 3):
             if page.evaluate(f"document.querySelector('.deck[data-i=\"{i}\"]').classList.contains('compact')"):
                 page.click(f'.deck[data-i="{i}"] .expand')

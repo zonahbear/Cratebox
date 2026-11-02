@@ -33,7 +33,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         for theme in ("booth", "default"):
             for four in ("0", "1"):
                 page = b.new_page(viewport={"width": 1440, "height": 790})

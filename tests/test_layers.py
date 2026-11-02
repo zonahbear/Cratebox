@@ -28,7 +28,7 @@ def main():
     check = T.check
     errors = []
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         page = b.new_page(viewport={"width": 1600, "height": 1000})
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
@@ -44,7 +44,7 @@ def main():
 
         vis = lambda sel: page.evaluate(f"(() => {{ const e = document.querySelector('{sel}'); return !!e && e.getBoundingClientRect().height > 0; }})()")
         check("2 decks: no layer toggles", not vis("#mixer .layers"))
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(4)")
         check("4 decks: each deck's number over its own channel strip (3 1 | 2 4), above the knobs", vis("#mixer .layers") and page.evaluate("""(() => {
             const strip = (i) => document.querySelector(`#mixer > .strip[data-i="${i}"]`).getBoundingClientRect();
             return [0, 1, 2, 3].every((d) => { const c = document.querySelector(`#mixer .layercell[data-d="${d}"]`).getBoundingClientRect(), s = strip(d), mid = c.left + c.width / 2;
@@ -170,7 +170,7 @@ def main():
 
         # ---- back to 2 decks: the controller is on 1 and 2 again
         page.evaluate("for (const d of cratebox.decks) if (d.playing) d.togglePlay()")
-        page.click("#fourBtn")
+        page.evaluate("cratebox.setDecks(2)")
         st = page.evaluate("({ side: cratebox.MIDI.side.join(), hw: document.querySelectorAll('.deck.hw').length, four: document.documentElement.classList.contains('four') })")
         check("2 DECKS: controller back on decks 1 and 2, no toggles", st == {"side": "0,1", "hw": 0, "four": False} and not vis("#mixer .layers"), str(st))
         midi(play0[0], play0[1], 127); midi(play0[0], play0[1], 0)

@@ -82,7 +82,7 @@ def main():
     music = os.path.join(T.ROOT, "tests", "music")
     names = sorted(n for n in os.listdir(music) if n.endswith(("126.wav", "140.wav")))
     with sync_playwright() as p:
-        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         for name, w, h, short, kind in DEVICES:
             if only and only.lower() not in name.lower():
                 continue
