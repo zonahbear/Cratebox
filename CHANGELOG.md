@@ -4,6 +4,9 @@ All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MIN
 
 ## Unreleased
 
+### Fixed
+- **The library keeps your selected track.** The highlighted row used to jump back to the first track whenever the list refreshed: every few tracks during background analysis, on a MATCH re-sort while a tempo moved, and after playlist edits. Loading with the controller's LOAD button right then could load the wrong track.
+
 ### Added
 - **MATCH column in the library: which track mixes in next.** While a deck plays, each track gets a score out of 100 for the deck you'd load it on (the first other deck that isn't playing). Tempo counts 35%: half, normal or double time, and only if that deck's tempo range reaches it, the same rule SYNC uses (a track it can't reach shows –). Key counts 30%: same key, ±1 and relative score highest, a clash loses 40%, and with master tempo off the key is checked after the pitch change. Click MATCH to sort best first; hover a score for the reason. Energy and sound aren't scored yet. A draft: the weights are a first guess.
 - **3 decks.** The header's DECKS button now cycles 2 → 3 → 4. With 3, decks 1 and 3 share the left side (the layer button switches them) and deck 2 keeps the right; the mixer reads 3 1 2. Desktop and tablet; phones stay on 2 decks.

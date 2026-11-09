@@ -90,6 +90,7 @@ def main():
         page.wait_for_timeout(500)
         st = page.evaluate("({ id: cratebox.decks[0].track.id, playing: cratebox.decks[0].playing, msg: document.querySelector('#status') ? document.querySelector('#status').textContent : '' })")
         check("locked: a playing deck keeps its track and keeps playing", st["id"] == before and st["playing"], str(st))
+        page.click("#setBtn")                  # Load lock lives in the Settings window (closed by the Escape above)
         page.select_option("#lockSel", "0")
         page.evaluate("cratebox.lib.sel = 1; cratebox.loadSelected(0)")
         page.wait_for_function("cratebox.decks[0].loaded && cratebox.decks[0].track.id !== %r" % before, timeout=60000)

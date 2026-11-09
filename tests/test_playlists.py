@@ -100,7 +100,7 @@ def main():
     errors = []
     with sync_playwright() as p:
         b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
-        ctx = b.new_context(viewport={"width": 1440, "height": 900}, accept_downloads=True)
+        ctx = b.new_context(viewport={"width": 1440, "height": 1200}, accept_downloads=True)
         page = ctx.new_page()
         page.on("pageerror", lambda e: errors.append(str(e)))
         start(page)
@@ -290,13 +290,14 @@ def main():
         # ---- editing the stick's playlists: off by default, on after a disclaimer, then written into export.pdb
         page.click("#setBtn")
         page.select_option("#rbEditSel", "1")
-        page.wait_for_selector(".rbwarn")
-        check("turning editing on shows the disclaimer first", "may damage your USB" in page.inner_text(".rbwarn") and page.evaluate("localStorage.getItem('cb.rbEdit')") != "1")
-        page.click(".rbwarn button:has-text('Cancel')")
+        page.wait_for_selector(".rbwarn[open]")
+        check("turning editing on shows the disclaimer first", "may damage your USB" in page.inner_text(".rbwarn[open]") and page.evaluate("localStorage.getItem('cb.rbEdit')") != "1")
+        page.click(".rbwarn[open] button:has-text('Cancel')")
         check("Cancel leaves it read-only", page.input_value("#rbEditSel") == "0" and page.is_hidden("#plRemove"))
         page.click("#setBtn")                  # clicking the dialog closed the settings
         page.select_option("#rbEditSel", "1")
-        page.click(".rbwarn button:has-text('I understand')")
+        page.click(".rbwarn[open] button:has-text('I understand')")
+        page.wait_for_function("localStorage.getItem('cb.rbEdit') === '1'", timeout=5000)   # the dialog's close event comes a task later
         check("accepting turns editing on (and it's remembered)", page.input_value("#rbEditSel") == "1" and page.evaluate("localStorage.getItem('cb.rbEdit')") == "1"
               and page.is_visible("#plRemove") and page.locator(".tx[title^='New playlist on']").count() == 1)
         PDB = "cratebox.RB.parsePdb(window.usbWritten.get('PIONEER/rekordbox/export.pdb').buffer)"

@@ -114,7 +114,8 @@ Session notes and next steps: [`.claudes/breadcrumbs.md`](.claudes/breadcrumbs.m
   (`laneH`/`blaneH`), phone SCRATCH tab, Settings window, phone Touch mode (`html.tmode`), KEY SHIFT (worklet `ps`,
   pad mode `keyshift`, FLX4 notes 0x70+p UNVERIFIED on hardware). Tests: test_wave.py, test_keyshift.py.
   EJECT lets go of a stick (browsers can't unmount; the OS eject still comes after). Not done: key controls in the Mixxx-derived maps (MIDI learn instead).
-- Known failing before this work (also on main b4ae37c): test_phrases (#lockSel select after Esc), test_playlists (`.rbwarn` matches #heatSheet too).
+- test_phrases and test_playlists pass again (2026-11-09, review thread: test drift, not app bugs). test_playlists now runs at 1440x1200:
+  at 1440x900 the library only shows ~4 rows since the 1280x800 fit, so drags to off-screen rows failed.
 - Website + beta signup: PRs #6 and #7 merged to main (latest 072dc71, 2026-10-22). Live at https://cratebox.zonahbear.workers.dev; Cloudflare production branch is `main`. Secrets set and verified (owner-only `/api/status?k=<LINK_SECRET>&mail=1&asc=1`). #beta has a 6-step iPhone install guide (Jonah-approved copy). Full signup → Apple invite → TestFlight pipeline confirmed working live (2026-10-22). Cloudflare PR preview builds fail instantly (dashboard setting, ignore). Setup: project files website/SETUP.md. Real screenshots wanted. HEAT stays in the public player.
 - HEAT / TrueCurve mini: merged to main (PR #5, 2026-10-21). Simulator-tested only (`tests/test_truecurve.py`); not yet tried on a real Puffco. Follow-up idea: learnable controller button. iOS suite copy synced (cratebox-iOS-suite PR #4, merged).
 

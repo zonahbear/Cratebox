@@ -3463,7 +3463,9 @@ function applyView(keepSel) {
     });
   }
   lib.view = v.map((e) => e.t); lib.viewPos = v.map((e) => e.i);
-  if (keepSel && selId) { const i = v.findIndex((t) => t.id === selId); lib.sel = i >= 0 ? i : 0; }
+  // v holds { t, i } pairs: match on the track's id, or the selection jumps to the top on every refresh
+  // (background analysis every 3 tracks, MATCH re-sorting as the tempo moves, playlist edits)
+  if (keepSel && selId) { const i = v.findIndex((e) => e.t.id === selId); lib.sel = i >= 0 ? i : 0; }
   else lib.sel = clamp(lib.sel, 0, Math.max(0, v.length - 1));
   renderList(true);
 }

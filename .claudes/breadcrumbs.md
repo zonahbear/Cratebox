@@ -26,3 +26,11 @@ Next:
 - WAVE strips: key colour only written when the key changes.
 - EJECT: re-checks the decks after waiting for a save (a stick track loaded meanwhile now refuses).
 - 4 decks fit at 1280x800 (library min 86 px there) and 1440x900; under ~800 px tall it still scrolls (tallapp).
+
+## 2026-11-09 review thread (code review, bugs, perf)
+- Fixed: applyView(keepSel) matched `t.id` on `{ t, i }` pairs, so the selection jumped to row 0 on every refresh
+  (analysis every 3 tracks, MATCH re-sort, playlist edits). Bug since the first commit; confirmed in Chromium before/after.
+- Tests: test_phrases opens Settings before #lockSel; test_playlists uses `.rbwarn[open]`, waits for the dialog's close,
+  and runs at 1440x1200. Both pass (17/17, 49/49).
+- Perf: CDP profile, 4 decks playing at 1440x900 headless: frame() JS ~0.5 ms/frame, no hotspot. Not changed.
+- Not done: iOS suite copy of cratebox.html/tests not re-synced (suite main is behind anyway).
