@@ -26,3 +26,8 @@ Next:
 - WAVE strips: key colour only written when the key changes.
 - EJECT: re-checks the decks after waiting for a save (a stick track loaded meanwhile now refuses).
 - 4 decks fit at 1280x800 (library min 86 px there) and 1440x900; under ~800 px tall it still scrolls (tallapp).
+
+## 2026-11-09: competitor comparison (analysis only, no code)
+- Doc: https://claude.ai/artifact/1m68Zmeh8chYifHhDCksPa (djay, rekordbox, Serato, VirtualDJ, Traktor, Mixxx vs Cratebox).
+- Gaps found: no stems, no streaming, no StoreKit paywall yet; FLX4 already unlocks rekordbox/Serato Lite free.
+- Niche: rekordbox USB editing + Deck Bridge on iPhone, browser player. Vendor sites blocked in cloud sessions; prices search-sourced.
