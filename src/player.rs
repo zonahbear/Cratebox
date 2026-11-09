@@ -71,7 +71,8 @@ pub struct Player {
     fresh: bool,
     buf: Vec<f32>,
     tpl: Vec<f32>,
-    /// buffers replaced on this thread, handed back so they're freed elsewhere
+    /// buffers replaced on this thread, handed back so they're freed elsewhere (room reserved up front: the first
+    /// load would otherwise grow it, an allocation on the audio thread)
     pub trash: Vec<Pcm>,
 }
 
@@ -85,7 +86,7 @@ impl Player {
             sr, l: None, r: None, len: 0, pos: 0.0, playing: false, rate: 1.0, bend: 0.0, scratching: false, target: 0.0, vel: 0.0,
             loop_on: false, loop_in: 0.0, loop_out: 0.0, amp: 0.0, ended: false, coast: false, spin_a: 9.0 / 2.5, seq: 0,
             mt: false, h, nw, s, ramp: (0.002 * sr).round() as usize, win, g_s: [0.0; 2], g_k: [nw; 2], g_f: [false; 2], cur: 0, ph: 0,
-            prev_s: 0.0, fresh: true, buf: vec![0.0; 2 * s + h + 8], tpl: vec![0.0; h], trash: vec![],
+            prev_s: 0.0, fresh: true, buf: vec![0.0; 2 * s + h + 8], tpl: vec![0.0; h], trash: Vec::with_capacity(8),
         };
         p.flush();
         p
