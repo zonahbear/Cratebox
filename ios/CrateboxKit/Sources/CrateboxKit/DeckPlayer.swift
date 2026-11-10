@@ -85,6 +85,9 @@ public final class DeckPlayer {
         case .rate(let v): rate = v
         case .seek(let v, let s):
             seq = s; pos = max(0, min(Double(len - 2), v)); target = pos; vel = 0; coast = false; flush()
+            // a seek leaves the end: "ended" goes too, or the reports that follow (still ended, not playing) would
+            // switch the deck back off when PLAY is pressed right after, while the sound carries on
+            ended = false
         case .bend(let v): bend = max(-0.6, min(0.6, bend + v))
         case .scratch(let v, let noCoast):
             if v { vel = coast ? vel : (playing ? rate : 0); coast = false }
