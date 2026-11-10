@@ -129,3 +129,18 @@
   ring Consumer re-primes after running dry; cratebox-analyse thread at nice 19.
 - Tests: cargo test --release all pass (53 lib, analysis, app, four, ui).
 - Not looked at this pass: ui.rs/widgets.rs drawing cost, distro/.
+## 2026-10-26 late: Windows port (branch claude/project-thread-k9y5qa)
+- Jonah: "windows app port of version inside iso", "optimize for 1080p and 1440p", "MAINTAIN LAYOUT AND LOOKS".
+- Same crate, cfg-gated: zbus Linux-only, `windows` 0.58 on Windows. heat_win.rs = WinRT BLE (advertisement watcher,
+  paired-device list, GATT notify, custom "just works" pairing). Lorax Device impl moved into `lorax_device!` (shared).
+  Audio: cpal WASAPI + MMCSS Pro Audio (cpal without audio_thread_priority sets no priority on Windows).
+- Scaling: `ui::fit_scale` sets egui zoom so the window holds 720 pt height (min width 1152 pt). Gotcha: the viewport
+  rect arrives measured at the previous zoom, so it waits 2 frames after a change (else it oscillates).
+- Verified: cargo test (Linux) all pass; Windows exe under Wine 9 at 1920x1080 / 2560x1440 (same 1280x720-pt layout),
+  4 decks + HEAT simulator. Wine ignored with_maximized/fullscreen, so sizes were forced with a temp patch.
+- Next: Jonah runs cratebox.exe on his PC: sound (WASAPI buffer), FLX4 (Pioneer driver?), HEAT over Windows BLE.
+
+## 2026-11-10: Windows branch brought up to main (#13-#46)
+- Merged main into claude/project-thread-k9y5qa (PR #14); heat.rs conflicts: kept `lorax_device!` and added lantern/lantern_color to it.
+- New Linux-only features mapped for Windows (see win.rs line in CLAUDE.md). Linux tests pass; Wine screenshot at 1080p OK.
+- Zip at project files cratebox-windows/Cratebox-Windows.zip. Not tested with Jonah's real tracks (D: drive is on his PC).

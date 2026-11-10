@@ -1,7 +1,8 @@
 //! The window, laid out like an XDJ's screen: a slim header, the scrolling waveforms (2 or 4 decks) with
 //! each deck's numbers above its waveform and the whole track below it, then the decks' controls either
 //! side of the mixer (channels 3 1 2 4 in 4-deck mode, the BEAT FX unit underneath), then the library.
-//! WAVE mode shows just the waveforms. Sized for 1152×720 points (a MacBook10,1 at 2x) and up.
+//! WAVE mode shows just the waveforms. Sized for 1152×720 points (a MacBook10,1 at 2x) and up; on Windows
+//! `fit_scale` zooms the whole thing so a 1080p or 1440p screen shows that same layout, just bigger.
 
 use crate::app::{level, App};
 use crate::deck::{PadMode, JUMPS, LOOP_SIZES, RANGES, JogKind};
@@ -25,6 +26,7 @@ pub struct DragList(pub String);
 
 pub struct Gui {
     pub app: App,
+    fit_wait: u8,
     deck_rects: [Rect; DECKS],
     jog_last: [Option<f32>; DECKS],
     lane_drag: [Option<(f32, f32, std::time::Instant, bool, bool)>; DECKS],
@@ -95,7 +97,7 @@ impl Gui {
         app.midi_io.set_wake(wake.clone());
         app.watch_drives();
         let remote = crate::remote::listen(move || wake());
-        Gui { app, deck_rects: [Rect::NOTHING; DECKS], jog_last: [None; DECKS], lane_drag: [None; DECKS], lane_cache: Default::default(), ov_cache: Default::default(), settings_tab: 0, net: None, wifi_pw: None, pad_held: None, frames: 0, test_shot: None,
+        Gui { app, fit_wait: 0, deck_rects: [Rect::NOTHING; DECKS], jog_last: [None; DECKS], lane_drag: [None; DECKS], lane_cache: Default::default(), ov_cache: Default::default(), settings_tab: 0, net: None, wifi_pw: None, pad_held: None, frames: 0, test_shot: None,
             rects: Default::default(), uitest: crate::uitest::UiTest::from_env(), heat_open: false, power_open: false, sys: SysStats::new(), battery: (std::time::Instant::now().checked_sub(std::time::Duration::from_secs(60)).unwrap_or_else(std::time::Instant::now), read_battery()), power_confirm: None, bat_alerted: 100, bat_dialog: None, wave_browse: None, last_sel: usize::MAX, heat_paste: String::new(), hitting: false, focus_search: false, keys_open: false, remote, seen_loads: 0, pl_names: (0, Default::default()) }
     }
 
@@ -202,6 +204,9 @@ impl Gui {
                 self.reg("web", r.rect);
                 if r.clicked() {
                     // nothing launched: say why (the helper comes with the app update)
+                    #[cfg(windows)]
+                    let _ = crate::win::open("https://www.google.com");
+                    #[cfg(not(windows))]
                     if let Err(e) = std::process::Command::new("cratebox-web").spawn() {
                         self.app.say(&format!("Chromium didn't start ({e}). Run Update Cratebox from the Cratebox OS menu to get the helper."), 10.0);
                     }
@@ -209,6 +214,9 @@ impl Gui {
                 let r = icon_button(ui, Icon::Search, false, FG()).on_hover_text("SOULSEEK: Nicotine+, downloads go straight into the collection");
                 self.reg("soulseek", r.rect);
                 if r.clicked() {
+                    #[cfg(windows)]
+                    if crate::win::nicotine().is_err() { self.app.say("Soulseek: install Nicotine+ for Windows (nicotine-plus.org) first.", 10.0); }
+                    #[cfg(not(windows))]
                     if let Err(e) = std::process::Command::new("cratebox-soulseek").spawn().or_else(|_| std::process::Command::new("nicotine").spawn()) {
                         self.app.say(&format!("Soulseek didn't start ({e}). Run Update Cratebox from the Cratebox OS menu to get the helper."), 10.0);
                     }
@@ -217,6 +225,9 @@ impl Gui {
                 self.reg("files", r.rect);
                 if r.clicked() {
                     let home = dirs::home_dir().unwrap_or_default();
+                    #[cfg(windows)]
+                    let _ = crate::win::open(&home.to_string_lossy());
+                    #[cfg(not(windows))]
                     let _ = std::process::Command::new("pcmanfm-qt").arg(&home).spawn().or_else(|_| std::process::Command::new("xdg-open").arg(&home).spawn());
                 }
                 let rec = self.app.rec.as_ref().map(|r| r.seconds());
@@ -246,9 +257,11 @@ impl Gui {
                 // two small lines: CPU + memory over network rates, Wi-Fi signal and Bluetooth
                 let (wt, wc) = match self.sys.wifi { Some(q) => (format!("WI-FI {q}%"), if q < 30 { RED } else { MUTED() }), None => ("WI-FI OFF".into(), RED) };
                 let mut l1 = format!("CPU {:.0}% · {} MB · BT {}", self.sys.cpu, self.sys.mem_mb, if self.sys.bt { "ON" } else { "OFF" });
+                // Windows: no Wi-Fi signal or Bluetooth reading (Windows' own taskbar shows them)
+                if cfg!(windows) { l1 = format!("CPU {:.0}% · {} MB", self.sys.cpu, self.sys.mem_mb); }
                 if self.app.store.settings.show_fps { if let Ok(f) = FRAME_STATS.lock() { if !f.is_empty() { l1 = format!("{f} · {l1}"); } } }
-                let l2 = format!("↓{} ↑{} · {wt}", rate_text(self.sys.down), rate_text(self.sys.up));
-                let (c1, c2) = (if self.sys.cpu >= 85.0 || !self.sys.bt { RED } else { MUTED() }, wc);
+                let l2 = if cfg!(windows) { format!("↓{} ↑{}", rate_text(self.sys.down), rate_text(self.sys.up)) } else { format!("↓{} ↑{} · {wt}", rate_text(self.sys.down), rate_text(self.sys.up)) };
+                let (c1, c2) = if cfg!(windows) { (if self.sys.cpu >= 85.0 { RED } else { MUTED() }, MUTED()) } else { (if self.sys.cpu >= 85.0 || !self.sys.bt { RED } else { MUTED() }, wc) };
                 ui.with_layout(Layout::top_down(Align::Max), |ui| {
                     ui.spacing_mut().item_spacing.y = 0.0;
                     let r1 = ui.add(egui::Label::new(egui::RichText::new(l1).font(mono(9.5)).color(c1)).extend().sense(Sense::click())).on_hover_text("CPU use of the whole computer, memory in use, Bluetooth (HEAT needs it). Click: Bluetooth settings");
@@ -1313,7 +1326,7 @@ impl Gui {
                     });
                     if matches!(self.app.view, View::Pl(_)) && ui.button("Remove from playlist").clicked() { self.app.remove_from_playlist(); ui.close(); }
                     if let Some(tr) = self.app.track(&t.id) {
-                        if ui.button("Show in folder").clicked() { if let Some(dir) = tr.path.parent() { let _ = std::process::Command::new("xdg-open").arg(dir).spawn(); } ui.close(); }
+                        if ui.button("Show in folder").clicked() { if let Some(dir) = tr.path.parent() { let _ = std::process::Command::new(if cfg!(windows) { "explorer" } else { "xdg-open" }).arg(dir).spawn(); } ui.close(); }
                     }
                 });
             }
@@ -1530,6 +1543,7 @@ impl Gui {
 
     /// Settings → Wi-Fi: on/off, networks (scan, join with a password, disconnect, forget)
     fn settings_wifi(&mut self, ui: &mut Ui) {
+        if cfg!(windows) { windows_settings(ui, "Wi-Fi", "ms-settings:network-wifi"); return; }
         let net = self.net.get_or_insert_with(crate::net::Net::new);
         net.tick();
         let v = net.snapshot();
@@ -1581,6 +1595,7 @@ impl Gui {
     }
     /// Settings → Bluetooth: on/off, devices (scan, pair, connect, disconnect, forget)
     fn settings_bluetooth(&mut self, ui: &mut Ui) {
+        if cfg!(windows) { windows_settings(ui, "Bluetooth", "ms-settings:bluetooth"); return; }
         let net = self.net.get_or_insert_with(crate::net::Net::new);
         net.tick();
         let v = net.snapshot();
@@ -2098,6 +2113,22 @@ fn strobe(ctx: &egui::Context) -> f32 {
 struct SysStats { at: std::time::Instant, last: (u64, u64), cpu: f32, mem_mb: u64, net_last: Option<(u64, u64)>, down: f64, up: f64, wifi: Option<u32>, bt: bool }
 impl SysStats {
     fn new() -> Self { let mut s = SysStats { at: std::time::Instant::now(), last: (0, 0), cpu: 0.0, mem_mb: 0, net_last: None, down: 0.0, up: 0.0, wifi: None, bt: false }; s.sample(); s }
+    #[cfg(windows)]
+    fn sample(&mut self) {
+        let dt = self.at.elapsed().as_secs_f64().max(0.1);
+        self.at = std::time::Instant::now();
+        if let Some((rx, tx)) = crate::win::net_bytes() {
+            if let Some((r0, t0)) = self.net_last { self.down = rx.saturating_sub(r0) as f64 / dt; self.up = tx.saturating_sub(t0) as f64 / dt; }
+            self.net_last = Some((rx, tx));
+        }
+        if let Some((total, idle)) = crate::win::cpu_times() {
+            let (dt, di) = (total.saturating_sub(self.last.0), idle.saturating_sub(self.last.1));
+            if self.last.0 > 0 && dt > 0 { self.cpu = 100.0 * (dt - di.min(dt)) as f32 / dt as f32; }
+            self.last = (total, idle);
+        }
+        if let Some(m) = crate::win::mem_used_mb() { self.mem_mb = m; }
+    }
+    #[cfg(not(windows))]
     fn sample(&mut self) {
         let dt = self.at.elapsed().as_secs_f64().max(0.1);
         self.at = std::time::Instant::now();
@@ -2139,15 +2170,20 @@ impl SysStats {
 fn read_battery() -> Option<(u32, bool)> {
     // CRATEBOX_FAKE_BATTERY="4,0": percent, charging (screenshots and trying the alerts)
     if let Ok(f) = std::env::var("CRATEBOX_FAKE_BATTERY") { let mut it = f.split(','); return Some((it.next()?.trim().parse().ok()?, it.next().is_some_and(|c| c.trim() == "1"))); }
-    for e in std::fs::read_dir("/sys/class/power_supply").ok()?.flatten() {
-        let p = e.path();
-        if std::fs::read_to_string(p.join("type")).map(|t| t.trim() == "Battery").unwrap_or(false) {
-            let pc = std::fs::read_to_string(p.join("capacity")).ok()?.trim().parse().ok()?;
-            let st = std::fs::read_to_string(p.join("status")).unwrap_or_default();
-            return Some((pc, matches!(st.trim(), "Charging" | "Full" | "Not charging")));
+    #[cfg(windows)]
+    { crate::win::battery() }
+    #[cfg(not(windows))]
+    {
+        for e in std::fs::read_dir("/sys/class/power_supply").ok()?.flatten() {
+            let p = e.path();
+            if std::fs::read_to_string(p.join("type")).map(|t| t.trim() == "Battery").unwrap_or(false) {
+                let pc = std::fs::read_to_string(p.join("capacity")).ok()?.trim().parse().ok()?;
+                let st = std::fs::read_to_string(p.join("status")).unwrap_or_default();
+                return Some((pc, matches!(st.trim(), "Charging" | "Full" | "Not charging")));
+            }
         }
+        None
     }
-    None
 }
 /// the power symbol: a ring open at the top with a bar through the gap
 fn paint_power(p: &egui::Painter, r: Rect, c: Color32) {
@@ -2256,6 +2292,7 @@ impl eframe::App for Gui {
         let _prof = FrameProf(std::time::Instant::now());
         crate::deck::frame_tick();
         self.frames += 1;
+        if cfg!(windows) || std::env::var_os("CRATEBOX_FIT").is_some() { fit_scale(ctx, &mut self.fit_wait); }
         self.app.poll();
         if std::env::var("CRATEBOX_DEMO").is_ok() { self.demo(); }
         self.keyboard(ctx);
@@ -2354,6 +2391,22 @@ impl eframe::App for Gui {
     }
 }
 
+/// Windows: scale the whole window like the MacBook10,1's screen, which shows 1152×720 points. The layout
+/// stays the same and fills the window: 1.5x full screen at 1920×1080 (about 1.4x maximized), 2x at
+/// 2560×1440, whatever Windows' own display scaling says. (CRATEBOX_FIT=1 does the same on Linux.)
+/// The window's size comes in measured at the zoom of the frame before a change, so after changing it
+/// `wait` skips two frames until the size is measured at the new zoom.
+fn fit_scale(ctx: &egui::Context, wait: &mut u8) {
+    if *wait > 0 { *wait -= 1; return; }
+    let Some(inner) = ctx.input(|i| i.viewport().inner_rect) else { return };
+    let ppp = ctx.pixels_per_point();
+    let (w, h) = (inner.width() * ppp, inner.height() * ppp);
+    if w < 1.0 || h < 1.0 { return; }
+    let want = (h / 720.0).min(w / 1152.0).max(0.5);
+    let zoom = want / ctx.native_pixels_per_point().unwrap_or(1.0);
+    if (ctx.zoom_factor() - zoom).abs() > 0.005 { ctx.set_zoom_factor(zoom); *wait = 2; }
+}
+
 fn save_png(path: &PathBuf, img: &egui::ColorImage) {
     let Ok(f) = std::fs::File::create(path) else { return };
     let mut e = png::Encoder::new(std::io::BufWriter::new(f), img.size[0] as u32, img.size[1] as u32);
@@ -2374,6 +2427,16 @@ fn phase_tag(d: &crate::deck::Deck) -> Option<(String, Color32)> {
 const SETTINGS_TABS: [(Icon, &str); 8] = [(Icon::Palette, "Look"), (Icon::List, "Library"), (Icon::Deck, "Decks"), (Icon::Speaker, "Sound"),
     (Icon::Knob, "Controller"), (Icon::Wifi, "Wi-Fi"), (Icon::Bluetooth, "Bluetooth"), (Icon::Usb, "rekordbox")];
 const TAB_WIFI: usize = 5;
+
+/// Windows: Wi-Fi and Bluetooth are Windows' own settings pages
+fn windows_settings(ui: &mut Ui, what: &str, page: &str) {
+    ui.label(egui::RichText::new(format!("On Windows, {what} is set up in Windows' own Settings.")).color(MUTED()));
+    if ui.button(format!("Open Windows {what} settings")).clicked() {
+        #[cfg(windows)]
+        let _ = crate::win::open(page);
+        let _ = page;
+    }
+}
 
 /// an on/off switch with its name
 fn toggle(ui: &mut Ui, on: &mut bool, label: &str) -> Response {

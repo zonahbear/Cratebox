@@ -1,15 +1,21 @@
 //! USB sticks and SD cards: mounts plugged-in drives through udisks (the Cratebox session has no desktop
 //! automounter) and reports which mounted drives hold a rekordbox export. Its own thread, every 3 s;
-//! started from `App::new`, results come back as `Job::Drives`.
+//! started from `App::new`, results come back as `Job::Drives`. On Windows, Windows mounts drives itself:
+//! `scan` lists the drive letters holding a rekordbox export, and ejecting is left to Windows.
 
+#[cfg(unix)]
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+#[cfg(unix)]
 use std::process::Command;
+#[cfg(unix)]
 use std::sync::Mutex;
 
 /// drives ejected from Cratebox: not mounted again until they're unplugged
+#[cfg(unix)]
 static EJECTED: Mutex<Option<HashSet<String>>> = Mutex::new(None);
 
+#[cfg(unix)]
 fn walk(v: &serde_json::Value, out: &mut Vec<(String, bool, bool, PathBuf)>, hot: bool) {
     let Some(a) = v.as_array() else { return };
     for d in a {
@@ -22,8 +28,21 @@ fn walk(v: &serde_json::Value, out: &mut Vec<(String, bool, bool, PathBuf)>, hot
     }
 }
 
+#[cfg(windows)]
+pub fn scan() -> Vec<PathBuf> {
+    crate::win::drives().into_iter().filter(|d| crate::win::removable(d) && crate::playlists::sub(d, "/PIONEER/rekordbox/export.pdb").exists()).collect()
+}
+#[cfg(windows)]
+pub fn eject_all(_roots: Vec<PathBuf>, then: Option<&'static str>, done: impl FnOnce(Vec<String>) + Send + 'static) {
+    done(vec![]);
+    if let Some(t) = then { crate::win::power(t); }
+}
+#[cfg(windows)]
+pub fn eject(_root: &Path) -> Result<(), String> { Err("On Windows, eject the stick from the taskbar (Safely Remove Hardware)".into()) }
+
 /// one pass: mount any removable filesystem that isn't mounted yet, return the mount points of
 /// removable drives with PIONEER/rekordbox/export.pdb
+#[cfg(unix)]
 pub fn scan() -> Vec<PathBuf> {
     let Ok(o) = Command::new("lsblk").args(["-J", "-p", "-o", "NAME,RM,HOTPLUG,FSTYPE,MOUNTPOINT"]).output() else { return vec![] };
     let Ok(j) = serde_json::from_slice::<serde_json::Value>(&o.stdout) else { return vec![] };
@@ -52,6 +71,7 @@ pub fn scan() -> Vec<PathBuf> {
 /// battery-critical and shutdown path: unmount every drive in `roots` on a thread of its own at realtime
 /// priority (below the audio thread's 70, so it isn't stuck behind the UI or analysis), flush what's
 /// still in the page cache, then `systemctl <then>` (poweroff / reboot) if given. `done` gets the errors.
+#[cfg(unix)]
 pub fn eject_all(roots: Vec<PathBuf>, then: Option<&'static str>, done: impl FnOnce(Vec<String>) + Send + 'static) {
     let _ = std::thread::Builder::new().name("cratebox-eject".into()).spawn(move || {
         let param = libc::sched_param { sched_priority: 40 };
@@ -63,6 +83,7 @@ pub fn eject_all(roots: Vec<PathBuf>, then: Option<&'static str>, done: impl FnO
     });
 }
 
+#[cfg(unix)]
 pub fn eject(root: &Path) -> Result<(), String> {
     let o = Command::new("findmnt").args(["-n", "-o", "SOURCE", "--target"]).arg(root).output().map_err(|e| e.to_string())?;
     let dev = String::from_utf8_lossy(&o.stdout).trim().to_string();

@@ -3,9 +3,12 @@
 //! since winit/egui drop the Super modifier on Linux. Listener on its own thread; lines come out of a
 //! channel that the UI thread drains each frame.
 
+#[cfg(unix)]
 use std::os::unix::net::UnixDatagram;
 use std::path::PathBuf;
-use std::sync::mpsc::{channel, Receiver};
+#[cfg(unix)]
+use std::sync::mpsc::channel;
+use std::sync::mpsc::Receiver;
 
 pub fn socket_path() -> PathBuf {
     match std::env::var_os("XDG_RUNTIME_DIR") {
@@ -14,7 +17,14 @@ pub fn socket_path() -> PathBuf {
     }
 }
 
+/// Windows: no command socket (the window manager shortcuts it serves are Cratebox OS only)
+#[cfg(windows)]
+pub fn listen(_wake: impl Fn() + Send + 'static) -> Option<Receiver<String>> { None }
+#[cfg(windows)]
+pub fn send(_cmd: &str) -> std::io::Result<()> { Err(std::io::Error::new(std::io::ErrorKind::Unsupported, "--cmd is Linux only")) }
+
 /// start listening (replaces a stale socket); `wake` runs after each command so an idle window repaints
+#[cfg(unix)]
 pub fn listen(wake: impl Fn() + Send + 'static) -> Option<Receiver<String>> {
     let p = socket_path();
     let _ = std::fs::remove_file(&p);
@@ -31,11 +41,12 @@ pub fn listen(wake: impl Fn() + Send + 'static) -> Option<Receiver<String>> {
 }
 
 /// send one command to the running app
+#[cfg(unix)]
 pub fn send(cmd: &str) -> std::io::Result<()> {
     UnixDatagram::unbound()?.send_to(cmd.as_bytes(), socket_path()).map(|_| ())
 }
 
-#[cfg(test)]
+#[cfg(all(test, unix))]
 mod tests {
     #[test]
     fn a_sent_command_comes_out_of_the_listener() {
