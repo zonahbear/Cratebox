@@ -455,6 +455,8 @@ impl App {
             let range = self.range();
             let wake = self.repaint.clone();
             std::thread::Builder::new().name("cratebox-analyse".into()).spawn(move || {
+                // background work: lowest priority for this thread only, so it never competes with the UI or a deck load
+                unsafe { libc::setpriority(libc::PRIO_PROCESS, libc::syscall(libc::SYS_gettid) as libc::id_t, 19); }
                 let res = (|| -> Result<AnaResult, String> {
                     let d = decode(&t.path)?;
                     let (mono, fs) = mono_for(&[&d.l, &d.r], d.sr, 11025.0);

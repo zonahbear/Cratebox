@@ -7,7 +7,7 @@ use crate::fft::{hann, Fft};
 #[inline]
 pub fn jsround(x: f64) -> f64 { (x + 0.5).floor() }
 
-pub const ANALYSIS_VER: u32 = 3;
+pub const ANALYSIS_VER: u32 = 4;
 
 /// mono, downsampled by an integer factor to about `target` Hz (averaging), from planar channels
 pub fn mono_for(chans: &[&[f32]], sr: u32, target: f64) -> (Vec<f32>, f64) {
@@ -283,11 +283,8 @@ pub struct Grid {
     pub conf: f64,
 }
 
-// downbeat vote weights (tuned on the synthetic test set)
-const W_KS: f64 = 0.5;
-const W_NOV: f64 = 20.0;
-const W_START: f64 = 2.0;
-const W_ENTRY: f64 = 0.0;
+/// Bar-1 vote: the lowest BAR_LOW of the 16 spectrum bands (30 Hz to about 145 Hz) count as the bass.
+const BAR_LOW: usize = 6;
 
 #[derive(Clone, Copy)]
 struct Pk { f: f64, v: f64 }
@@ -331,7 +328,6 @@ pub fn beat_grid(x: &[f32], fs: f64, range: (f64, f64)) -> Grid {
     let mut f_low = vec![0f32; frames];
     let mut f_mid = vec![0f32; frames];
     let mut f_high = vec![0f32; frames];
-    let mut rms = vec![0f32; frames];
     const NB: usize = 16;
     let mut band_of = vec![-1i8; N / 2];
     for k in b0..b2 {
@@ -345,9 +341,7 @@ pub fn beat_grid(x: &[f32], fs: f64, range: (f64, f64)) -> Grid {
     let mut cur = vec![0f32; N / 2];
     for t in 0..frames {
         let s0 = t * HOP;
-        let mut e = 0f64;
-        for i in 0..N { let v = x[s0 + i] as f64; re[i] = v * win[i]; im[i] = 0.0; e += v * v; }
-        rms[t] = (e / N as f64).sqrt() as f32;
+        for i in 0..N { re[i] = x[s0 + i] as f64 * win[i]; im[i] = 0.0; }
         fft.run(&mut re, &mut im);
         let (mut lo, mut mi, mut hi) = (0f64, 0f64, 0f64);
         for k in b0..=b3 {
@@ -564,82 +558,31 @@ pub fn beat_grid(x: &[f32], fs: f64, range: (f64, f64)) -> Grid {
     let mut vote = [0f64; 4];
     let res4 = |k: i64| (((k % 4) + 4) % 4) as usize;
     if nbt >= 16 {
+        // Bar 1 is where the music changes: the bass note, the chord, a new part. For every beat, how far the
+        // spectrum of the two beats after it is from the two beats before it, summed per beat-of-the-bar, once
+        // over all bands and once over the bass bands alone. (On real tracks this agrees with rekordbox's bar 1
+        // far more often than the earlier kick/snare + "first loud beat" vote, which was tuned on synthetic ones.)
         let nbt = nbt as usize;
-        let mut f_kick = vec![0f64; nbt];
-        let mut f_snare = vec![0f64; nbt];
-        let mut f_entry = vec![0f64; nbt];
-        let mut loud = vec![0f64; nbt];
         let mut avg_spec = vec![0f64; nbt * NB];
         for j in 0..nbt {
-            let k = k_first + j as i64;
-            let f0 = a0 + k as f64 * p;
-            f_kick[j] = peak_near(&o_l, f0, 3.0, frames).map_or(0.0, |x| x.v);
-            f_snare[j] = peak_near(&o_m, f0, 3.0, frames).map_or(0.0, |x| x.v);
+            let f0 = a0 + (k_first + j as i64) as f64 * p;
             let s = jsround(f0).max(0.0) as usize;
             let e = (jsround(f0 + p) as usize).min(frames);
-            let mut r = 0f64;
-            let mut t = s;
-            while t < e {
-                r += rms[t] as f64;
-                for q in 0..NB { avg_spec[j * NB + q] += spec[t * NB + q] as f64; }
-                t += 1;
-            }
+            for t in s..e { for q in 0..NB { avg_spec[j * NB + q] += spec[t * NB + q] as f64; } }
             let c = (e.saturating_sub(s)).max(1) as f64;
-            loud[j] = r / c;
             for q in 0..NB { avg_spec[j * NB + q] /= c; }
         }
-        let mut f_change = vec![0f64; nbt];
-        for j in 1..nbt {
-            let mut d = 0f64;
-            for q in 0..NB { d += (avg_spec[j * NB + q] - avg_spec[(j - 1) * NB + q]).abs(); }
-            f_change[j] = d;
-        }
-        if nbt > 8 {
-            for j in 4..nbt - 4 {
-                let (mut a, mut b) = (0f64, 0f64);
-                for q in 0..4 { a += loud[j + q]; b += loud[j - 4 + q]; }
-                let r = ((a + 1e-6) / (b + 1e-6)).ln();
-                f_entry[j] = if r > 0.4 { r } else { 0.0 };
+        let (mut all, mut low) = ([0f64; 4], [0f64; 4]);
+        for j in 2..nbt - 2 {
+            let r = res4(k_first + j as i64);
+            for q in 0..NB {
+                let d = ((avg_spec[(j + 1) * NB + q] + avg_spec[j * NB + q] - avg_spec[(j - 1) * NB + q] - avg_spec[(j - 2) * NB + q]) / 2.0).abs();
+                all[r] += d;
+                if q < BAR_LOW { low[r] += d; }
             }
         }
-        let zs = |v: &[f64]| -> Vec<f64> {
-            let m = v.iter().sum::<f64>() / v.len() as f64;
-            let mut s = v.iter().map(|a| (a - m).powi(2)).sum::<f64>();
-            s = (s / v.len() as f64).sqrt();
-            if s == 0.0 { s = 1.0; }
-            v.iter().map(|a| (a - m) / s).collect()
-        };
-        let z_k = zs(&f_kick);
-        let z_s = zs(&f_snare);
-        let _z_c = zs(&f_change);
-        let mut nov = [0f64; 4];
-        for r in 0..4i64 {
-            let j0 = (((r - k_first) % 4) + 4) % 4;
-            let mut prev_bar: Option<[f64; NB]> = None;
-            let mut cnt = 0f64;
-            let mut j = j0 as usize;
-            while j + 4 <= nbt {
-                let mut bar = [0f64; NB];
-                for q in 0..4 { for u in 0..NB { bar[u] += avg_spec[(j + q) * NB + u] / 4.0; } }
-                if let Some(pb) = prev_bar { let mut d = 0f64; for u in 0..NB { d += (bar[u] - pb[u]).abs(); } nov[r as usize] += d; cnt += 1.0; }
-                prev_bar = Some(bar);
-                j += 4;
-            }
-            nov[r as usize] /= if cnt > 0.0 { cnt } else { 1.0 };
-        }
-        let mut ks = [0f64; 4];
-        let mut ksn = [0f64; 4];
-        for j in 0..nbt { let r = res4(k_first + j as i64); ks[r] += z_k[j] - z_s[j]; ksn[r] += 1.0; }
-        for r in 0..4 { ks[r] /= if ksn[r] > 0.0 { ksn[r] } else { 1.0 }; }
-        let mut lsorted = loud.clone();
-        lsorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
-        let lmed = lsorted[nbt / 2];
-        let mut j_start = 0usize;
-        while j_start < nbt - 1 && loud[j_start] < 0.25 * lmed { j_start += 1; }
-        let nov_mean = { let m = (nov[0] + nov[1] + nov[2] + nov[3]) / 4.0; if m == 0.0 { 1.0 } else { m } };
-        for r in 0..4 { vote[r] = W_KS * ks[r] + W_NOV * (nov[r] / nov_mean - 1.0); }
-        vote[res4(k_first + j_start as i64)] += W_START;
-        for j in 0..nbt { vote[res4(k_first + j as i64)] += W_ENTRY * f_entry[j]; }
+        let (sa, sl) = (all.iter().sum::<f64>().max(1e-12), low.iter().sum::<f64>().max(1e-12));
+        for r in 0..4 { vote[r] = all[r] / sa + low[r] / sl; }
     }
     let mut best = 0usize;
     for r in 1..4 { if vote[r] > vote[best] { best = r; } }

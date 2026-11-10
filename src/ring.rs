@@ -16,6 +16,7 @@ unsafe impl Sync for Inner {}
 unsafe impl Send for Inner {}
 
 pub struct Producer(Arc<Inner>);
+/// .1 = primed: `pull` has seen enough audio waiting to start (cleared again when it runs dry)
 pub struct Consumer(Arc<Inner>, bool);
 
 pub fn ring(frames: usize) -> (Producer, Consumer) {
@@ -71,7 +72,7 @@ impl Consumer {
                 let v = unsafe { (*i.buf[t & (i.cap - 1)].get(), *i.buf[(t + 1) & (i.cap - 1)].get()) };
                 t = t.wrapping_add(2);
                 v
-            } else { (0.0, 0.0) };
+            } else { self.1 = false; (0.0, 0.0) };  // ran dry: wait for a cushion again, or every later buffer is cut short too
             let f = &mut out[k * channels..(k + 1) * channels];
             f.fill(0.0);
             f[0] = l;

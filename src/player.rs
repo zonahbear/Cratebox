@@ -71,7 +71,8 @@ pub struct Player {
     fresh: bool,
     buf: Vec<f32>,
     tpl: Vec<f32>,
-    /// buffers replaced on this thread, handed back so they're freed elsewhere
+    /// buffers replaced on this thread, handed back so they're freed elsewhere (room reserved up front: the first
+    /// load would otherwise grow it, an allocation on the audio thread)
     pub trash: Vec<Pcm>,
 }
 
@@ -85,7 +86,7 @@ impl Player {
             sr, l: None, r: None, len: 0, pos: 0.0, playing: false, rate: 1.0, bend: 0.0, scratching: false, target: 0.0, vel: 0.0,
             loop_on: false, loop_in: 0.0, loop_out: 0.0, amp: 0.0, ended: false, coast: false, spin_a: 9.0 / 2.5, seq: 0,
             mt: false, h, nw, s, ramp: (0.002 * sr).round() as usize, win, g_s: [0.0; 2], g_k: [nw; 2], g_f: [false; 2], cur: 0, ph: 0,
-            prev_s: 0.0, fresh: true, buf: vec![0.0; 2 * s + h + 8], tpl: vec![0.0; h], trash: vec![],
+            prev_s: 0.0, fresh: true, buf: vec![0.0; 2 * s + h + 8], tpl: vec![0.0; h], trash: Vec::with_capacity(8),
         };
         p.flush();
         p
@@ -115,6 +116,9 @@ impl Player {
                 self.seq = seq;
                 self.pos = pos.min(self.len as f64 - 2.0).max(0.0);
                 self.target = self.pos; self.vel = 0.0; self.coast = false; self.flush();
+                // a seek leaves the end: "ended" goes too, or the reports that follow (still ended, not playing)
+                // would switch the UI's deck back off when PLAY is pressed right after, while the sound carries on
+                self.ended = false;
             }
             PlayerCmd::Bend(v) => self.bend = (self.bend + v).clamp(-0.6, 0.6),
             PlayerCmd::Scratch { on, no_coast } => {
@@ -380,5 +384,18 @@ mod tests {
         run(&mut p, 1.5, sr);
         let r = p.report();
         assert!(!r.playing && r.ended);
+    }
+
+    #[test]
+    fn a_seek_leaves_the_end() {
+        let sr = 44100.0;
+        let t = tone(sr, 1.0, 220.0);
+        let mut p = Player::new(sr);
+        p.cmd(PlayerCmd::Load { l: t.clone(), r: t, mt: false, spin: 2.5 });
+        p.cmd(PlayerCmd::Play(true));
+        run(&mut p, 1.5, sr);
+        assert!(p.report().ended);
+        p.cmd(PlayerCmd::Seek { pos: 0.0, seq: 1 });
+        assert!(!p.report().ended);
     }
 }
