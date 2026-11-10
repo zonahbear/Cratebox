@@ -133,7 +133,8 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel { width: 330px; }
 /* Settings sits in the header: its panel drops down over the app */
 /* computers and tablets: Settings is a window in the middle of the screen (two columns when there's room), not a drop-down */
-header .setpanel.setpanel { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(780px, calc(100vw / var(--uiz, 1) - 32px)); max-height: calc(var(--vh, 100vh) - 48px);
+/* (not the HEAT drop-down, which shares .setpanel: as a window it was shifted up and left, its top row off the screen) */
+header .setpanel.setpanel:not(.tcpanel) { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(780px, calc(100vw / var(--uiz, 1) - 32px)); max-height: calc(var(--vh, 100vh) - 48px);
   display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); column-gap: 28px; align-content: start; padding: 0 18px 16px; border-radius: 12px; box-shadow: 0 24px 80px #000e; }
 header .setpanel[hidden] { display: none; }
 header .setpanel > .setcol { display: grid; gap: 4px; align-content: start; min-width: 0; }
@@ -1254,7 +1255,9 @@ class DeckPlayer extends AudioWorkletProcessor {
         if (d.mt != null) this.mt = d.mt; if (d.spin) this.spinA = 9 / d.spin; this.coast = false; this.flush(); break;
       case "play": this.playing = d.v; if (d.v) this.ended = false; break;
       case "rate": this.rate = d.v; break;
-      case "seek": this.seq = d.seq || 0; this.pos = Math.max(0, Math.min(this.len - 2, d.v)); this.target = this.pos; this.vel = 0; this.coast = false; this.flush(); break;
+      // a seek leaves the end: "ended" goes too, or the reports that follow (still ended, not playing) would
+      // switch the page's deck back off when PLAY is pressed right after, while the sound carries on
+      case "seek": this.seq = d.seq || 0; this.pos = Math.max(0, Math.min(this.len - 2, d.v)); this.target = this.pos; this.vel = 0; this.coast = false; this.ended = false; this.flush(); break;
       case "bend": this.bend = Math.max(-0.6, Math.min(0.6, this.bend + d.v)); break;
       case "scratch":
         if (d.v) { this.vel = this.coast ? this.vel : (this.playing ? this.rate : 0); this.coast = false; }
@@ -1837,10 +1840,9 @@ function phraseAnalysis(x, fs, bpm, firstBeat) {
 //    fit a straight line through them (no drift), then only round to a whole BPM if that rounding
 //    would move the grid by less than a few ms by the end of the track.
 // 4. On-beat vs off-beat: kicks and snares should sit on the beats, hats and offbeat bass between.
-// 5. Downbeat: chord/bass changes, drum entries and kick-vs-snare placement vote for which of the
-//    four beats starts the bar.
-// downbeat vote weights (tuned on the synthetic test set)
-var W_KS = 0.5, W_NOV = 20, W_START = 2, W_ENTRY = 0;
+// 5. Downbeat: the beat of the bar where the spectrum (and the bass on its own) changes most starts the bar.
+// the lowest BAR_LOW of the 16 spectrum bands (30 Hz to about 145 Hz) count as the bass
+const BAR_LOW = 6;
 function beatGrid(x, fs, range) {
   const n = x.length, N = 512, hop = 64, FPS = fs / hop;
   const frames = Math.max(0, Math.floor((n - N) / hop) + 1);
@@ -1850,7 +1852,6 @@ function beatGrid(x, fs, range) {
   const binHz = fs / N, bin = (f) => Math.max(1, Math.round(f / binHz));
   const b0 = bin(30), b1 = bin(150), b2 = bin(2000), b3 = Math.min(N / 2 - 1, bin(5000));
   const fLow = new Float32Array(frames), fMid = new Float32Array(frames), fHigh = new Float32Array(frames);
-  const rms = new Float32Array(frames);
   // coarse log spectrum (16 log-spaced bands, 30 Hz - 2 kHz) kept per frame for the downbeat vote
   const NB = 16, bandOf = new Int8Array(N / 2).fill(-1);
   for (let k = b0; k < b2; k++) bandOf[k] = Math.min(NB - 1, Math.floor(NB * Math.log(k / b0) / Math.log(b2 / b0)));
@@ -1873,11 +1874,8 @@ function beatGrid(x, fs, range) {
   // frames t and t+1 share one FFT (see splitMags): half the FFTs, same spectra
   for (let t = 0; t < frames; t += 2) {
     const sa = t * hop, sb = sa + hop, two = t + 1 < frames;
-    let ea = 0, eb = 0;
-    if (two) for (let i = 0; i < N; i++) { const v = x[sa + i], w = x[sb + i]; re[i] = v * win[i]; im[i] = w * win[i]; ea += v * v; eb += w * w; }
-    else for (let i = 0; i < N; i++) { const v = x[sa + i]; re[i] = v * win[i]; im[i] = 0; ea += v * v; }
-    rms[t] = Math.sqrt(ea / N);
-    if (two) rms[t + 1] = Math.sqrt(eb / N);
+    if (two) for (let i = 0; i < N; i++) { re[i] = x[sa + i] * win[i]; im[i] = x[sb + i] * win[i]; }
+    else for (let i = 0; i < N; i++) { re[i] = x[sa + i] * win[i]; im[i] = 0; }
     fft(re, im);
     splitMags(re, im, b0, b3, ma, mb);
     frameOut(t, ma);
@@ -2066,59 +2064,29 @@ function beatGrid(x, fs, range) {
   const nb = kLast - kFirst + 1;
   const vote = [0, 0, 0, 0];
   if (nb >= 16) {
-    const fKick = new Float32Array(nb), fSnare = new Float32Array(nb), fChange = new Float32Array(nb), fEntry = new Float32Array(nb), loud = new Float32Array(nb);
-    const avgSpec = new Float32Array(nb * NB);
+    // Bar 1 is where the music changes: the bass note, the chord, a new part. For every beat, how far the
+    // spectrum of the two beats after it is from the two beats before it, summed per beat-of-the-bar, once
+    // over all bands and once over the bass bands alone. (On real tracks this agrees with rekordbox's bar 1
+    // far more often than the earlier kick/snare + "first loud beat" vote, which was tuned on synthetic ones.)
+    const avgSpec = new Float64Array(nb * NB);
     for (let j = 0; j < nb; j++) {
-      const k = kFirst + j, f0 = a0 + k * P;
-      const pk = peakNear(oL, f0, 3), ps = peakNear(oM, f0, 3);
-      fKick[j] = pk ? pk.v : 0; fSnare[j] = ps ? ps.v : 0;
+      const f0 = a0 + (kFirst + j) * P;
       const s = Math.max(0, Math.round(f0)), e = Math.min(frames, Math.round(f0 + P));
-      let r = 0;
-      for (let t = s; t < e; t++) { r += rms[t]; for (let q = 0; q < NB; q++) avgSpec[j * NB + q] += spec[t * NB + q]; }
+      for (let t = s; t < e; t++) for (let q = 0; q < NB; q++) avgSpec[j * NB + q] += spec[t * NB + q];
       const c = Math.max(1, e - s);
-      loud[j] = r / c;
       for (let q = 0; q < NB; q++) avgSpec[j * NB + q] /= c;
     }
-    for (let j = 1; j < nb; j++) {
-      let d = 0;
-      for (let q = 0; q < NB; q++) d += Math.abs(avgSpec[j * NB + q] - avgSpec[(j - 1) * NB + q]);
-      fChange[j] = d;
-    }
-    for (let j = 4; j < nb - 4; j++) {
-      let a = 0, b = 0;
-      for (let q = 0; q < 4; q++) { a += loud[j + q]; b += loud[j - 4 + q]; }
-      const r = Math.log((a + 1e-6) / (b + 1e-6));
-      fEntry[j] = r > 0.4 ? r : 0;
-    }
-    const zs = (v) => { let m = 0, s = 0; for (const a of v) m += a; m /= v.length; for (const a of v) s += (a - m) ** 2; s = Math.sqrt(s / v.length) || 1; return v.map((a) => (a - m) / s); };
-    const zK = zs(fKick), zS = zs(fSnare), zC = zs(fChange);
-    // bar novelty: with the right bar lines each bar sits on one chord, so bar-to-bar changes are biggest
-    var nov = [0, 0, 0, 0];
-    for (let r = 0; r < 4; r++) {
-      const j0 = (((r - kFirst) % 4) + 4) % 4;
-      let prevBar = null, cnt = 0;
-      for (let j = j0; j + 4 <= nb; j += 4) {
-        const bar = new Float32Array(NB);
-        for (let q = 0; q < 4; q++) for (let u = 0; u < NB; u++) bar[u] += avgSpec[(j + q) * NB + u] / 4;
-        if (prevBar) { let d = 0; for (let u = 0; u < NB; u++) d += Math.abs(bar[u] - prevBar[u]); nov[r] += d; cnt++; }
-        prevBar = bar;
-      }
-      nov[r] /= cnt || 1;
-    }
-    var ks = [0, 0, 0, 0], ksn = [0, 0, 0, 0];
-    for (let j = 0; j < nb; j++) { const r = (((kFirst + j) % 4) + 4) % 4; ks[r] += zK[j] - zS[j]; ksn[r]++; }
-    for (let r = 0; r < 4; r++) ks[r] /= ksn[r] || 1;
-    // most tracks start on bar 1: the first beat where the music has properly started gets a vote
-    const lsorted = Array.from(loud).sort((p, q) => p - q), lmed = lsorted[Math.floor(nb / 2)];
-    let jStart = 0;
-    while (jStart < nb - 1 && loud[jStart] < 0.25 * lmed) jStart++;
-    const novMean = (nov[0] + nov[1] + nov[2] + nov[3]) / 4 || 1;
-    for (let r = 0; r < 4; r++) vote[r] = W_KS * ks[r] + W_NOV * (nov[r] / novMean - 1);
-    vote[(((kFirst + jStart) % 4) + 4) % 4] += W_START;
-    for (let j = 0; j < nb; j++) {
+    const all = [0, 0, 0, 0], low = [0, 0, 0, 0];
+    for (let j = 2; j < nb - 2; j++) {
       const r = (((kFirst + j) % 4) + 4) % 4;
-      vote[r] += W_ENTRY * fEntry[j];
+      for (let q = 0; q < NB; q++) {
+        const d = Math.abs((avgSpec[(j + 1) * NB + q] + avgSpec[j * NB + q] - avgSpec[(j - 1) * NB + q] - avgSpec[(j - 2) * NB + q]) / 2);
+        all[r] += d;
+        if (q < BAR_LOW) low[r] += d;
+      }
     }
+    const sa = Math.max(1e-12, all[0] + all[1] + all[2] + all[3]), sl = Math.max(1e-12, low[0] + low[1] + low[2] + low[3]);
+    for (let r = 0; r < 4; r++) vote[r] = all[r] / sa + low[r] / sl;
   }
   let best = 0;
   for (let r = 1; r < 4; r++) if (vote[r] > vote[best]) best = r;
@@ -2359,7 +2327,7 @@ const GPU = (() => {
 let spinSecs = 2.5;
 try { const v = parseFloat(localStorage.getItem("cb.spin")); if (v > 0) spinSecs = v; } catch (e) {}
 // bump when the analyser changes so cached results get redone (hand-edited grids are kept)
-const ANALYSIS_VER = 3;          // 2: new beat tracker, 3: phrases
+const ANALYSIS_VER = 4;          // 2: new beat tracker, 3: phrases, 4: bar 1 from spectrum changes
 const analysisCurrent = (t) => t.bpm != null && t.key != null && Array.isArray(t.phrases) && t.ver === ANALYSIS_VER;
 // One big decode at a time (deck loads and the background analysis), and a crash guard: the track
 // being decoded is written down first, so if the browser dies (out of memory) we skip it next time
@@ -3000,7 +2968,7 @@ class Deck {
   }
   // SYNC as the button sees it: a tap toggles it, but not the release that ends a hold (makeMaster)
   syncPressed() {
-    if (performance.now() - this.heldAt < 2000) { this.heldAt = -1e9; return; }
+    if (this.heldAt > 0) { this.heldAt = -1e9; return; }      // however long it was held (a new press clears it)
     this.setSync(!this.sync);
   }
   // hold SYNC: this deck becomes the master. It keeps its tempo (synced or not) and every other synced deck
@@ -7021,6 +6989,7 @@ const TC = (() => {
   const now = () => performance.now();
   const cToF = (c) => c * 9 / 5 + 32, fToC = (f) => (f - 32) * 5 / 9;
   const MIN_F = 350, MAX_F = 590, CUTOFF_F = 600, SLOT = 3;
+  const BLIND_MS = 3000;   // a run stops when the bowl temperature can't be read for this long (as in TrueCurve)
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
@@ -7504,6 +7473,8 @@ const TC = (() => {
       if (HEATING.has(await dev.readState())) { await dev.stop(); await sleep(1500); }
       origSlot = await dev.readActiveSlot();
       backup = await dev.backupSlot(SLOT);
+      // no backup, no run: without it slot 4 could not be put back afterwards
+      if (!backup || backup.temp == null) { backup = null; throw new Error("couldn't read profile slot 4 to back it up; nothing was changed"); }
       const startF = Math.round(curve.at(0));
       if (!(await dev.writeProfileTemp(SLOT, startF))) throw new Error("the device refused the start temperature");
       await dev.writeProfileTime(SLOT, Math.min(120, Math.ceil(end + 10)));
@@ -7511,11 +7482,13 @@ const TC = (() => {
       if (!(await dev.start())) throw new Error("the device didn't accept the start command");
       S.phase = "preheat"; S.target = startF; say(`Preheating to ${startF}°F. Back to the decks; it'll run on its own.`);
       const p0 = now();
+      let seen = p0;   // when the bowl temperature was last read: never heat blind, the cutoff needs a reading
       while (!S.abort) {
         S.live = await dev.readTemp(); S.state = await dev.readState();
         const tp = (now() - p0) / 1000, y = S.live;
         render();
         if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+        if (y != null) seen = now(); else if (now() - seen > BLIND_MS) throw new Error("no temperature reading from the device for 3 s");
         // some firmware (Proxy) says "heating" long before the bowl is hot, so the temperature has to agree too
         if (y != null && (y >= startF - 8 || (HEATING.has(S.state) && S.state !== 7 && y >= startF - 30))) break;
         if (tp > 6 && !HEATING.has(S.state)) throw new Error(`the device stopped heating during preheat (at ${f0(y)}°F)`);
@@ -7537,6 +7510,7 @@ const TC = (() => {
           if (t > 2 && !HEATING.has(S.state)) { say(`The device ended its heat cycle ${Math.round(t)} s in.`); break; }
         }
         if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+        if (y != null) seen = tn; else if (tn - seen > BLIND_MS) throw new Error("no temperature reading from the device for 3 s");
         const u = Math.round(drv.command(t, y, dt) * 10) / 10, diff = Math.abs(u - sent);
         if ((diff >= 1.5 || (diff >= 0.5 && tn - sentAt > 1500)) && await dev.setLiveTarget(u)) { sent = u; sentAt = tn; }
         learner.add(t, y, sent);
@@ -7575,13 +7549,15 @@ const TC = (() => {
       if (HEATING.has(await dev.readState())) { await dev.stop(); await sleep(1500); }
       origSlot = await dev.readActiveSlot();
       backup = await dev.backupSlot(SLOT);
+      // no backup, no run: without it slot 4 could not be put back afterwards
+      if (!backup || backup.temp == null) { backup = null; throw new Error("couldn't read profile slot 4 to back it up; nothing was changed"); }
       if (!(await dev.writeProfileTemp(SLOT, f))) throw new Error("the device refused the temperature");
       await dev.writeProfileTime(SLOT, 120);
       await dev.setActiveSlot(SLOT);
       if (!(await dev.start())) throw new Error("the device didn't accept the start command");
       S.phase = "hold"; say(`Holding ${f}°F. Pick PUFF in Beat FX and turn it on; hit it once the bowl is up to temperature.`);
       const t0 = now();
-      let tick = 0, reads = 0, rateAt = t0;
+      let tick = 0, reads = 0, rateAt = t0, seen = t0;
       while (!S.abort) {
         const tn = now(), tt = (tn - t0) / 1000;
         const y = await dev.readTemp();
@@ -7590,6 +7566,7 @@ const TC = (() => {
           if (tt > 6 && !HEATING.has(S.state)) { ended = true; break; }
         }
         if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+        if (y != null) seen = tn; else if (tn - seen > BLIND_MS) throw new Error("no temperature reading from the device for 3 s");
         S.live = y;
         if (y != null) reads++;
         if (tn - rateAt >= 2000) {

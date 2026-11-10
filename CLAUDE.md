@@ -119,5 +119,7 @@ Session notes and next steps: [`.claudes/breadcrumbs.md`](.claudes/breadcrumbs.m
 - Website + beta signup: PRs #6 and #7 merged to main (latest 072dc71, 2026-10-22). Live at https://cratebox.zonahbear.workers.dev; Cloudflare production branch is `main`. Secrets set and verified (owner-only `/api/status?k=<LINK_SECRET>&mail=1&asc=1`). #beta has a 6-step iPhone install guide (Jonah-approved copy). Full signup → Apple invite → TestFlight pipeline confirmed working live (2026-10-22). Cloudflare PR preview builds fail instantly (dashboard setting, ignore). Setup: project files website/SETUP.md. Real screenshots wanted. HEAT stays in the public player.
 - HEAT / TrueCurve mini: merged to main (PR #5, 2026-10-21). Simulator-tested only (`tests/test_truecurve.py`); not yet tried on a real Puffco. Follow-up idea: learnable controller button. iOS suite copy synced (cratebox-iOS-suite PR #4, merged).
 
+- Analysis (2026-11-10): bar 1 now comes from spectrum changes per beat-of-bar (`BAR_LOW`, ANALYSIS_VER 4), checked against rekordbox grids on
+  real tracks (see breadcrumbs). Known gaps: ~7% of tracks half a beat off rekordbox, ~2% tempo at 4/3 or 2/3. Swift port not updated.
 - iOS suite copy matches Cratebox main 8a02028 (suite PR #4 merged); a drift check in the suite CI was proposed, not built.
 - Not in the web app: OneLibrary reading, tempo-change grids (one tempo used), AIFF decode.

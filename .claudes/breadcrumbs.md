@@ -34,3 +34,22 @@ Next:
   and runs at 1440x1200. Both pass (17/17, 49/49).
 - Perf: CDP profile, 4 decks playing at 1440x900 headless: frame() JS ~0.5 ms/frame, no hotspot. Not changed.
 - Not done: iOS suite copy of cratebox.html/tests not re-synced (suite main is behind anyway).
+
+## 2026-11-10 second review pass (branch claude/project-thread-t5561g, stacked on PR #14)
+- Bar 1: old vote (kick/snare + bar novelty + "first loud beat") agreed with rekordbox on 23 of 51 real stick tracks;
+  "first loud beat" alone was at chance. New vote in beatGrid: per beat-of-bar, sum of |spectrum of the 2 beats after -
+  2 beats before|, all 16 bands + bass bands (BAR_LOW = 6), each as a share. Tuned on 51 tracks, then checked on 46
+  fresh ones: 19 -> 30 of 43. ANALYSIS_VER 4 (libraries re-analyse once; manual and rekordbox grids are kept).
+  Same code in Cratebox-Linux analysis.rs (results match to 0.1 ms). iOS Swift port NOT updated (its oracle fixtures will drift).
+- Measured, not fixed: 8 of 113 tracks are half a beat off rekordbox (rekordbox's beats sit where our onset energy is
+  weaker; needs ears to say who is right); 2 of 113 tempos wrong at 4/3 and 2/3 (dotted rhythms; a triplet/straight
+  subdivision test did not separate them from correct swing tracks, so no change).
+- Fixed: worklet seek clears `ended` (PLAY after a track ran out could show stopped while sounding); hold-SYNC release
+  after >2.5 s no longer toggles SYNC (heldAt is cleared on the next pointerdown instead of timing out);
+  HEAT panel was caught by the Settings-window CSS (`header .setpanel.setpanel`) and opened half off-screen;
+  HEAT run stops after 3 s without a temperature reading and refuses to start without a slot 4 backup (from truecurve).
+- Tests run: cratebox 64, sync 22, phrases 17, barcounter 9, truecurve 25, puff 21, header 9, layout 20, all pass
+  (truecurve and puff failed before the panel fix: `#tcSim` outside the viewport).
+- Jonah's rule: test with real tracks from his D: stick (rekordbox USB), headless Chromium. Scripts used lived in the
+  session scratchpad; the Linux repo has `examples/grid_compare.rs` for the rekordbox comparison.
+- Next: sync the iOS suite's copy of cratebox.html; port the bar-1 vote to Swift; look at the off-beat cases by ear.
