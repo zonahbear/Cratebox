@@ -179,3 +179,13 @@ unstarted four times; that also means #28 itself has never been compiled). First
   init), Library.swift, LibraryView.swift, project.yml, SmartSearch.swift: none of the files above.
 - Next: get one macOS run through, fix what the compiler says, check the screenshots (EQ sheet on an SE-size screen,
   the V tab on a 16e). personal/heat has none of this yet.
+
+## 2026-11-10 22:35Z: Intel Mac runners, first compile
+- GitHub's arm64 Mac pool cancelled TestFlight unstarted 4 times. Jonah: "try the intel pool". ios.yml and testflight.yml
+  now `runs-on: macos-15-intel`: picked up in 6 s. Simulators there are x86_64; the archive is still arm64 (generic/platform=iOS).
+- TestFlight run 42913806647 on claude/project-thread-t5561g @ 8283c23 (= #28 + the TODO features): ARCHIVE SUCCEEDED,
+  UPLOADED build 47.1 (Xcode 26.3). First compile of #28 and of d63cfd8; no fixes needed.
+- ios.yml run 42913811801 (same commit, devices none): "Core tests" step finished; check its final gate before merging PR #29.
+- Next: merge PR #29 into preview/truecurve-usb (triggers one more TestFlight build from the merge commit). Nothing tried
+  on a device: VINYL, range change + FLX4 soft takeover, master EQ sound, walkthrough layout on SE all need Jonah's hands.
+  personal/heat does not have these features.
