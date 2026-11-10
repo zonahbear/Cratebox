@@ -25,6 +25,9 @@ targets:
     sources: [App]
     dependencies:
       - package: CrateboxKit
+      # Ask the library (SmartSearch.swift): iOS 26+ only, so weak, or the app wouldn't start on iOS 17/18
+      - sdk: FoundationModels.framework
+        weak: true
     info:
       path: App/Info.plist
       properties:

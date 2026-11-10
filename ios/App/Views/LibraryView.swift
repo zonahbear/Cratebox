@@ -10,6 +10,10 @@ struct LibraryPane: View {
     @EnvironmentObject var devices: Devices
     @EnvironmentObject var core: Core
     @State private var query = ""
+    // Ask the library in words (SmartSearch.swift): only offered where Apple's on-device model is ready
+    @State private var smart: SmartFilter?
+    @State private var asking = false
+    @State private var canAsk = false
     @State private var sorts: [String: [String]] = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
     @State private var showSidebar = true
     // what the Files picker was opened for: 0 a music folder, 1 a rekordbox USB, 2 rekordbox XML. Kept apart
@@ -56,9 +60,9 @@ struct LibraryPane: View {
         NotificationCenter.default.post(name: sortsChanged, object: nil)
     }
     struct Row: Identifiable { let id: String; let pos: Int; let t: LibTrack? ; let title: String; let artist: String }
-    var rows: [Row] { LibraryPane.build(app.view, library, playlists, devices, query: query, sort: sort) }
+    var rows: [Row] { LibraryPane.build(app.view, library, playlists, devices, query: query, sort: sort, smart: smart) }
     /// the list for a view: also what the controller's browse knob walks when the library isn't on screen
-    static func build(_ view: AppModel.LibraryView, _ library: Library, _ playlists: Playlists, _ devices: Devices, query: String, sort: (SortKey, Bool)) -> [Row] {
+    static func build(_ view: AppModel.LibraryView, _ library: Library, _ playlists: Playlists, _ devices: Devices, query: String, sort: (SortKey, Bool), smart: SmartFilter? = nil) -> [Row] {
         var base: [Row]
         switch view {
         case .collection: base = library.tracks.filter { $0.device == nil }.enumerated().map { Row(id: $0.element.id, pos: $0.offset, t: $0.element, title: $0.element.info.title, artist: $0.element.info.artist) }
@@ -82,6 +86,12 @@ struct LibraryPane: View {
                 r.title.lowercased().contains(q) || r.artist.lowercased().contains(q) || (r.t.flatMap { Keys.camelot($0.info.key)?.label.lowercased() } == q)
             }
         }
+        if let f = smart {
+            base = base.filter { r in
+                guard let t = r.t else { return false }
+                return f.matches(title: r.title, artist: r.artist, bpm: t.info.bpm, key: t.info.key, duration: t.info.duration)
+            }
+        }
         let (k, desc) = sort
         if k != .none {
             func v(_ r: Row) -> (Double, String) {
@@ -101,8 +111,8 @@ struct LibraryPane: View {
     func pick(_ m: Int) { pickMode = m; picking = true }
     var editable: Bool {
         switch app.view {
-        case .playlist: return sort.0 == .none && query.isEmpty
-        case .devicePlaylist: return devices.editable && sort.0 == .none && query.isEmpty
+        case .playlist: return sort.0 == .none && query.isEmpty && smart == nil
+        case .devicePlaylist: return devices.editable && sort.0 == .none && query.isEmpty && smart == nil
         default: return false
         }
     }
@@ -143,11 +153,44 @@ struct LibraryPane: View {
             Button { showSidebar.toggle() } label: { Image(systemName: "sidebar.left") }.buttonStyle(.plain)
             Text(title).font(.system(size: 13, weight: .bold)).lineLimit(1)
                 .padding(.horizontal, 4).background(RoundedRectangle(cornerRadius: 4).stroke(app.browseFocusTree ? Theme.loop : .clear, lineWidth: 1.5))
-            TextField("Search title, artist or key (8A)", text: $query).textFieldStyle(.roundedBorder).font(.system(size: 12)).frame(maxWidth: 260)
+            TextField(canAsk ? "Search, or ask: 124–128 in 8A ✨" : "Search title, artist or key (8A)", text: $query)
+                .textFieldStyle(.roundedBorder).font(.system(size: 12)).frame(maxWidth: 260)
+                .onSubmit { if canAsk && query.split(separator: " ").count >= 3 { ask() } }
+            if canAsk {
+                Button { ask() } label: {
+                    if asking { ProgressView().controlSize(.small) } else { Image(systemName: "sparkles") }
+                }.buttonStyle(.plain).disabled(asking || query.trimmingCharacters(in: .whitespaces).isEmpty)
+                .accessibilityLabel("Ask the library")
+            }
+            if let f = smart {
+                Button { smart = nil } label: {
+                    HStack(spacing: 3) { Text(f.summary).lineLimit(1); Image(systemName: "xmark.circle.fill") }
+                }.buttonStyle(.plain).font(.system(size: 11)).foregroundStyle(Theme.loop)
+                .padding(.horizontal, 6).padding(.vertical, 3).background(Capsule().fill(Theme.raise))
+                .accessibilityLabel("Clear: \(f.summary)")
+            }
             Spacer()
             if !library.progress.isEmpty { Text(library.progress).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1) }
             if editable { EditButton().font(.system(size: 12)) }
         }.padding(6).environment(\.editMode, $editMode)
+        .onAppear { canAsk = SmartSearch.available }
+    }
+    /// The search box's words → a filter, by Apple's on-device model. "What's playing" is the newest playing deck,
+    /// at the tempo it plays at now.
+    func ask() {
+        let q = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !q.isEmpty, !asking else { return }
+        let p = core.decks.filter { $0.playing && $0.loaded }.sorted { $0.startedAt > $1.startedAt }.first
+        let playing = p.map { (bpm: $0.effBpm(), key: $0.keyNow()) }
+        asking = true
+        Task { @MainActor in
+            defer { asking = false }
+            do {
+                let f = try await SmartSearch.filter(for: q, playing: playing)
+                if f.isEmpty { app.status("Couldn't find a tempo, key, length or name in that"); return }
+                smart = f; query = ""
+            } catch { app.status("Couldn't ask: \(error.localizedDescription)") }
+        }
     }
     var title: String {
         switch app.view {

@@ -159,3 +159,13 @@
   good for optional library features (natural-language search, tags), useless for audio analysis.
 - Speed/memory wins found instead: Analysis.swift FFT is hand-rolled `[Double]` (no Accelerate); Library.swift:293 decodes whole
   tracks before downmixing (the ~320 MB issue). Next steps wait on Jonah's go.
+
+## 2026-11-10: analysis speed/memory + "ask the library" (branch claude/project-thread-ggbual, from preview/truecurve-usb 24bbebb)
+- Not compiled locally (no Swift toolchain allowed in the cloud session); compiled + tested only by ios.yml on GitHub's Mac.
+- `Analysis.fft` uses vDSP_fft_zipD when Accelerate exists (`Analysis.useAccelerate`, tests flip it); the radix-2 loop stays as
+  the reference. AnalysisSpeedTests: loop vs vDSP (< 1e-9), timing printed as `ANALYSIS speed`.
+- `AudioDecoder` (Library.swift) streams 1 s blocks: decks write straight into PCMTrack(adopting:) (one copy, was two),
+  library analysis uses `analysisMono` + `Analysis.MonoAccumulator` (same samples as monoFor, tested) and never holds stereo.
+- Ask the library: SmartSearch.swift (App) + CrateboxKit SmartFilter (tested). Foundation Models on-device only, iOS 26+,
+  FoundationModels weak-linked in project.yml; the sparkles button only shows when SystemLanguageModel.default.isAvailable.
+- Not done: Beat This! on Core ML (needs torch + coremltools + the weights; not reachable from the cloud session).
