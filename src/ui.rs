@@ -1750,6 +1750,34 @@ impl Gui {
             self.bat_dialog = Some(5);
         }
     }
+    /// a stick was plugged in: ask before anything is copied to this computer
+    fn copy_dialog(&mut self, ctx: &egui::Context) {
+        let Some((id, name, has)) = self.app.ask_copy.clone() else { return };
+        // pulled out or ejected before the answer: nothing to ask
+        if !self.app.lists.devices.iter().any(|d| d.id == id && !crate::usbcopy::is_copy(&d.root)) { self.app.ask_copy = None; return; }
+        egui::Window::new("askcopy").title_bar(false).resizable(false).collapsible(false).order(egui::Order::Foreground)
+            .anchor(egui::Align2::CENTER_CENTER, vec2(0.0, 0.0)).fixed_size(vec2(420.0, 0.0))
+            .frame(egui::Frame::window(&ctx.style()).fill(PANEL()).stroke(Stroke::new(2.0_f32, deck_color(0))))
+            .show(ctx, |ui| {
+                ui.spacing_mut().item_spacing = vec2(8.0, 8.0);
+                ui.label(egui::RichText::new(if has { format!("Update the copy of {name}?") } else { format!("Copy {name} to this computer?") }).font(bold(18.0)).color(FG()));
+                ui.label(egui::RichText::new(if has {
+                    "New and changed files go from the stick to its copy on this computer. Nothing is deleted, and nothing is written to the stick."
+                } else {
+                    "The stick's music and playlists go to Music/Cratebox USB, so you can play on after pulling it out. Nothing is written to the stick."
+                }).size(13.0).color(FG()));
+                ui.label(egui::RichText::new("You can play straight from the stick either way. COPY USB in the library does this later.").size(11.0).color(DIM()));
+                let half = vec2((ui.available_width() - 8.0) / 2.0, 34.0);
+                ui.horizontal(|ui| {
+                    let r = button(ui, "Not now", half, false, FG(), 13.0);
+                    self.reg("askcopy.no", r.rect);
+                    if r.clicked() { self.app.answer_copy(false); }
+                    let r = button(ui, if has { "Update the copy" } else { "Copy" }, half, true, deck_color(0), 13.0);
+                    self.reg("askcopy.yes", r.rect);
+                    if r.clicked() { self.app.answer_copy(true); }
+                });
+            });
+    }
     fn battery_dialog(&mut self, ctx: &egui::Context) {
         let Some(level) = self.bat_dialog else { return };
         let pc = self.battery.1.map(|b| b.0).unwrap_or(level);
@@ -2368,6 +2396,7 @@ impl eframe::App for Gui {
         if self.app.ui.settings_open { self.settings(ctx); }
         if self.power_open { self.power_menu(ctx); }
         self.wave_browser(ctx);
+        self.copy_dialog(ctx);
         self.battery_dialog(ctx);
         if self.heat_open { self.heat_panel(ctx); } else { self.app.heat.set_panel(false); }
         if self.keys_open { self.keys_window(ctx); }

@@ -139,6 +139,7 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
   app.rs adopt_rb_grid at load). Settings → rekordbox → Compare grids logs bar-1 offsets to grid-compare.log
   (evidence for the "bar 1 half a bar late" report; synthetic tests are all on bar 1, so tuning needs real tracks).
   2026-11-10: bar-1 vote replaced after measuring on 113 real stick tracks (breadcrumbs); ~7% still half a beat off rekordbox.
+- A mounted stick is never copied by itself: Job::Mounted sets App.ask_copy, ui.rs copy_dialog asks, answer_copy(yes) runs copy_device (Jonah's rule, 2026-11-10).
 - rekordbox is read-only here: never writes to a stick (the web app's playlist writer isn't ported).
 - Header launchers: WEB = cratebox-web (Chromium, xtradeb PPA deb; Chrome only as a fallback on old images), SOULSEEK = cratebox-soulseek (Nicotine+), FILES = pcmanfm-qt; openbox-rc.xml
   gives every window but Cratebox a frame at 80%, resizable. Settings is tabbed (SETTINGS_TABS in ui.rs, one fn per tab).
