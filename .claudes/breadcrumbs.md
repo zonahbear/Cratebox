@@ -168,4 +168,10 @@
   library analysis uses `analysisMono` + `Analysis.MonoAccumulator` (same samples as monoFor, tested) and never holds stereo.
 - Ask the library: SmartSearch.swift (App) + CrateboxKit SmartFilter (tested). Foundation Models on-device only, iOS 26+,
   FoundationModels weak-linked in project.yml; the sparkles button only shows when SystemLanguageModel.default.isAvailable.
-- Not done: Beat This! on Core ML (needs torch + coremltools + the weights; not reachable from the cloud session).
+- Compiled + tested 2026-11-10 22:30Z on macos-15-intel (ios.yml run 42914100713): 85 tests pass, app builds (Xcode 26.3).
+  JS oracle still exact with vDSP; fft diff 1e-13; whole analysis ~25% faster (0.25 s -> 0.19 s per synthetic track on CI).
+- Beat This! small -> Core ML: ios/tools/coreml/convert.py + .github/workflows/coreml.yml (ubuntu, claude/** pushes or manual).
+  Rotary einsum replaced by cos/sin tables (exact match); lookups must use int(shape) or tracing misses them.
+  Artifact BeatThisSmall-coreml (run 42914095676, 30-day retention). NOT wired into the app: needs a Swift log-mel front end
+  (22050 Hz, n_fft 1024, hop 441, 30-11000 Hz, 128 slaney mels, log1p(1000x)) + peak picking, then a bar-1 check vs rekordbox on
+  Jonah's D: tracks. Reference beats for two real tracks: Jonah's PC, Relay\beatthis\out\reference.json.
