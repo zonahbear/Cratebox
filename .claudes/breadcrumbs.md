@@ -153,3 +153,9 @@
   regenerate the oracle fixtures. The web copy of cratebox.html here also needs a sync once #15 merges.
 - personal/heat needs the same two fixes as its own change (never merged from here). HEAT there should also get truecurve PR #4's two
   fail-safes (stop after 3 s with no temperature reading; no run without a slot 4 backup).
+
+## 2026-11-10: Apple Intelligence feasibility (research only, no code)
+- Full note: project files `research/apple-intelligence-ios.md`. Foundation Models = text/image LLM, 4096 tokens, iPhone 15 Pro+/16+ only:
+  good for optional library features (natural-language search, tags), useless for audio analysis.
+- Speed/memory wins found instead: Analysis.swift FFT is hand-rolled `[Double]` (no Accelerate); Library.swift:293 decodes whole
+  tracks before downmixing (the ~320 MB issue). Next steps wait on Jonah's go.
