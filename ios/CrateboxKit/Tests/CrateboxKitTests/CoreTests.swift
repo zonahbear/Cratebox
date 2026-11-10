@@ -320,8 +320,10 @@ final class CoreTests: XCTestCase {
         d.togglePlay(); render(e, c, secs: 1)
         d.platterTouch(true); d.jogTicks(40, .scratch); render(e, c, secs: 0.5)       // a nudge, not a hold
         XCTAssertTrue(d.playing); XCTAssertGreaterThan(d.now(), 1.3)
-        let p = MemoryPrefs(); Core(engine: Engine(sampleRate: SR), prefs: p).decks[1].setVinyl(false)
-        XCTAssertFalse(Core(engine: Engine(sampleRate: SR), prefs: p).decks[1].vinyl, "remembered")
+        // the cores stay in locals: a deck's `core` is unowned, so a temporary Core would be gone before its deck is used
+        let p = MemoryPrefs(); let c1 = Core(engine: Engine(sampleRate: SR), prefs: p); c1.decks[1].setVinyl(false)
+        let c2 = Core(engine: Engine(sampleRate: SR), prefs: p)
+        XCTAssertFalse(c2.decks[1].vinyl, "remembered")
     }
     /// the beat counter, as the web app's barBeat: 1.1 on the grid's first beat, counting back before it
     func testBarBeatCounter() {
