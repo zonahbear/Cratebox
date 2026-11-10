@@ -103,3 +103,10 @@ pub fn nicotine() -> std::io::Result<std::process::Child> {
         std::process::Command::new(PathBuf::from(pf).join("Nicotine+").join("Nicotine+.exe")).spawn()
     })
 }
+
+/// background work (track analysis): this thread drops to Windows' background mode (lowest CPU and
+/// disk priority), the counterpart of nice 19 on Linux
+pub fn background_thread() {
+    use windows::Win32::System::Threading::{GetCurrentThread, SetThreadPriority, THREAD_MODE_BACKGROUND_BEGIN};
+    let _ = unsafe { SetThreadPriority(GetCurrentThread(), THREAD_MODE_BACKGROUND_BEGIN) };
+}

@@ -55,6 +55,7 @@ src/win.rs         Windows only: MMCSS "Pro Audio" for the audio thread, message
 src/heat.rs        HEAT (TrueCurve mini): curve maths, driver, learner, PuffDrop, simulator, Lorax bytes,
                    BlueZ GATT via zbus (pure Rust, no libdbus), worker thread; port of iOS personal/heat
 src/uitest.rs      scripted UI driver: CRATEBOX_UITEST=script.json, output to CRATEBOX_UITEST_OUT
+examples/grid_compare.rs  analysis vs rekordbox's grids on a stick (or a copy): BPM, beat offset, bar 1. Real-track check for analysis changes
 tests/analysis.rs  analysis accuracy on synthetic tracks
 tests/app.rs       whole app end-to-end with FLX4 MIDI messages, persistence
 tests/ui.rs        real window under Xvfb (skipped without xvfb-run)
@@ -137,6 +138,7 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
 - rekordbox grids win: stick tracks, XML imports, and collection tracks with a stick twin (same file name + size,
   app.rs adopt_rb_grid at load). Settings → rekordbox → Compare grids logs bar-1 offsets to grid-compare.log
   (evidence for the "bar 1 half a bar late" report; synthetic tests are all on bar 1, so tuning needs real tracks).
+  2026-11-10: bar-1 vote replaced after measuring on 113 real stick tracks (breadcrumbs); ~7% still half a beat off rekordbox.
 - rekordbox is read-only here: never writes to a stick (the web app's playlist writer isn't ported).
 - Header launchers: WEB = cratebox-web (Chromium, xtradeb PPA deb; Chrome only as a fallback on old images), SOULSEEK = cratebox-soulseek (Nicotine+), FILES = pcmanfm-qt; openbox-rc.xml
   gives every window but Cratebox a frame at 80%, resizable. Settings is tabbed (SETTINGS_TABS in ui.rs, one fn per tab).

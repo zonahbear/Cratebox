@@ -76,7 +76,7 @@ where T: cpal::SizedSample + cpal::FromSample<f32> {
     let mut promoted = false;
     let per_us = cfg.channels as u64 * cfg.sample_rate.0 as u64;
     dev.build_output_stream::<T, _, _>(cfg, move |data: &mut [T], info| {
-        if !promoted { promoted = true; promote_to_realtime(); }
+        if !promoted { promoted = true; promote_to_realtime(); no_denormals(); }
         beat.fetch_add(1, Ordering::Relaxed);
         // how long until the end of this buffer is heard: the device's delay plus the buffer itself
         let ts = info.timestamp();
@@ -103,6 +103,19 @@ fn promote_to_realtime() {
     let rc = unsafe { libc::pthread_setschedparam(libc::pthread_self(), libc::SCHED_FIFO, &param) };
     if rc != 0 && !WARNED.swap(true, Ordering::Relaxed) {
         eprintln!("cratebox: no realtime priority for the audio thread ({}), running at normal priority", std::io::Error::from_raw_os_error(rc));
+    }
+}
+
+/// Flush-to-zero + denormals-are-zero for the calling (audio) thread. A smoothed gain heading for 0 (a closed
+/// fader, a killed EQ band) otherwise ends up as a denormal number after a few seconds and stays one, and
+/// every multiply with it takes the CPU's slow path: many times the normal cost, on the audio thread.
+pub fn no_denormals() {
+    #[cfg(target_arch = "x86_64")]
+    unsafe {
+        let mut csr = 0u32;
+        std::arch::asm!("stmxcsr [{}]", in(reg) &mut csr, options(nostack));
+        csr |= 0x8040; // FTZ | DAZ
+        std::arch::asm!("ldmxcsr [{}]", in(reg) &csr, options(nostack, readonly));
     }
 }
 
@@ -197,6 +210,7 @@ impl AudioIo {
         let eng = self.engine.clone();
         let sr = self.sr;
         self.null_thread = Some(std::thread::Builder::new().name("cratebox-null-audio".into()).spawn(move || {
+            no_denormals();
             let frames = 256usize;
             let mut buf = vec![0f32; frames * 2];
             let t0 = Instant::now();

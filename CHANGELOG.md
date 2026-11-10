@@ -2,6 +2,17 @@
 
 Newest first. Each update arrives through `cratebox-update` (no new ISO needed) unless it says "Cratebox OS".
 
+## 10 November 2026
+
+- Bar 1 lands on the right beat far more often. It is now picked from where the spectrum and the bass change,
+  and was checked against rekordbox's own grids on a real stick: on 46 tracks it had never seen, bar 1 matched
+  rekordbox on 30 of 43, up from 19. Tracks are analysed again once; hand-edited and rekordbox grids are kept.
+- PLAY right after a track ran out works (CUE or a seek, then PLAY, could leave the deck showing stopped).
+- Less work on the audio thread when a fader is down or an EQ band is killed: the gain maths no longer falls
+  into the processor's slow path for very small numbers (measured 43 times slower on that maths before).
+- Headphones recover cleanly after a gap instead of cutting every following buffer short.
+- Background analysis runs at the lowest priority, so it gives way to the screen and to track loads.
+
 ## 27 October 2026 (night): Cratebox OS
 
 - Cratebox OS: Chromium is the browser now (the WEB button opens it), and VLC is installed.
