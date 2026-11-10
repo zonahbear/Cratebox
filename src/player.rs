@@ -116,6 +116,9 @@ impl Player {
                 self.seq = seq;
                 self.pos = pos.min(self.len as f64 - 2.0).max(0.0);
                 self.target = self.pos; self.vel = 0.0; self.coast = false; self.flush();
+                // a seek leaves the end: "ended" goes too, or the reports that follow (still ended, not playing)
+                // would switch the UI's deck back off when PLAY is pressed right after, while the sound carries on
+                self.ended = false;
             }
             PlayerCmd::Bend(v) => self.bend = (self.bend + v).clamp(-0.6, 0.6),
             PlayerCmd::Scratch { on, no_coast } => {
@@ -381,5 +384,18 @@ mod tests {
         run(&mut p, 1.5, sr);
         let r = p.report();
         assert!(!r.playing && r.ended);
+    }
+
+    #[test]
+    fn a_seek_leaves_the_end() {
+        let sr = 44100.0;
+        let t = tone(sr, 1.0, 220.0);
+        let mut p = Player::new(sr);
+        p.cmd(PlayerCmd::Load { l: t.clone(), r: t, mt: false, spin: 2.5 });
+        p.cmd(PlayerCmd::Play(true));
+        run(&mut p, 1.5, sr);
+        assert!(p.report().ended);
+        p.cmd(PlayerCmd::Seek { pos: 0.0, seq: 1 });
+        assert!(!p.report().ended);
     }
 }

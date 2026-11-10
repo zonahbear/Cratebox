@@ -115,3 +115,17 @@
   Player.trash growing on the first load; it now reserves room up front. std mpsc send/recv of trash/commands can
   still allocate/free a channel block now and then (only on load/unload; left as is).
 - Library selection keeps its track by id on re-sort (library.rs:266), so the web app's selection-jump bug isn't here.
+
+## 2026-11-10 second review pass (branch claude/project-thread-t5561g, stacked on PR #47)
+- `examples/grid_compare.rs`: Cratebox's analysis vs rekordbox's on a stick or a copy of one (BPM, beat offset, bar 1);
+  a folder with no PIONEER is analysed as plain files. Used on 113 of Jonah's stick tracks (D:, read-only).
+- Bar 1: new vote in analysis.rs beat_grid (spectrum change 2 beats after vs before, all bands + bass share, BAR_LOW = 6);
+  old weights W_KS/W_NOV/W_START/W_ENTRY removed. Tuned on 51 tracks, fresh 46: 19 -> 30 of 43 agree with rekordbox.
+  ANALYSIS_VER 4. Web cratebox.html has the same code (results match to 0.1 ms).
+- Measured, not fixed: 8 of 113 half a beat off rekordbox (the >1.1 off-beat test never fired correctly: 2 fired, both
+  disagree with rekordbox; 6 would need a shift but look on-beat by onset energy); 2 of 113 tempos at 4/3 and 2/3.
+- Fixed: PlayerCmd::Seek clears `ended` (+ unit test); audio_io::no_denormals() (FTZ|DAZ) on the cpal callback and the
+  timer thread (Smooth heading for 0 goes denormal after ~6 s: 43x slower multiplies, measured standalone);
+  ring Consumer re-primes after running dry; cratebox-analyse thread at nice 19.
+- Tests: cargo test --release all pass (53 lib, analysis, app, four, ui).
+- Not looked at this pass: ui.rs/widgets.rs drawing cost, distro/.
