@@ -71,6 +71,43 @@
   token in ~/.config/cratebox/github-token. Ships in the ISO after the one built from cda9652.
 - Next: Jonah tests the ISO on the MacBook (splash, minimal install, Claude sign-in, sleep/wake, HEAT).
 
+## 2026-10-27 app update batch (branch claude/project-thread-nvrvsw)
+- OFF menu (exit to login / restart / shut down), F11 full screen, ms beat-lock tag, smoothed waveform clock (deck.vis_now) + pixel-locked lane columns, rekordbox grids kept (grid_manual), USB copy (src/usbcopy.rs, ↓ on stick rows).
+- OS files ship via app-latest os-files.tar.gz (cratebox-update installs them): kiosk session exits to SDDM, Xsession.d/45cratebox-hidpi (Cratebox 2x, desktop Xft.dpi 168, Jonah confirmed).
+- Open: Alt+F4 landed on a text console on the installed system (SDDM not coming back?), awaiting `systemctl status display-manager`.
+
+## 2026-10-27 03:30Z
+- Shipped: header FIREFOX (distro/overlay/usr/bin/cratebox-firefox: firejail --private box, first run installs Mozilla-apt firefox + firejail) and FILES (pcmanfm-qt), Wi-Fi/BT forced on in kiosk session + BlueZ AutoEnable in ISO, selected-deck strobe, LIB toggle, HEAT forget-on-auth-fail.
+- Next: HEAT auto-reconnect/longer retries (heat.log shows LE timeouts, bond fine), master+trim readouts, hold SYNC = master, REC arms until play, 3-deck mode, Wi-Fi/BT + net rates in header, PUFF theremin, Soulseek in-app.
+
+## 2026-10-27 03:40Z
+- Downloads: ~/Music/Cratebox Downloads (app.rs downloads_dir) is shared by FIREFOX (firejail --whitelist + Firefox policy DownloadDirectory) and Nicotine+ (kiosk session seds downloaddir). Cratebox rescans it on change and copies new files to "<stick>/Cratebox Downloads" (plain files, pdb untouched; Jonah chose this) now and at each plug-in.
+- HEAT: 5 connect tries (15 s settle), auto-reconnect after a drop at 2/5/10/20/30 s; user Disconnect/Sim cancels.
+- Jonah: in-app Soulseek must scale properly for the 2x display.
+
+## 2026-10-27 WEB button
+- FIREFOX → WEB: spawns distro/overlay/usr/bin/cratebox-web (Chrome, own profile ~/.local/share/cratebox/web,
+  downloads → ~/Music/Cratebox Downloads, niced, log web.log). cratebox-firefox/firejail removed (too slow mid-set).
+- Next: spec list (Beat 1 shortcuts Cmd+Shift+X / Cmd+Shift+., Camelot colours + quick sort, playlist column,
+  load closes manager, load lock, battery 5%/3%, graceful shutdown, power icon, themes, Puffco LED), then Soulseek.
+- Beat 1: ⌘⇧X / ⌘⇧. via openbox keybinds → `cratebox --cmd beat1 left|right` (src/remote.rs socket). Ctrl+Shift fallback.
+  openbox-rc.xml now ships in os-files; cratebox-update runs `openbox --reconfigure`.
+- Library: BPM / KEY / MATCH quick-sort chips next to search (SortKey::Match, library::match_score, App::mix_ref); key highlight: same key bright, neighbours softer.
+- Library PLAYLISTS column (Lists::membership, rebuilt on Lists::fingerprint change). Load Lock: Deck.locked, padlock in the
+  deck screen's top corner (paint_lock), LOCK flag. App.loads counter closes the pop-up browser; BROWSE closes on load
+  (settings.browse_close_on_load, default on).
+- Battery alerts 5%/3% + power_off (unload, eject on priority thread, systemctl); power icon far right (paint_power).
+- Rekordbox grid for stick twins (adopt_rb_grid) + Compare grids button (grid-compare.log). Half-bar-late: synthetic tracks are correct; needs Jonah's compare summary to tune analysis.rs downbeat vote (W_KS/W_NOV/W_START).
+- Waveform timing: audio_io measures output latency per callback (Beat.lat); App sets Deck.vis_delay = latency - 1 frame + settings.wave_offset_ms; vis_now subtracts it.
+- GLOW (Puffco lantern rainbow following the music) in heat.rs/app.rs glow_tick; HEAT panel checkbox + FX knob mode. Lantern paths unverified on Proxy.
+- Themes (widgets::THEMES: Night, Midnight, Ember, Neon, Mono; settings.theme; Settings → Look), header icon buttons (Icon::Folder/Globe/List/Wave), wording pass.
+- Perf pass: store.flush_bg (serialise on UI, write on "cratebox-save" thread; failures re-dirty), CRATEBOX_PROFILE=1 frame timer. UI avg ~1.5 ms/frame in Xvfb; the 1 s analysis.json write was the stall suspect.
+- CHANGELOG.md added (plain-language, newest first). Next: Soulseek native client (paused), more settings if Jonah asks.
+- 2026-10-27 eve: Jonah's video (IMG_9300) of waveform stutter: measured 13.6±1.6 px per 30fps camera frame, no long freezes. Fix: frame clock in deck.rs (refresh-quantized), eased vis_delay in App, show_fps header readout. Real cause on the MacBook unconfirmed until Jonah reports the FPS readout.
+- 2026-10-27 eve: lanes moved to GPU tiles (WaveCache) after Jonah's bug report on whole-pixel stepping; Xvfb llvmpipe 46→49 fps.
+- 2026-10-27 eve: SOULSEEK button (cratebox-soulseek), framed resizable windows (openbox-rc), tabbed Settings, Wi-Fi/Bluetooth panels (src/net.rs, nmcli/bluetoothctl), globe spike fix. Next: Jonah asked for a final review pass (perf, bugs, UI, layout).
+- 2026-10-27 eve: review pass #44: overviews → textures (OverviewCache), wave_col mesh path removed, net refresh coalescing, Sound tab width.
+- 2026-10-27 night: ISO batch (Jonah): Chromium replaces Chrome (xtradeb PPA deb, pinned chromium* only; install runs first in chroot-setup so a missing package fails fast), VLC, playerctl + playerctld (kiosk session + xdg autostart), media keys → playerctl and F5/F6 → maclight (shell redo of tych0/maclight, udev chmod on brightness), facetimehd DKMS + firmware 5.60.0 (pinned commits), cratebox-boot-update.service (`cratebox-update --auto <token>`; skips offline / no token; atomic rename of /usr/bin/cratebox), bigger Plymouth (wheel 320, wordmark 52 pt, fonts 20/48) + fbcon=font:TER16x32 + console-setup Terminus 16x32. Unverified until the Actions ISO build + Jonah's MacBook: xtradeb resolute chromium (couldn't reach the PPA from the sandbox), Apple CDN firmware download on the runner, plymouth 2x scale, applespi fnmode (media keys without Fn assumed).
 ## 2026-10-26 late: Windows port (branch claude/project-thread-k9y5qa)
 - Jonah: "windows app port of version inside iso", "optimize for 1080p and 1440p", "MAINTAIN LAYOUT AND LOOKS".
 - Same crate, cfg-gated: zbus Linux-only, `windows` 0.58 on Windows. heat_win.rs = WinRT BLE (advertisement watcher,
@@ -81,3 +118,8 @@
 - Verified: cargo test (Linux) all pass; Windows exe under Wine 9 at 1920x1080 / 2560x1440 (same 1280x720-pt layout),
   4 decks + HEAT simulator. Wine ignored with_maximized/fullscreen, so sizes were forced with a temp patch.
 - Next: Jonah runs cratebox.exe on his PC: sound (WASAPI buffer), FLX4 (Pioneer driver?), HEAT over Windows BLE.
+
+## 2026-11-10: Windows branch brought up to main (#13-#46)
+- Merged main into claude/project-thread-k9y5qa (PR #14); heat.rs conflicts: kept `lorax_device!` and added lantern/lantern_color to it.
+- New Linux-only features mapped for Windows (see win.rs line in CLAUDE.md). Linux tests pass; Wine screenshot at 1080p OK.
+- Zip at project files cratebox-windows/Cratebox-Windows.zip. Not tested with Jonah's real tracks (D: drive is on his PC).

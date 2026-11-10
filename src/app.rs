@@ -23,13 +23,22 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
+/// how long SYNC is held to make a deck the master
+pub const HOLD_MASTER: Duration = Duration::from_millis(600);
+
 pub enum Job {
+    /// a line for the status bar from a background thread
+    Say(String, f32),
     Scanned { root: PathBuf, tracks: Vec<Track>, quiet: bool },
     Loaded { deck: usize, gen: u64, track: Track, l: Pcm, r: Pcm, sr: f64, ana: DeckAna, mono: (Arc<Vec<f32>>, f64) },
     LoadFailed { deck: usize, gen: u64, msg: String },
     Analysed { id: String, res: Result<AnaResult, String> },
     Rephrased { deck: usize, gen: u64, phrases: Vec<Phrase> },
     Mounted { root: PathBuf, res: Result<(Device, Vec<Track>), String>, remember: bool },
+    CopyProgress { done: u64, total: u64 },
+    /// rekordbox drives mounted right now (drives.rs, every 3 s)
+    Drives(Vec<PathBuf>),
+    Copied { stick: PathBuf, copy: PathBuf, res: Result<crate::usbcopy::Copied, String> },
 }
 
 pub struct AnaResult { pub bpm: f64, pub first_beat: f64, pub key: i32, pub phrases: Vec<Phrase>, pub duration: f64, pub title: Option<String>, pub artist: Option<String> }
@@ -49,6 +58,13 @@ pub struct UiState {
 }
 
 pub struct App {
+    /// tracks loaded so far (the pop-up browser closes when this moves)
+    pub loads: u64,
+    /// GLOW (the Puffco lantern following the music) and whether it was sending last frame
+    pub glow: crate::heat::Glow,
+    glow_was: bool,
+    /// the eased output latency the waveforms are drawn behind (see poll)
+    vis_delay: f64,
     pub tx: Sender<Cmd>,
     pub shared: Shared,
     pub status_snap: Status,
@@ -60,6 +76,10 @@ pub struct App {
     /// soft takeover after a layer switch: control/deck -> the last hardware value seen (None = none yet)
     pickup: HashMap<(String, usize), Option<f64>>,
     pub rec: Option<crate::recorder::Recorder>,
+    /// REC pressed with nothing playing: recording starts when a deck starts
+    pub rec_armed: bool,
+    /// when each deck's SYNC went down (cleared once it counts as a hold)
+    pub sync_held: [Option<Instant>; DECKS],
     pub heat: crate::heat::Heat,
     pub route: Route,
     pub tracks: Vec<Track>,
@@ -87,6 +107,12 @@ pub struct App {
     pub ui: UiState,
     last_flush: Instant,
     pub repaint: Option<Arc<dyn Fn() + Send + Sync>>,
+    /// USB → local copy running: (bytes done, bytes to copy)
+    pub copying: Option<(u64, u64)>,
+    /// when to ask the controller for its knob/fader positions again
+    midi_query: Vec<Instant>,
+    /// the Cratebox Downloads folder (WEB button and Nicotine+): when it was last looked at, and its modified time then
+    downloads: (Instant, Option<std::time::SystemTime>),
     pub hp_note: String,
     /// output that stopped and is being reopened: (device name, next attempt)
     reconnect: Option<(String, Instant)>,
@@ -148,7 +174,8 @@ impl App {
         for (i, d) in decks.iter_mut().enumerate() { d.mt = s.mt.get(i).copied().unwrap_or(true); d.spin_secs = s.spin; d.sr = sr; }
         let fx = BeatFx::new(tx.clone(), &s.bfx_fx, s.bfx_depth, s.bfx_ch, &s.bfx_beats);
         let mut mixer = MixerParams::default();
-        mixer.active = [true, true, s.four, s.four];
+        let n = if !s.four { 2 } else if s.three { 3 } else { 4 };
+        mixer.active = [true, true, n >= 3, n >= 4];
         let mut lists = Lists::default();
         lists.lists = store.playlists.clone();
         lists.open = s.pl_open.iter().cloned().collect();
@@ -158,10 +185,11 @@ impl App {
             jobs_tx, jobs_rx, queue: VecDeque::new(), analysing: None, analysed_count: 0, deck_loads: Arc::new(AtomicUsize::new(0)),
             midi: midi::Engine::new(), midi_io: MidiIo::new(), last_keep: Instant::now(), last_led: Instant::now(),
             status: String::new(), status_until: Instant::now(), progress: String::new(), outputs, ui: UiState::default(), last_flush: Instant::now(),
-            repaint: None, hp_note: String::new(), reconnect: None, scanning: 0,
+            repaint: None, copying: None, midi_query: vec![], rec_armed: false, loads: 0, glow: crate::heat::Glow::new(), glow_was: false, vis_delay: 0.0, sync_held: [None; DECKS], downloads: (Instant::now(), None), hp_note: String::new(), reconnect: None, scanning: 0,
         };
         app.midi.use_profile("learn", vec![]);
         app.midi.four = app.store.settings.four;
+        app.midi.three = app.store.settings.four && app.store.settings.three;
         for d in app.decks.iter() { let _ = app.tx.send(Cmd::Deck(d.i, crate::player::PlayerCmd::Mt(d.mt))); }
         let _ = app.tx.send(Cmd::Mixer(app.mixer));
         app.apply_headphones(false);
@@ -174,6 +202,26 @@ impl App {
         app.connect_midi();
         app.apply_view(false);
         app
+    }
+
+    /// mount plugged-in sticks and open rekordbox ones by themselves (the kiosk has no automounter);
+    /// started by the window (after `repaint` is set), not by tests
+    pub fn watch_drives(&mut self) {
+        if std::env::var_os("CRATEBOX_NO_DRIVES").is_some() || cfg!(not(target_os = "linux")) { return; }
+        let tx = self.jobs_tx.clone();
+        let wake = self.repaint.clone();
+        std::thread::spawn(move || {
+            let mut last: Vec<PathBuf> = vec![];
+            loop {
+                let now = crate::drives::scan();
+                if now != last {
+                    if tx.send(Job::Drives(now.clone())).is_err() { return; }
+                    if let Some(w) = &wake { w(); }
+                    last = now;
+                }
+                std::thread::sleep(std::time::Duration::from_secs(3));
+            }
+        });
     }
 
     pub fn say(&mut self, s: &str, secs: f32) {
@@ -204,6 +252,46 @@ impl App {
                 }
             }
             let _ = tx.send(Job::Scanned { root, tracks, quiet });
+            if let Some(w) = wake { w(); }
+        });
+    }
+    /// tracks downloaded with WEB (Chromium) or Nicotine+ (both save to ~/Music/Cratebox Downloads)
+    /// join the collection: the folder becomes a music folder and is rescanned whenever it changes
+    fn watch_downloads(&mut self) {
+        if self.downloads.0.elapsed() < Duration::from_secs(4) || std::env::var_os("CRATEBOX_NO_DRIVES").is_some() { return; }
+        self.downloads.0 = Instant::now();
+        let Some(dir) = downloads_dir() else { return };
+        let Ok(m) = std::fs::metadata(&dir).and_then(|m| m.modified()) else { return };
+        if self.downloads.1 == Some(m) { return; }
+        self.downloads.1 = Some(m);
+        if !self.store.settings.folders.iter().any(|f| f == &dir) { self.store.settings.folders.push(dir.clone()); self.store.dirty_settings = true; }
+        self.scan_folder(&dir, true);
+        self.push_downloads();
+    }
+    /// copy downloads the plugged-in sticks don't have yet into "Cratebox Downloads" on each stick
+    /// (plain files: the stick's rekordbox database is never written); runs again at every plug-in
+    fn push_downloads(&mut self) {
+        let Some(dir) = downloads_dir() else { return };
+        let sticks: Vec<PathBuf> = self.lists.devices.iter().filter(|d| !crate::usbcopy::is_copy(&d.root) && d.root.join("PIONEER").exists()).map(|d| d.root.clone()).collect();
+        if sticks.is_empty() || !dir.is_dir() { return; }
+        let tx = self.jobs_tx.clone();
+        let wake = self.repaint.clone();
+        std::thread::spawn(move || {
+            let files = scan_dir(&dir);
+            for stick in sticks {
+                let to = stick.join("Cratebox Downloads");
+                let mut n = 0;
+                for f in &files {
+                    let Some(name) = f.file_name() else { continue };
+                    let dst = to.join(name);
+                    let size = std::fs::metadata(f).map(|m| m.len()).unwrap_or(0);
+                    if std::fs::metadata(&dst).is_ok_and(|m| m.len() == size) { continue; }
+                    let tmp = to.join(format!(".{}.part", name.to_string_lossy()));
+                    let ok = std::fs::create_dir_all(&to).and_then(|_| std::fs::copy(f, &tmp)).and_then(|_| std::fs::rename(&tmp, &dst));
+                    match ok { Ok(()) => n += 1, Err(e) => { let _ = std::fs::remove_file(&tmp); let _ = tx.send(Job::Say(format!("Couldn't copy a download to the stick: {e}"), 6.0)); break; } }
+                }
+                if n > 0 { let _ = tx.send(Job::Say(format!("Copied {n} download{} to the stick", if n == 1 { "" } else { "s" }), 5.0)); }
+            }
             if let Some(w) = wake { w(); }
         });
     }
@@ -272,7 +360,15 @@ impl App {
             }
         }
     }
+    /// the deck to mix into: the one that started playing last, else the first loaded one (key now, tempo)
+    pub fn mix_ref(&self) -> (Option<crate::keys::Camelot>, f64) {
+        let mut p: Vec<&crate::deck::Deck> = self.decks.iter().filter(|d| d.playing && d.loaded()).collect();
+        p.sort_by_key(|d| std::cmp::Reverse(d.started_at));
+        let d = p.first().copied().or_else(|| self.decks.iter().take(self.deck_count()).find(|d| d.loaded()));
+        d.map(|d| (crate::keys::camelot(d.key_now()), d.eff_bpm())).unwrap_or((None, 0.0))
+    }
     pub fn apply_view(&mut self, keep_sel: bool) {
+        self.list.mix_ref = self.mix_ref();
         let base = self.view_tracks();
         self.list.apply(base, keep_sel);
     }
@@ -304,7 +400,14 @@ impl App {
         if t.missing { self.say(&format!("\"{}\" isn't in a connected folder or device right now", t.title), 5.0); return; }
         let t = self.track(&t.id).cloned().unwrap_or(t);
         let gen = match self.decks[i].begin_load(t.clone()) { Ok(g) => g, Err(e) => { self.say(&e, 4.0); return; } };
+        // a track picked: back to the decks (the pop-up browser watches `loads` too)
+        self.loads += 1;
+        if self.store.settings.browse && self.store.settings.browse_close_on_load { self.store.settings.browse = false; self.store.dirty_settings = true; }
         self.say(&format!("Loading {} into deck {}…", t.title, i + 1), 0.0);
+        // the same file on a rekordbox stick (name and size): its grid wins over Cratebox's own
+        let twin = if t.device.is_none() && !t.grid_manual {
+            self.tracks.iter().find(|x| x.device.is_some() && x.anlz_path.is_some() && x.size == t.size && x.name.eq_ignore_ascii_case(&t.name)).and_then(|x| x.anlz_path.clone())
+        } else { None };
         let tx = self.jobs_tx.clone();
         let sr = self.audio.sr;
         let range = self.range();
@@ -315,6 +418,7 @@ impl App {
             let res = (|| -> Result<Job, String> {
                 let mut track = t;
                 if track.device.is_some() && !track.rb_read { read_device_analysis(&mut track); }
+                if let Some(anlz) = twin { adopt_rb_grid(&mut track, anlz); }
                 let d = decode(&track.path)?;
                 if let (Some(ti), true) = (&d.title, track.artist.is_empty()) { track.title = ti.clone(); }
                 if let (Some(a), true) = (&d.artist, track.artist.is_empty()) { track.artist = a.clone(); }
@@ -384,6 +488,119 @@ impl App {
             let _ = tx.send(Job::Mounted { root, res, remember });
             if let Some(w) = wake { w(); }
         });
+    }
+    /// copy a mounted stick to ~/Music/Cratebox USB, or bring that copy up to date; the copy then
+    /// replaces the stick in the list (same device id) and is remembered instead of it
+    pub fn copy_device(&mut self, id: &str) {
+        if self.copying.is_some() { self.say("A copy is already running", 3.0); return; }
+        let Some(d) = self.lists.devices.iter().find(|x| x.id == id) else { return };
+        if crate::usbcopy::is_copy(&d.root) { self.say("This is the copy on this computer: plug the stick in and open it to update", 6.0); return; }
+        let stick = d.root.clone();
+        let copy = crate::usbcopy::copy_root(&stick.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default());
+        self.copying = Some((0, 0));
+        let tx = self.jobs_tx.clone();
+        let wake = self.repaint.clone();
+        std::thread::spawn(move || {
+            let mut last = std::time::Instant::now();
+            let res = crate::usbcopy::copy_tree(&stick, &copy, |done, total| {
+                if last.elapsed().as_millis() >= 250 { last = std::time::Instant::now(); let _ = tx.send(Job::CopyProgress { done, total }); if let Some(w) = &wake { w(); } }
+            });
+            let _ = tx.send(Job::Copied { stick, copy, res });
+            if let Some(w) = wake { w(); }
+        });
+    }
+    /// EJECT: close the stick, unmount it so it can be pulled out, and carry on from its local copy
+    pub fn eject_device(&mut self, id: &str) {
+        if self.copying.is_some() { self.say("Wait for the copy to finish first", 4.0); return; }
+        let Some(d) = self.lists.devices.iter().find(|x| x.id == id && !crate::usbcopy::is_copy(&x.root)).cloned() else { return };
+        let copy = crate::usbcopy::copy_root(&d.root.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default());
+        let has_copy = copy.join("PIONEER").exists();
+        // decks hold their whole track in memory, so a loaded stick track keeps playing; only refuse when
+        // there's no copy to carry on from
+        if !has_copy && self.decks.iter().any(|x| x.track.as_ref().and_then(|t| t.device.as_deref()) == Some(id)) {
+            self.say("Load something else on the decks first", 4.0); return;
+        }
+        if let Err(e) = crate::drives::eject(&d.root) { self.say(&e, 6.0); return; }
+        self.lists.devices.retain(|x| x.id != id);
+        self.tracks.retain(|t| t.device.as_deref() != Some(id));
+        self.reindex();
+        self.store.settings.devices.retain(|p| p != &d.root);
+        self.store.dirty_settings = true;
+        if has_copy { self.mount(&copy, false); }
+        if matches!(&self.view, View::Dev(x) | View::DevPl(x, _) if x == id) && !has_copy { self.set_view(View::All); } else { self.apply_view(true); }
+        self.say(&format!("{} ejected: safe to pull out{}", d.name, if has_copy { ". Playing from the copy on this computer" } else { "" }), 6.0);
+    }
+    /// every collection track that's also on a plugged-in rekordbox stick: does Cratebox's bar 1 land where
+    /// rekordbox's does? Reads the stick's analysis files on a thread; the summary comes back as a status
+    /// line, each track in grid-compare.log (data dir)
+    pub fn compare_grids(&mut self) {
+        let pairs: Vec<(Track, PathBuf)> = self.tracks.iter().filter(|t| t.device.is_none() && !t.grid_manual && t.first_beat.is_some()).filter_map(|t| {
+            self.tracks.iter().find(|x| x.device.is_some() && x.anlz_path.is_some() && x.size == t.size && x.name.eq_ignore_ascii_case(&t.name)).and_then(|x| x.anlz_path.clone()).map(|a| (t.clone(), a))
+        }).collect();
+        if pairs.is_empty() { self.say("No tracks are both in the collection and on a plugged-in rekordbox stick", 6.0); return; }
+        self.say(&format!("Comparing {} grids with rekordbox…", pairs.len()), 0.0);
+        let tx = self.jobs_tx.clone();
+        let wake = self.repaint.clone();
+        std::thread::spawn(move || {
+            let mut off = [0usize; 4];
+            for (t, anlz) in pairs {
+                let mut tw = Track { anlz_path: Some(anlz), ..Default::default() };
+                if !read_device_analysis(&mut tw) { continue; }
+                if let (Some(rb), Some(rf)) = (tw.bpm, tw.first_beat) { if let Some(b) = grid_compare_line(&t, rb, rf) { off[b as usize] += 1; } }
+            }
+            let n: usize = off.iter().sum();
+            let _ = tx.send(Job::Say(format!("Grids vs rekordbox ({n} tracks, same tempo): bar 1 matches on {}, 1 beat late on {}, half a bar off on {}, 1 beat early on {}. Details in grid-compare.log", off[0], off[1], off[2], off[3]), 20.0));
+            if let Some(w) = wake { w(); }
+        });
+    }
+    /// GLOW: the lantern's colour from the master level and the FX knob, to the HEAT worker (which sends it
+    /// between heat runs only); off again when GLOW is switched off or the Puffco goes
+    fn glow_tick(&mut self) {
+        let on = self.store.settings.heat_glow && self.heat.view.connected;
+        if !on {
+            if self.glow_was { self.heat.glow(None); self.glow.reset(); self.glow_was = false; }
+            return;
+        }
+        self.glow_was = true;
+        use crate::heat::GlowKnob;
+        let what = match self.store.settings.heat_glow_knob.as_str() { "speed" => GlowKnob::Speed, "sensitivity" => GlowKnob::Sensitivity, "off" => GlowKnob::Off, _ => GlowKnob::Intensity };
+        let m = self.status_snap.master_meter;
+        if let Some(c) = self.glow.tick(m[0].max(m[1]) as f64, self.fx.depth, what) { self.heat.glow(Some(c)); }
+    }
+    /// stop every deck (battery critical)
+    pub fn stop_all(&mut self) {
+        let p = self.peers();
+        for d in self.decks.iter_mut() { if d.playing { d.set_playing(false, &p); } }
+    }
+    /// unmount every stick (not the local copies) straight away and take it out of the library; the
+    /// unmounting runs on its own thread (drives::eject_all), then `systemctl then` if given
+    pub fn eject_all(&mut self, then: Option<&'static str>) {
+        let sticks: Vec<_> = self.lists.devices.iter().filter(|d| !crate::usbcopy::is_copy(&d.root)).cloned().collect();
+        for d in &sticks {
+            self.lists.devices.retain(|x| x.id != d.id);
+            self.tracks.retain(|t| t.device.as_deref() != Some(d.id.as_str()));
+            self.store.settings.devices.retain(|p| p != &d.root);
+        }
+        if !sticks.is_empty() {
+            self.reindex();
+            self.store.dirty_settings = true;
+            if matches!(self.view, View::Dev(_) | View::DevPl(..)) { self.set_view(View::All); } else { self.apply_view(true); }
+        }
+        let n = sticks.len();
+        let tx = self.jobs_tx.clone();
+        let wake = self.repaint.clone();
+        crate::drives::eject_all(sticks.into_iter().map(|d| d.root).collect(), then, move |errs| {
+            let msg = if !errs.is_empty() { format!("Couldn't eject {}", errs.join("; ")) } else if n > 0 { format!("USB ejected ({n}): safe to pull out") } else { String::new() };
+            if !msg.is_empty() { let _ = tx.send(Job::Say(msg, 8.0)); }
+            if let Some(w) = wake { w(); }
+        });
+    }
+    /// shut down or restart cleanly: stop REC and save, empty the decks, eject sticks, then systemctl
+    pub fn power_off(&mut self, arg: &'static str) {
+        self.flush_now();
+        for d in self.decks.iter_mut() { d.unload(); }
+        self.say(if arg == "reboot" { "Restarting: decks emptied, ejecting USB…" } else { "Shutting down: decks emptied, ejecting USB…" }, 30.0);
+        self.eject_all(Some(arg));
     }
     pub fn close_device(&mut self, id: &str) {
         if self.decks.iter().any(|d| d.track.as_ref().and_then(|t| t.device.as_deref()) == Some(id)) { self.say("Load something else on the decks first", 4.0); return; }
@@ -580,6 +797,9 @@ impl App {
         self.use_profile(&pid);
         let p = self.midi.profile_info();
         if let Some(init) = p.init { self.midi_io.send(init); }
+        // ask again in 1 s and 3 s: right after the port opens (at boot especially) the FLX4 can miss the
+        // first request, and then the on-screen knobs and faders don't match the hardware
+        self.midi_query = vec![Instant::now() + std::time::Duration::from_secs(1), Instant::now() + std::time::Duration::from_secs(3)];
         self.say(&format!("{name} connected · {}{}", p.name, if p.src == midi::Src::Tested { "" } else { " (see Settings → Controller)" }), 6.0);
     }
     pub fn use_profile(&mut self, id: &str) {
@@ -655,13 +875,17 @@ impl App {
                 let p = r.stop();
                 self.say(&format!("Recording saved: {} ({}:{:02})", p.display(), secs as u64 / 60, secs as u64 % 60), 10.0);
             }
-            None => {
-                let dir = if self.store.settings.rec_dir.is_empty() { crate::recorder::default_dir() } else { PathBuf::from(&self.store.settings.rec_dir) };
-                match crate::recorder::Recorder::start(&dir, self.audio.sr, &format!("Cratebox {}", local_stamp())) {
-                    Ok((r, p)) => { let _ = self.tx.send(Cmd::Record(Some(p))); self.say(&format!("Recording the master to {}", r.path.display()), 5.0); self.rec = Some(r); }
-                    Err(e) => self.say(&e, 8.0),
-                }
-            }
+            None if self.rec_armed => { self.rec_armed = false; self.say("REC cancelled", 3.0); }
+            None if !self.decks.iter().any(|d| d.playing) => { self.rec_armed = true; self.say("REC armed: recording starts when a deck plays", 5.0); }
+            None => self.start_rec(),
+        }
+    }
+    fn start_rec(&mut self) {
+        self.rec_armed = false;
+        let dir = if self.store.settings.rec_dir.is_empty() { crate::recorder::default_dir() } else { PathBuf::from(&self.store.settings.rec_dir) };
+        match crate::recorder::Recorder::start(&dir, self.audio.sr, &format!("Cratebox {}", local_stamp())) {
+            Ok((r, p)) => { let _ = self.tx.send(Cmd::Record(Some(p))); self.say(&format!("Recording the master to {}", r.path.display()), 5.0); self.rec = Some(r); }
+            Err(e) => self.say(&e, 8.0),
         }
     }
 
@@ -701,29 +925,48 @@ impl App {
         format!("Added {n} curve{}.", if n > 1 { "s" } else { "" })
     }
 
-    pub fn deck_active(&self, i: usize) -> bool { i < 2 || self.store.settings.four }
+    pub fn deck_active(&self, i: usize) -> bool { i < self.deck_count() }
+    /// 3 or 4 decks: the stacked layout, layer buttons on
     pub fn four(&self) -> bool { self.store.settings.four }
+    /// 2, 3 or 4
+    pub fn deck_count(&self) -> usize { let s = &self.store.settings; if !s.four { 2 } else if s.three { 3 } else { 4 } }
     pub fn peers(&self) -> [Peer; DECKS] { std::array::from_fn(|i| self.decks[i].peer(self.deck_active(i))) }
     pub fn toggle_play(&mut self, i: usize) { let p = self.peers(); self.decks[i].toggle_play(&p); }
     pub fn set_playing(&mut self, i: usize, on: bool) { let p = self.peers(); self.decks[i].set_playing(on, &p); }
     pub fn set_sync(&mut self, i: usize, on: bool) { let p = self.peers(); self.decks[i].set_sync(on, &p); }
+    /// SYNC held: deck `i` becomes the tempo master; the other synced decks follow it
+    pub fn make_master(&mut self, i: usize) {
+        if !self.decks[i].loaded() || self.decks[i].bpm() <= 0.0 { return; }
+        self.decks[i].become_master();
+        let m = self.peers()[i];
+        for j in 0..DECKS { if j != i && self.deck_active(j) { self.decks[j].follow_master(m); } }
+        self.say(&format!("Deck {} is the master", i + 1), 3.0);
+    }
     /// the deck a synced deck `i` follows, if any (for the MASTER tags)
     pub fn tempo_master(&self) -> Option<usize> {
         let p = self.peers();
         self.decks.iter().filter(|d| d.sync && self.deck_active(d.i)).find_map(|d| d.master(&p).map(|m| m.i))
     }
-    pub fn set_four(&mut self, on: bool) {
-        self.store.settings.four = on;
+    pub fn set_four(&mut self, on: bool) { self.set_decks(if on { 4 } else { 2 }); }
+    /// 2, 3 (1 and 3 on the left, the left layer button / SMART CFX switches them; 2 alone on the right) or 4 decks
+    pub fn set_decks(&mut self, n: usize) {
+        let n = n.clamp(2, 4);
+        self.store.settings.four = n >= 3;
+        self.store.settings.three = n == 3;
         self.store.dirty_settings = true;
-        self.mixer.active = [true, true, on, on];
+        self.mixer.active = [true, true, n >= 3, n >= 4];
         self.send_mixer();
-        self.midi.four = on;
-        if !on {
-            for i in 2..DECKS { if self.decks[i].playing { self.set_playing(i, false); } self.fx.release_deck(i); }
-            for s in 0..2 { if let Some(crate::midi::Action::Side { side, from, to }) = self.midi.set_side(s, s) { self.on_side(side, from, to); } }
-            if self.fx.ch >= 2 && self.fx.ch < DECKS { let c = self.fx.ch - 2; let ck = self.clock_fn(); self.fx.channel(c, &ck); }
-        }
-        self.say(if on { "4 decks: decks 3 and 4 are on the outer channels (3 left, 4 right). Layer buttons switch the controller's sides." } else { "2 decks" }, 5.0);
+        self.midi.four = n >= 3;
+        self.midi.three = n == 3;
+        for i in n..DECKS { if self.decks[i].playing { self.set_playing(i, false); } self.fx.release_deck(i); }
+        // a side on a deck that's gone goes back to its own
+        for s in 0..2 { if self.midi.side[s] >= n { if let Some(crate::midi::Action::Side { side, from, to }) = self.midi.set_side(s, s) { self.on_side(side, from, to); } } }
+        if self.fx.ch >= n && self.fx.ch < DECKS { let c = self.fx.ch - 2; let ck = self.clock_fn(); self.fx.channel(c, &ck); }
+        self.say(match n {
+            4 => "4 decks: decks 3 and 4 are on the outer channels (3 left, 4 right). Layer buttons switch the controller's sides.",
+            3 => "3 decks: 1 and 3 on the left (the left layer button switches them), 2 on the right",
+            _ => "2 decks",
+        }, 5.0);
     }
     /// the audio clock now (seconds), from the last report and the time since
     pub fn audio_clock(&self) -> f64 { self.status_snap.time + self.status_snap.at.elapsed().as_secs_f64() }
@@ -796,7 +1039,7 @@ impl App {
                     "mid" => { self.mixer.mid[d] = v; self.send_mixer(); }
                     "low" => { self.mixer.low[d] = v; self.send_mixer(); }
                     "cfx" => { self.mixer.cfx[d] = v; self.send_mixer(); }
-                    "xfader" => { self.mixer.xfader = v; self.send_mixer(); }
+                    "xfader" => { self.mixer.xfader = if (v - 0.5).abs() < 0.02 { 0.5 } else { v }; self.send_mixer(); } // 64/127 is the hardware middle: snap it
                     "headMix" => { self.mixer.head_mix = v; self.send_mixer(); }
                     "master" => { self.mixer.master = v; self.send_mixer(); }
                     "fxDepth" => self.fx_depth(val),
@@ -825,7 +1068,8 @@ impl App {
             "playCue" => if on { let c = self.decks[i].cue; self.decks[i].seek(c); self.set_playing(i, true); },
             "cue" => if on { self.decks[i].cue_down() } else { self.decks[i].cue_up() },
             "start" => if on { self.set_playing(i, false); self.decks[i].seek(0.0); },
-            "sync" => if on { let s = !self.decks[i].sync; self.set_sync(i, s); },
+            // a tap toggles SYNC on release; held for HOLD_MASTER it makes the deck the master instead (see poll)
+            "sync" => if on { self.sync_held[i] = Some(Instant::now()); } else if self.sync_held[i].take().is_some() { let s = !self.decks[i].sync; self.set_sync(i, s); },
             "syncOn" => if on && !self.decks[i].sync { self.set_sync(i, true) },
             "range" => if on { self.decks[i].cycle_range() },
             "touch" => self.decks[i].jog_touch(on, false),
@@ -924,11 +1168,27 @@ impl App {
         if let Ok(s) = self.shared.lock() { self.status_snap = *s; }
         let snap = self.status_snap;
         for i in 0..DECKS { self.decks[i].on_report(&snap.decks[i], snap.at); }
+        // draw what's being heard: the output latency, less the frame on its way to the screen, plus the user's nudge
+        // (the latency reading moves by up to a buffer from one callback to the next; eased over ~1 s so
+        // the waveforms don't wobble or snap with it)
+        let delay = (self.audio.latency() - 1.0 / 60.0 + self.store.settings.wave_offset_ms / 1000.0).clamp(-0.2, 0.5);
+        self.vis_delay = if (delay - self.vis_delay).abs() > 0.1 { delay } else { self.vis_delay + (delay - self.vis_delay) * 0.02 };
+        for d in self.decks.iter_mut() { d.vis_delay = self.vis_delay; }
         while self.trash_rx.try_recv().is_ok() {} // finished-with audio buffers get freed here, not on the audio thread
         if let Some(e) = self.audio.take_error() { self.say(&format!("Sound output problem: {e}"), 8.0); }
         self.watch_output();
+        self.watch_downloads();
+        for i in 0..DECKS {
+            if self.sync_held[i].is_some_and(|t| t.elapsed() >= HOLD_MASTER) { self.sync_held[i] = None; self.make_master(i); }
+        }
+        if self.rec_armed && self.decks.iter().any(|d| d.playing) { self.start_rec(); }
+        if self.midi_query.first().is_some_and(|t| Instant::now() >= *t) {
+            self.midi_query.remove(0);
+            if let Some(init) = self.midi.profile_info().init { self.midi_io.send(init); }
+        }
         // HEAT: the worker's view, PUFF amounts into the BEAT FX unit, learned models and the device to remember
         self.heat.poll();
+        self.glow_tick();
         while let Ok(e) = self.heat.events.try_recv() {
             match e {
                 crate::heat::Event::Connected(c) => {
@@ -991,7 +1251,7 @@ impl App {
         if open.len() != self.store.settings.pl_open.len() || open.iter().any(|x| !self.store.settings.pl_open.contains(x)) { self.store.settings.pl_open = open; self.store.dirty_settings = true; }
         if self.last_flush.elapsed() > Duration::from_secs(1) {
             self.last_flush = Instant::now();
-            if let Err(e) = self.store.flush() { self.say(&format!("Couldn't save your library: {e}"), 8.0); }
+            if let Some(e) = self.store.flush_bg() { self.say(&format!("Couldn't save your library: {e}"), 8.0); }
         }
     }
     pub fn flush_now(&mut self) {
@@ -1026,6 +1286,12 @@ impl App {
                 self.add_tracks(tracks, quiet);
             }
             Job::Loaded { deck, gen, track, l, r, sr, ana, mono } => {
+                // took rekordbox's grid from the stick's copy of this file: keep it in the library
+                if track.device.is_none() && track.grid_from.as_deref() == Some("rekordbox") && self.track(&track.id).is_some_and(|x| !x.grid_manual) {
+                    self.save_track(&track);
+                    self.apply_view(true);
+                    self.say(&format!("Deck {}: using rekordbox's grid from the USB stick", deck + 1), 4.0);
+                }
                 let cues = match self.store.cues.get(&track.id) { Some(c) => c.clone().norm(), None => rb_cues_for(&track).unwrap_or_else(Cues::empty) };
                 let id = track.id.clone();
                 self.decks[deck].finish_load(gen, track, l, r, sr, ana, mono, cues);
@@ -1069,13 +1335,55 @@ impl App {
                     self.lists.open.insert(format!("dev:{id}"));
                     self.lists.devices.push(dev);
                     for t in tracks { self.by_id.insert(t.id.clone(), self.tracks.len()); self.tracks.push(t); }
-                    if remember && !self.store.settings.devices.contains(&root) { self.store.settings.devices.push(root); self.store.dirty_settings = true; }
+                    self.push_downloads();
+                    if remember && !self.store.settings.devices.contains(&root) { self.store.settings.devices.push(root.clone()); self.store.dirty_settings = true; }
                     self.lists.rematch(&self.tracks);
                     self.apply_view(true);
                     self.say(&format!("{name}: {n} tracks, {pls} playlists (read-only)"), 6.0);
+                    // a stick that's plugged in syncs to this computer by itself (only new or changed files)
+                    if !crate::usbcopy::is_copy(&root) && self.copying.is_none() && self.repaint.is_some() { self.copy_device(&id); }
                 }
                 Err(e) => if remember { self.say(&e, 9.0) },
             },
+            Job::Say(m, secs) => self.say(&m, secs),
+            Job::Drives(roots) => {
+                // new rekordbox sticks open on their own (a stick replaces its local copy: same device id)
+                for r in &roots {
+                    if !self.lists.devices.iter().any(|d| &d.root == r) { self.mount(r, false); }
+                }
+                // a stick that's gone: close it, and fall back to its local copy if there is one
+                let gone: Vec<(String, PathBuf)> = self.lists.devices.iter()
+                    .filter(|d| !crate::usbcopy::is_copy(&d.root) && !d.root.join("PIONEER").exists() && !roots.contains(&d.root))
+                    .map(|d| (d.id.clone(), d.root.clone())).collect();
+                for (id, root) in gone {
+                    if self.decks.iter().any(|d| d.track.as_ref().and_then(|t| t.device.as_deref()) == Some(id.as_str())) { continue; }
+                    let remembered = self.store.settings.devices.contains(&root);
+                    self.close_device(&id);
+                    if remembered { self.store.settings.devices.push(root.clone()); }
+                    let copy = crate::usbcopy::copy_root(&root.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default());
+                    if copy.join("PIONEER").exists() { self.mount(&copy, false); }
+                }
+            }
+            Job::CopyProgress { done, total } => {
+                self.copying = Some((done, total));
+                let pc = if total > 0 { done * 100 / total } else { 0 };
+                self.say(&format!("Copying the stick to this computer… {pc}% ({} of {} MB)", done >> 20, total >> 20), 2.0);
+            }
+            Job::Copied { stick, copy, res } => {
+                self.copying = None;
+                match res {
+                    Ok(c) => {
+                        self.store.settings.devices.retain(|p| p != &stick);
+                        if !self.store.settings.devices.contains(&copy) { self.store.settings.devices.push(copy.clone()); }
+                        self.store.dirty_settings = true;
+                        // while the stick is in, keep playing from it (switching would make the drive
+                        // watcher reopen the stick and sync again); the copy takes over when it's pulled
+                        if !stick.join("PIONEER").exists() { self.mount(&copy, true); }
+                        self.say(&if c.files == 0 { format!("Local copy already up to date ({} files)", c.same) } else { format!("Copied {} files ({} MB); {} already there. You can take the stick out.", c.files, c.bytes >> 20, c.same) }, 8.0);
+                    }
+                    Err(e) => self.say(&e, 9.0),
+                }
+            }
         }
     }
 }
@@ -1084,3 +1392,32 @@ impl App {
 pub fn level(p: f32) -> f32 { ((20.0 * (p + 1e-9).log10() + 42.0) / 42.0).clamp(0.0, 1.0) }
 
 impl Default for App { fn default() -> Self { App::new() } }
+
+/// a collection track that's also on a rekordbox stick: take rekordbox's grid (and phrases) from the
+/// stick's analysis file, as `read_device_analysis` does for the stick's own tracks. Where Cratebox had
+/// its own grid, the two downbeats are compared in grid-compare.log (data dir), evidence for tuning the
+/// downbeat vote ("Cratebox starts bar 1 half a bar late").
+fn adopt_rb_grid(track: &mut Track, anlz: PathBuf) {
+    let mut tw = Track { anlz_path: Some(anlz), ..Default::default() };
+    if !read_device_analysis(&mut tw) { return; }
+    let (Some(rb), Some(rf)) = (tw.bpm, tw.first_beat) else { return };
+    let _ = grid_compare_line(track, rb, rf);
+    track.bpm = Some(rb); track.first_beat = Some(rf); track.auto_bpm = Some(rb); track.auto_first = Some(rf);
+    track.grid_manual = true; track.grid_from = Some("rekordbox".into());
+    if tw.phrases.as_ref().is_some_and(|p| !p.is_empty()) { track.phrases = tw.phrases; }
+}
+
+/// how many beats Cratebox's bar 1 sits after rekordbox's (0-3; None: no grid of its own or another
+/// tempo), logged to grid-compare.log
+fn grid_compare_line(t: &Track, rb: f64, rf: f64) -> Option<i64> {
+    let (cb, cf) = (t.bpm?, t.first_beat?);
+    if t.grid_manual || (cb - rb).abs() / rb >= 0.005 { return None; }
+    let beats = ((cf - rf) / (60.0 / rb)).round().rem_euclid(4.0) as i64;
+    let line = format!("{} - {}\tcratebox {cb:.2} @ {cf:.3}s\trekordbox {rb:.2} @ {rf:.3}s\tbar 1 off by {beats} beat(s)\n", t.artist, t.title);
+    use std::io::Write;
+    if let Ok(mut f) = std::fs::OpenOptions::new().create(true).append(true).open(crate::store::data_dir().join("grid-compare.log")) { let _ = f.write_all(line.as_bytes()); }
+    Some(beats)
+}
+
+/// where the WEB button (Chromium) and Nicotine+ (Soulseek) save downloads (set up by cratebox-web and the kiosk session)
+pub fn downloads_dir() -> Option<PathBuf> { dirs::home_dir().map(|h| h.join("Music/Cratebox Downloads")) }

@@ -12,7 +12,8 @@ F12 in the app shows this list. Deck keys follow the controller's sides: the lef
 | D | L | Loop ½ |
 | F | ; | Loop ×2 |
 | C | . | Beat jump back 4 |
-| V | / | Beat jump on 4 |
+| V | / | Beat jump ahead 4 |
+| ⌘⇧X (Ctrl+Shift+X) | ⌘⇧. (Ctrl+Shift+.) | Bar 1 at the playhead (beat grid) |
 | 1 2 3 4 / Q W E R | 7 8 9 0 / U I O P | Pads 1-8 in the current pad mode (PAD FX: held; Shift: delete hot cue) |
 | ` | \ | Layer: left side 1 ⇄ 3, right side 2 ⇄ 4 (4 DECKS) |
 
@@ -32,8 +33,14 @@ F12 in the app shows this list. Deck keys follow the controller's sides: the lef
 | F3 | BROWSE (big library) |
 | F4 | HEAT panel |
 | Ctrl R | REC on / off |
+| ↑ ↓ | WAVE mode: pops up the library; then 1 2 3 4 load on that deck |
+| F11 | Full screen on/off |
 | F12 | Shortcut list |
 | Esc | Close panels, stop MIDI learn |
+
+On Cratebox OS the MacBook's top row does its printed job without Fn (hold Fn for F1-F4 above): F1/F2 screen
+brightness, F5/F6 keyboard light, F7/F8/F9 previous / play-pause / next in the last media player (Chromium,
+VLC...; not the decks).
 
 Trackpad: knobs drag up/down (Shift = fine); faders grab and slide (they don't jump to the click); two-finger
 scroll nudges knobs and faders, zooms a waveform, and sideways scrubs a paused one; double-click puts a knob,

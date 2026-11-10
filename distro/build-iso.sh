@@ -2,7 +2,7 @@
 # Builds Cratebox OS by remastering the official Lubuntu 26.04 desktop ISO.
 #   sudo distro/build-iso.sh LUBUNTU.iso CRATEBOX_BINARY OUT.iso
 # Needs: squashfs-tools xorriso cpio git curl, root (overlay mounts + chroot), ~25 GB free, network.
-# SKIP_THIRD_PARTY=1 leaves out the out-of-tree speaker driver and Chrome (a quick check of the
+# SKIP_THIRD_PARTY=1 leaves out the out-of-tree drivers and Chromium (a quick check of the
 # remaster itself; that image has no MacBook speakers).
 #
 # The 26.04 ISO is layered: casper/minimal.squashfs, then minimal.standard (the installed desktop),
@@ -73,6 +73,23 @@ install -m 0755 "$here/chroot-setup.sh" "$stage/"
 cp "$work/minimal.manifest.full.orig" "$work/minimal.standard.manifest.full.orig" "$stage/"
 cp "$S/var/lib/dpkg/status" "$work/standard.status.orig"
 chroot_layer "$S" "$M" /tmp/cratebox-os/chroot-setup.sh
+# The installer (Calamares unpackfs) rsyncs minimal, then minimal.standard, onto the disk. Where this
+# layer removed a whole directory, overlayfs left a whiteout (a 0,0 character device) over a directory of
+# the layer below, and rsync can't replace a non-empty directory with it: "Failed to unpack" (Jonah,
+# 2026-10-26). An empty directory in its place copies fine; what's in it below stays, harmlessly.
+find "$S" -type c | while read -r w; do
+    if [ -d "$M/${w#"$S"/}" ] && [ "$(stat -c %t,%T "$w")" = 0,0 ]; then
+        rm "$w" && mkdir "$w" && echo "whiteout over a directory replaced: ${w#"$S"}"
+    fi
+done
+# A whiteout over a file (e.g. the stock cs420x module the speaker driver replaces) gets copied to the disk
+# as a 0,0 character device, and depmod then fails on it (Jonah, 2026-10-27). rsync can't delete, so list
+# them; cratebox-rt-users removes them on the installed system's first boot (live: overlayfs hides them).
+mkdir -p "$S/usr/share/cratebox-os"
+find "$S" -type c | while read -r w; do
+    [ "$(stat -c %t,%T "$w")" = 0,0 ] && echo "/${w#"$S"/}"
+done > "$S/usr/share/cratebox-os/whiteouts"
+echo "file whiteouts listed: $(wc -l < "$S/usr/share/cratebox-os/whiteouts")"
 "$here/merge-dpkg-status.py" "$work/standard.status.orig" "$S/var/lib/dpkg/status" "$L/var/lib/dpkg/status" "$work/live.status"
 cp "$work/live.status" "$L/var/lib/dpkg/status"
 
@@ -109,7 +126,7 @@ cp "$S/etc/plymouth/plymouthd.conf" "$work/splash/etc/plymouth/"
 # boot menu: Cratebox names, 3 s instead of 30 before it boots, and the same kernel options as the
 # installed system
 sed -e 's/^set timeout=30$/set timeout=3/' -e 's/Try or Install Lubuntu/Cratebox OS (try or install)/' -e 's/Lubuntu (safe graphics)/Cratebox OS (safe graphics)/' \
-    -e 's|\(/casper/vmlinuz.*\) ---|\1 mem_sleep_default=s2idle preempt=full threadirqs nowatchdog ---|' "$work/grub.cfg" > "$work/iso/boot/grub/grub.cfg"
+    -e 's|\(/casper/vmlinuz.*\) ---|\1 mem_sleep_default=s2idle preempt=full threadirqs nowatchdog fbcon=font:TER16x32 ---|' "$work/grub.cfg" > "$work/iso/boot/grub/grub.cfg"
 
 echo "== repack"
 changed=(boot/grub/grub.cfg casper/initrd)

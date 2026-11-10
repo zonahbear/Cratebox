@@ -140,6 +140,21 @@ impl Lists {
         self.dirty = true;
         true
     }
+    /// track id → the names of the playlists it's in (the library's PLAYLISTS column)
+    pub fn membership(&self) -> HashMap<String, String> {
+        let mut m: HashMap<String, Vec<&str>> = HashMap::new();
+        for p in self.lists.iter().filter(|p| !p.folder) {
+            for id in &p.items { let v = m.entry(id.clone()).or_default(); if !v.contains(&p.name.as_str()) { v.push(&p.name); } }
+        }
+        m.into_iter().map(|(k, v)| (k, v.join(", "))).collect()
+    }
+    /// changes when a list is added, renamed or gains/loses tracks (when to build `membership` again)
+    pub fn fingerprint(&self) -> u64 {
+        use std::hash::{Hash, Hasher};
+        let mut h = std::collections::hash_map::DefaultHasher::new();
+        for p in &self.lists { p.id.hash(&mut h); p.name.hash(&mut h); p.items.len().hash(&mut h); }
+        h.finish()
+    }
     pub fn path_name(&self, p: &Playlist) -> String {
         let mut parts = vec![p.name.clone()];
         let mut x = p.parent.clone();
@@ -249,7 +264,7 @@ pub fn row_is_view(r: &TreeRow, v: &View) -> bool {
 }
 
 // ---- rekordbox USB / SD ----
-fn sub(root: &Path, p: &str) -> PathBuf {
+pub fn sub(root: &Path, p: &str) -> PathBuf {
     // rekordbox paths start with "/" and use "/"; Linux filesystems on FAT/exFAT sticks may differ in case
     let rel = p.trim_start_matches('/');
     let direct = root.join(rel);
@@ -270,7 +285,12 @@ pub fn mount_device(root: &Path, saved: &crate::library::CacheMap, range: (f64, 
     let pdb_path = sub(root, "/PIONEER/rekordbox/export.pdb");
     let buf = std::fs::read(&pdb_path).map_err(|_| format!("\"{name}\" doesn't look like a rekordbox USB/SD export (no PIONEER/rekordbox/export.pdb). Pick the drive itself."))?;
     let db = parse_pdb(&buf).map_err(|e| format!("Couldn't read that rekordbox database: {e}"))?;
-    let id = format!("usb-{name}");
+    // a local copy ("<stick> local" in Cratebox USB) keeps the stick's id: same device, same saved edits,
+    // and mounting one replaces the other in the list, so tracks never show twice
+    let copy = crate::usbcopy::is_copy(root);
+    let stick = if copy { name.strip_suffix(" local").unwrap_or(&name).to_string() } else { name.clone() };
+    let id = format!("usb-{stick}");
+    let name = if copy { format!("{stick} (on this computer)") } else { name };
     let mut dev = Device { id: id.clone(), name: name.clone(), root: root.to_path_buf(), tree: db.playlists, by_rb: HashMap::new(), track_count: db.tracks.len() };
     let mut out = vec![];
     for r in db.tracks {
@@ -300,7 +320,12 @@ pub fn read_device_analysis(t: &mut Track) -> bool {
     if dat.beats.is_empty() { return false; }
     let ext = std::fs::read(dat_path.with_extension("EXT")).or_else(|_| std::fs::read(dat_path.with_extension("ext"))).ok().map(|b| parse_anlz(&b));
     let Some((bpm, first)) = grid_from_beats(&dat.beats) else { return false };
-    if !t.grid_manual { t.bpm = Some(bpm); t.first_beat = Some(first); t.auto_bpm = Some(bpm); t.auto_first = Some(first); }
+    // rekordbox's grid wins over Cratebox's own analysis (as with an XML import): kept like a grid you set,
+    // and RESET in the grid editor goes back to it
+    if !t.grid_manual {
+        t.bpm = Some(bpm); t.first_beat = Some(first); t.auto_bpm = Some(bpm); t.auto_first = Some(first);
+        t.grid_manual = true; t.grid_from = Some("rekordbox".into());
+    }
     t.phrases = Some(ext.as_ref().and_then(|e| e.phrases.as_ref()).and_then(|p| phrases_from(&dat.beats, p)).unwrap_or_default());
     let src = match &ext { Some(e) if !e.hot.is_empty() || !e.memory.is_empty() => e, _ => &dat };
     t.rb_cues = Some(RbCues { hot: src.hot.clone(), memory: src.memory.clone() });

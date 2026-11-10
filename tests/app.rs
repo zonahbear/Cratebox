@@ -86,7 +86,7 @@ fn whole_app() {
     assert!((app.decks[0].rate() - 1.0).abs() < 0.001);
 
     // ---- SYNC: deck 2 (140) follows deck 1 (126), beats line up once it plays
-    midi(&mut app, &[0x91, 0x58, 0x7f]);
+    midi(&mut app, &[0x91, 0x58, 0x7f]); midi(&mut app, &[0x91, 0x58, 0x00]); // a tap: SYNC on release
     assert!(app.decks[1].sync && (app.decks[1].eff_bpm() - 126.0).abs() < 0.01, "sync: {}", app.decks[1].eff_bpm());
     midi(&mut app, &[0x91, 0x0b, 0x7f]);
     run(&mut app, 1.0);
@@ -98,6 +98,16 @@ fn whole_app() {
     app.poll();
     assert!((app.decks[1].eff_bpm() - app.decks[0].eff_bpm()).abs() < 0.01);
     midi(&mut app, &[0xb0, 0x00, 0x40]); midi(&mut app, &[0xb0, 0x20, 0x00]);
+    // ---- holding SYNC makes deck 2 the master: deck 1, synced, then follows it
+    midi(&mut app, &[0x91, 0x58, 0x7f]);
+    std::thread::sleep(cratebox::app::HOLD_MASTER + std::time::Duration::from_millis(50));
+    app.poll();
+    midi(&mut app, &[0x91, 0x58, 0x00]);
+    assert!(app.decks[1].sync, "a hold doesn't toggle SYNC off");
+    app.set_sync(0, true);
+    app.poll();
+    assert_eq!(app.tempo_master(), Some(1), "deck 2 is the master");
+    app.set_sync(0, false);
 
     // ---- hot cue A on deck 1 (set, then jump back to it)
     midi(&mut app, &[0x97, 0x00, 0x7f]);
@@ -205,7 +215,15 @@ fn whole_app() {
     app.set_view(View::DevPl(dev.clone(), sub));
     assert_eq!(app.list.view.iter().map(|t| t.title.as_str()).collect::<Vec<_>>(), ["Demo Track 1", "Demo Track 2"]);
     app.list.sel = 0;
+    // LOAD LOCK: nothing goes onto a locked deck; loading from BROWSE goes back to the decks
+    app.decks[1].locked = true;
+    let (loads, before) = (app.loads, app.decks[1].track.as_ref().map(|t| t.id.clone()));
     app.load_selected(1);
+    assert!(app.decks[1].track.as_ref().map(|t| t.id.clone()) == before && app.loads == loads, "a locked deck keeps what it has");
+    app.decks[1].locked = false;
+    app.store.settings.browse = true;
+    app.load_selected(1);
+    assert!(app.loads == loads + 1 && !app.store.settings.browse, "loading closes BROWSE");
     wait(&mut app, 30.0, "USB track load", |a| a.decks[1].loaded() || (!a.decks[1].loading && a.decks[1].track.is_none()));
     let d = &app.decks[1];
     let ana = d.ana.as_ref().expect("USB track loaded");
@@ -215,6 +233,13 @@ fn whole_app() {
     assert!(app.track(&app.list.view[0].id).is_some());
     let notes = app.tracks.iter().filter(|t| t.device.is_none()).count();
     assert_eq!(notes, 4, "the collection doesn't mix device tracks in");
+    // the same file in the collection (name + size as on the stick) plays on rekordbox's grid too
+    let dt = app.tracks.iter().find(|t| t.device.is_some() && t.title == "Demo Track 1").unwrap().clone();
+    let twin = cratebox::library::Track { id: "twin".into(), path: music().join("Test Artist - House Groove 126.wav"), name: dt.name.clone(), size: dt.size, title: "Twin".into(), ..Default::default() };
+    app.load_track(1, twin);
+    wait(&mut app, 30.0, "twin load", |a| a.decks[1].loaded() && a.decks[1].track.as_ref().is_some_and(|t| t.id == "twin"));
+    let ana = app.decks[1].ana.as_ref().unwrap();
+    assert_eq!((ana.bpm, ana.first_beat), (128.0, 0.025), "rekordbox's grid for the collection's copy");
 
     // ---- MIDI learn on an unknown controller
     app.use_profile("learn");
