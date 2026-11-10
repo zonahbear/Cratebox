@@ -4,6 +4,14 @@ All notable changes to Cratebox (the web app). Version numbers follow `MAJOR.MIN
 
 ## Unreleased
 
+### Fixed
+- **Bar 1 lands on the right beat far more often.** The analyser used to lean on "the first loud beat is bar 1" and on kick-versus-snare placement, both tuned on synthetic test tracks. It now picks the beat of the bar where the spectrum, and the bass on its own, changes most. Checked against rekordbox's own grids on a real rekordbox stick: on 46 tracks it had never seen, bar 1 matched rekordbox on 30 of 43 comparable tracks, up from 19. Tracks are analysed again once so they pick this up; grids you edited by hand and rekordbox grids are left alone.
+- **PLAY right after a track ran out works.** Pressing CUE or seeking back and then PLAY soon after a track ended could start the sound while the deck showed stopped (PLAY light off, waveform still), because the player kept saying "ended" after the seek.
+- **Holding SYNC to make a deck the master no longer flips SYNC off when you let go late.** Letting go more than about 2.5 seconds after pressing counted as a second tap.
+- **The HEAT panel opens under its button again.** On computers it had been opening shifted up and to the left, with its top row (the device line, Connect and Simulator) off the top of the screen.
+- **HEAT never heats blind.** A curve or HOLD stops if the bowl temperature can't be read for 3 seconds (the 600°F cutoff needs a reading to work), and won't start at all if profile slot 4 can't be read for its backup. Simulator-tested only.
+- **The library keeps your selected track.** The highlighted row used to jump back to the first track whenever the list refreshed: every few tracks during background analysis, on a MATCH re-sort while a tempo moved, and after playlist edits. Loading with the controller's LOAD button right then could load the wrong track.
+
 ### Added
 - **MATCH column in the library: which track mixes in next.** While a deck plays, each track gets a score out of 100 for the deck you'd load it on (the first other deck that isn't playing). Tempo counts 35%: half, normal or double time, and only if that deck's tempo range reaches it, the same rule SYNC uses (a track it can't reach shows –). Key counts 30%: same key, ±1 and relative score highest, a clash loses 40%, and with master tempo off the key is checked after the pitch change. Click MATCH to sort best first; hover a score for the reason. Energy and sound aren't scored yet. A draft: the weights are a first guess.
 - **3 decks.** The header's DECKS button now cycles 2 → 3 → 4. With 3, decks 1 and 3 share the left side (the layer button switches them) and deck 2 keeps the right; the mixer reads 3 1 2. Desktop and tablet; phones stay on 2 decks.
