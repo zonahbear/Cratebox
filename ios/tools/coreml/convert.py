@@ -33,8 +33,10 @@ class FixedRotary(nn.Module):
         self.rot, self.tables = rot, {}
 
     def rotate_queries_or_keys(self, t):
-        n = t.shape[-2]
+        # int(): while tracing, a shape is a traced value that wouldn't find the tables made in the eager run
+        n = int(t.shape[-2])
         if n not in self.tables:
+            assert not torch.jit.is_tracing(), f"no rotary table for length {n}"
             with torch.no_grad():
                 f = self.rot.forward(torch.arange(n, dtype=torch.float32))      # [n, dim], pairs repeated
             self.tables[n] = (f.cos(), f.sin())
