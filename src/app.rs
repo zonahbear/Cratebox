@@ -109,6 +109,9 @@ pub struct App {
     pub repaint: Option<Arc<dyn Fn() + Send + Sync>>,
     /// USB → local copy running: (bytes done, bytes to copy)
     pub copying: Option<(u64, u64)>,
+    /// a stick was plugged in and the copy question is on screen: (device id, name, a copy already exists).
+    /// Nothing is copied until the answer is yes
+    pub ask_copy: Option<(String, String, bool)>,
     /// when to ask the controller for its knob/fader positions again
     midi_query: Vec<Instant>,
     /// the Cratebox Downloads folder (WEB button and Nicotine+): when it was last looked at, and its modified time then
@@ -185,7 +188,7 @@ impl App {
             jobs_tx, jobs_rx, queue: VecDeque::new(), analysing: None, analysed_count: 0, deck_loads: Arc::new(AtomicUsize::new(0)),
             midi: midi::Engine::new(), midi_io: MidiIo::new(), last_keep: Instant::now(), last_led: Instant::now(),
             status: String::new(), status_until: Instant::now(), progress: String::new(), outputs, ui: UiState::default(), last_flush: Instant::now(),
-            repaint: None, copying: None, midi_query: vec![], rec_armed: false, loads: 0, glow: crate::heat::Glow::new(), glow_was: false, vis_delay: 0.0, sync_held: [None; DECKS], downloads: (Instant::now(), None), hp_note: String::new(), reconnect: None, scanning: 0,
+            repaint: None, copying: None, ask_copy: None, midi_query: vec![], rec_armed: false, loads: 0, glow: crate::heat::Glow::new(), glow_was: false, vis_delay: 0.0, sync_held: [None; DECKS], downloads: (Instant::now(), None), hp_note: String::new(), reconnect: None, scanning: 0,
         };
         app.midi.use_profile("learn", vec![]);
         app.midi.four = app.store.settings.four;
@@ -496,7 +499,13 @@ impl App {
     }
     /// copy a mounted stick to ~/Music/Cratebox USB, or bring that copy up to date; the copy then
     /// replaces the stick in the list (same device id) and is remembered instead of it
+    /// the answer to the copy question
+    pub fn answer_copy(&mut self, yes: bool) {
+        let Some((id, _, _)) = self.ask_copy.take() else { return };
+        if yes { self.copy_device(&id); }
+    }
     pub fn copy_device(&mut self, id: &str) {
+        if self.ask_copy.as_ref().is_some_and(|a| a.0 == id) { self.ask_copy = None; }
         if self.copying.is_some() { self.say("A copy is already running", 3.0); return; }
         let Some(d) = self.lists.devices.iter().find(|x| x.id == id) else { return };
         if crate::usbcopy::is_copy(&d.root) { self.say("This is the copy on this computer: plug the stick in and open it to update", 6.0); return; }
@@ -1345,8 +1354,11 @@ impl App {
                     self.lists.rematch(&self.tracks);
                     self.apply_view(true);
                     self.say(&format!("{name}: {n} tracks, {pls} playlists (read-only)"), 6.0);
-                    // a stick that's plugged in syncs to this computer by itself (only new or changed files)
-                    if !crate::usbcopy::is_copy(&root) && self.copying.is_none() && self.repaint.is_some() { self.copy_device(&id); }
+                    // a stick that's plugged in is never copied by itself: ask first (COPY USB does it later too)
+                    if !crate::usbcopy::is_copy(&root) && self.copying.is_none() {
+                        let has = crate::usbcopy::copy_root(&root.file_name().map(|s| s.to_string_lossy().to_string()).unwrap_or_default()).exists();
+                        self.ask_copy = Some((id.clone(), name.clone(), has));
+                    }
                 }
                 Err(e) => if remember { self.say(&e, 9.0) },
             },

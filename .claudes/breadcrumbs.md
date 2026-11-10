@@ -144,3 +144,12 @@
 - Merged main into claude/project-thread-k9y5qa (PR #14); heat.rs conflicts: kept `lorax_device!` and added lantern/lantern_color to it.
 - New Linux-only features mapped for Windows (see win.rs line in CLAUDE.md). Linux tests pass; Wine screenshot at 1080p OK.
 - Zip at project files cratebox-windows/Cratebox-Windows.zip. Not tested with Jonah's real tracks (D: drive is on his PC).
+
+## 2026-11-10 22:25Z: ask before copying a USB stick (Jonah's TODO)
+- Job::Mounted no longer calls copy_device. It sets App.ask_copy (id, name, copy exists); ui.rs copy_dialog asks
+  ("Copy" / "Update the copy" / "Not now"); App::answer_copy. Rects askcopy.yes / askcopy.no for uitest. COPY USB unchanged.
+- It asks every time the stick mounts (also at launch with the stick in). No "always" option on purpose: the rule is ask.
+- Beat counter TODO: already there (ui.rs deck screen bar.beat), nothing to do for Linux/Windows.
+- Verified: cargo build --release, cargo test --release all pass (tests/app.rs asserts the question and "Not now").
+  Dialog not looked at on a screen; Windows build not rebuilt here (same code path, no cfg).
+- Next: after merge run the manual cratebox-app workflow (app-latest) and cratebox-windows (windows-latest).

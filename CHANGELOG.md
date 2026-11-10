@@ -4,6 +4,9 @@ Newest first. Each update arrives through `cratebox-update` (no new ISO needed) 
 
 ## 10 November 2026
 
+- Plugging in a USB stick no longer copies it to the computer by itself. Cratebox asks first ("Copy" or
+  "Not now"; "Update the copy" when one exists). COPY USB in the library still does it whenever you like.
+  The same goes for the Windows build.
 - Bar 1 lands on the right beat far more often. It is now picked from where the spectrum and the bass change,
   and was checked against rekordbox's own grids on a real stick: on 46 tracks it had never seen, bar 1 matched
   rekordbox on 30 of 43, up from 19. Tracks are analysed again once; hand-edited and rekordbox grids are kept.

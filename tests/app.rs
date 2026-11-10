@@ -209,6 +209,10 @@ fn whole_app() {
     app.mount(&usb, true);
     wait(&mut app, 10.0, "USB mount", |a| !a.lists.devices.is_empty());
     let dev = app.lists.devices[0].id.clone();
+    // plugging a stick in copies nothing: it asks, and "Not now" leaves it at that
+    assert!(app.copying.is_none() && app.ask_copy.as_ref().is_some_and(|a| a.0 == dev && !a.2), "the stick is asked about, not copied: {:?}", app.ask_copy);
+    app.answer_copy(false);
+    assert!(app.copying.is_none() && app.ask_copy.is_none());
     app.set_view(View::Dev(dev.clone()));
     assert_eq!(app.list.view.len(), 6);
     let sub = app.lists.devices[0].tree.iter().find(|n| n.name == "Sub Playlist").unwrap().id;
