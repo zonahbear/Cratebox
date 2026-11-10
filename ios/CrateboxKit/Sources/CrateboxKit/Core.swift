@@ -404,7 +404,8 @@ public final class DeckModel: ObservableObject, Identifiable {
     }
     /// SYNC as the button sees it: a tap toggles it, but not the release that ends a hold (makeMaster)
     public func syncPressed() {
-        if core.wallMs() - heldAt < 2000 { heldAt = -1e9; return }
+        // 15 s, not 2: the release counts from when the hold fired (0.5 s in), so a hold of over 2.5 s used to toggle SYNC
+        if core.wallMs() - heldAt < 15000 { heldAt = -1e9; return }
         setSync(!sync)
     }
     /// hold SYNC: this deck becomes the master. It keeps its tempo (synced or not) and every other synced deck follows

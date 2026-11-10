@@ -138,3 +138,18 @@
   The UI calls `syncPressed()`, which ignores the release that ends a hold. The FLX4's SYNC (MIDI) still just toggles.
 - Tests: testSyncFlipFlop140And92EndsOnTheBeat, testSyncMultipliersStayInTheTempoRange, testHoldSyncMakesTheMaster.
   The web app and Linux still have the old ¼-beat deadband and no range limit (parity gap).
+
+## 2026-11-10: second review pass (branch claude/project-thread-t5561g → preview/truecurve-usb). NOT COMPILED: no Swift toolchain in the cloud session
+
+- DeckPlayer `.seek` now clears `ended`. Before, after a track ran out, CUE/seek then PLAY could leave the deck showing stopped while it
+  sounded: reports still carried `ended` and `DeckModel.onReport` switched `playing` off. Reproduced and fixed the same way in the web app
+  (30 of 30 with a 100 ms stall) and in Cratebox-Linux. Likelier here with big Bluetooth buffers.
+- `syncPressed()` ignores the release that ends a hold for 15 s instead of 2 s: the release is timed from when the hold fired (0.5 s in),
+  so holding SYNC over ~2.5 s toggled SYNC off on release. Needs a phone check.
+- Finding, not changed: `Engine.apply(.mixer(let m))` does `mixer = m` on the audio thread, which frees the previous MixerState's 8 arrays there
+  on every knob or fader move. Hand the old value to the main thread like `retired`, or make MixerState fixed-size.
+- Finding, not changed: analysis (bar 1) now differs from the web app and Linux, which pick bar 1 from spectrum changes (Cratebox PR #15,
+  Cratebox-Linux PR #48; on 46 unseen real tracks agreement with rekordbox went 19 → 30 of 43). Port `beatGrid`'s new vote to Swift and
+  regenerate the oracle fixtures. The web copy of cratebox.html here also needs a sync once #15 merges.
+- personal/heat needs the same two fixes as its own change (never merged from here). HEAT there should also get truecurve PR #4's two
+  fail-safes (stop after 3 s with no temperature reading; no run without a slot 4 backup).
