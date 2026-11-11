@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+# monorepo: the Rust app lives in linux/
+defaults:
+  run:
+    working-directory: linux
+
 jobs:
   iso:
     runs-on: ubuntu-24.04

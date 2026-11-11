@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 fn music() -> PathBuf {
     let p = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/music");
-    if p.exists() { p } else { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../cratebox/tests/music") }
+    if p.exists() { p } else { PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../web/tests/music") }
 }
 
 #[test]

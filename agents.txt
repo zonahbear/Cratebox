@@ -1,0 +1,44 @@
+# Cratebox
+
+> DJ software for the Pioneer DDJ-FLX4, in one public monorepo (github.com/zonahbear/Cratebox, owner Jonah): a
+> browser player, a Rust app for Linux (Cratebox OS) and Windows, and a native iOS app. This file follows the
+> llms.txt layout so any AI agent (Claude, ChatGPT/Codex, Gemini, Grok, Copilot) can find its way in. Paste it into
+> a chat if your tool can't read the repo.
+
+Read in this order, then work only in the folder your task needs.
+
+## Start here
+
+- [.handoffs/LATEST.md](.handoffs/LATEST.md): savestate. Where the last agent stopped, what's in flight, next steps.
+- [AGENTS.md](AGENTS.md): layout, the ten hard rules, build/test, workflows.
+- [docs/agents/HANDOFF.md](docs/agents/HANDOFF.md): start/end checklist, bug and feature flow, handing off.
+- [docs/agents/REVIEW.md](docs/agents/REVIEW.md): how to review a PR here.
+
+## Folders
+
+- [web/CLAUDE.md](web/CLAUDE.md): web player `web/cratebox.html` (source of truth) and the website `web/site/`.
+- [linux/CLAUDE.md](linux/CLAUDE.md): Rust app, Cratebox OS ISO (`linux/distro/`), Windows build.
+- [ios-suite/CLAUDE.md](ios-suite/CLAUDE.md): Swift iOS app (`ios-suite/ios/`), Deck Bridge.
+- (Folder maps are named CLAUDE.md for history; they apply to every agent.)
+
+## Hard rules (short version)
+
+- personal/heat never merges into main. HEAT never goes into the App Store app.
+- Audio thread never blocks or allocates. No dropouts.
+- HEAT safety limits identical everywhere: 600°F cutoff, 350-590°F clamp, slot 4 backup/restore, 3 s no-reading stop.
+- Never write to a rekordbox USB stick from web or linux.
+- No secrets in the repo (it is public).
+- Don't merge to main, publish releases or delete anything without Jonah's OK.
+
+## Agent entry files
+
+- Claude Code: CLAUDE.md (imports AGENTS.md and .handoffs/LATEST.md)
+- ChatGPT / Codex: AGENTS.md (each folder has a short AGENTS.md too)
+- Gemini CLI: GEMINI.md (imports AGENTS.md and .handoffs/LATEST.md)
+- Grok and anything else: this file
+- GitHub Copilot: .github/copilot-instructions.md
+
+## Optional
+
+- [.claudes/breadcrumbs.md](.claudes/breadcrumbs.md): dated history of past sessions (per-folder ones in `<folder>/.claudes/`).
+- [CHANGELOG files](web/CHANGELOG.md): user-facing changes, one per folder.

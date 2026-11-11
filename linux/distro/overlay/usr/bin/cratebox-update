@@ -9,7 +9,9 @@ The repo is private, so it needs a GitHub token with read access to it; asked on
 questions, nothing downloaded when the installed build is already the newest."""
 import getpass, hashlib, json, os, subprocess, sys, tempfile, urllib.request
 
-REPO = "zonahbear/Cratebox-Linux"
+# The monorepo first; Cratebox-Linux (where app-latest lived before the monorepo) as the fallback
+REPOS = ("zonahbear/Cratebox", "zonahbear/Cratebox-Linux")
+REPO = REPOS[0]
 TAG = "app-latest"
 TOKEN_FILE = os.path.expanduser("~/.config/cratebox/github-token")
 
@@ -39,7 +41,14 @@ def get(url, tok, accept="application/vnd.github+json"):
 def main(auto=None):
     tok = open(auto).read().strip() if auto else token()
     try:
-        rel = json.loads(get("https://api.github.com/repos/%s/releases/tags/%s" % (REPO, TAG), tok))
+        rel = None
+        for i, repo in enumerate(REPOS):
+            try:
+                rel = json.loads(get("https://api.github.com/repos/%s/releases/tags/%s" % (repo, TAG), tok))
+                break
+            except urllib.error.HTTPError as e:
+                if e.code != 404 or i == len(REPOS) - 1:
+                    raise
     except urllib.error.HTTPError as e:
         if e.code in (401, 403, 404):
             if auto:

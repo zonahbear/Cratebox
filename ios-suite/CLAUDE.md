@@ -1,5 +1,8 @@
 # CLAUDE.md: Cratebox Suite (iOS)
 
+> Monorepo (2026-11-11): this folder is `ios-suite/` in zonahbear/Cratebox. Paths below are relative to `ios-suite/`; workflows
+> live in the root `.github/workflows/`. Start at the root [CLAUDE.md](../CLAUDE.md).
+
 Read this first. Keep it short. (The full repo map is in PR #3, branch `claude/project-thread-497h2z`. When that merges,
 fold this file into it.)
 

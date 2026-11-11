@@ -10,7 +10,7 @@ use std::time::{Duration, Instant};
 fn root() -> PathBuf { PathBuf::from(env!("CARGO_MANIFEST_DIR")) }
 fn music() -> PathBuf {
     let p = root().join("tests/music");
-    if p.exists() { p } else { root().join("../cratebox/tests/music") }
+    if p.exists() { p } else { root().join("../web/tests/music") }
 }
 fn wait(app: &mut App, secs: f64, what: &str, mut f: impl FnMut(&App) -> bool) {
     let t0 = Instant::now();

@@ -1,14 +1,15 @@
-# Cloudflare Worker for the Cratebox website (site/). Setup steps: site/README.md.
-# Static files come from site/dist (built by site/build.sh); /api/* runs site/src/worker.js.
+# Cloudflare Worker for the Cratebox website (web/site/). Setup steps: web/site/README.md.
+# Static files come from web/site/dist (built by web/site/build.sh); /api/* runs web/site/src/worker.js.
+# At the repo root (monorepo) so Workers Builds needs no "root directory" change; paths are relative to this file.
 name = "cratebox"
-main = "site/src/worker.js"
+main = "web/site/src/worker.js"
 compatibility_date = "2025-09-01"
 
 [build]
-command = "bash site/build.sh"
+command = "bash web/site/build.sh"
 
 [assets]
-directory = "site/dist"
+directory = "web/site/dist"
 binding = "ASSETS"
 # Serve .html paths as-is (no redirects): the player's service worker and manifest point at cratebox.html.
 html_handling = "none"

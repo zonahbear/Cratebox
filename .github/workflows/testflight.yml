@@ -8,12 +8,16 @@
 name: TestFlight
 on:
   push:
-    branches: [main, preview/truecurve-usb]   # this branch too: Jonah asked for its build on TestFlight
-    paths: ["ios/**", ".github/workflows/testflight.yml"]
+    branches: [main]   # main carries the shipping app (was preview/truecurve-usb before the monorepo)
+    paths: ["ios-suite/ios/**", ".github/workflows/testflight.yml"]
   workflow_dispatch:
 permissions:
   contents: write
 concurrency: { group: testflight, cancel-in-progress: false }
+# monorepo: the iOS suite lives in ios-suite/ (the secrets check and the log step run from the repo root)
+defaults:
+  run:
+    working-directory: ios-suite
 jobs:
   upload:
     runs-on: macos-15-intel   # GitHub's arm64 Mac pool has not been picking jobs up (Nov 2026); the archive is still arm64 for iPhones
@@ -28,6 +32,7 @@ jobs:
     steps:
       - name: Secrets present?
         id: check
+        working-directory: .
         run: |
           # runner.temp isn't allowed in job-level env, so the keychain path is set here
           echo "KC=$RUNNER_TEMP/signing.keychain-db" >> "$GITHUB_ENV"
@@ -130,8 +135,9 @@ jobs:
           rm -f "$RUNNER_TEMP/dist.p12" "$RUNNER_TEMP/app.mobileprovision" "$RUNNER_TEMP/profile.plist" "$HOME/private_keys/AuthKey_"*.p8
       - name: Log summary to the ci-logs-testflight branch
         if: always() && steps.check.outputs.ready == 'true'
+        working-directory: .
         run: |
-          { echo "run ${{ github.run_id }} sha ${{ github.sha }} build $BUILD at $(date -u)"; grep -E "error:|ERROR|FAIL|BUILD|ARCHIVE|PROFILE|UPLOADED|identities|CODESIGN|\*\* " ci.log | head -200; echo "---- tail"; tail -60 ci.log; } > testflight.txt || true
+          { cd ios-suite; echo "run ${{ github.run_id }} sha ${{ github.sha }} build $BUILD at $(date -u)"; grep -E "error:|ERROR|FAIL|BUILD|ARCHIVE|PROFILE|UPLOADED|identities|CODESIGN|\*\* " ci.log | head -200; echo "---- tail"; tail -60 ci.log; cd ..; } > testflight.txt || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git checkout --orphan ci-tmp && git rm -rfq --cached . >/dev/null
           git add -f testflight.txt && git commit -qm "testflight ci ${{ github.run_id }}" && git push -qf origin HEAD:ci-logs-testflight

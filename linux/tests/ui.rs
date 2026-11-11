@@ -8,7 +8,7 @@ use std::process::Command;
 fn music() -> PathBuf {
     let r = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     let p = r.join("tests/music");
-    if p.exists() { p } else { r.join("../cratebox/tests/music") }
+    if p.exists() { p } else { r.join("../web/tests/music") }
 }
 
 #[test]
