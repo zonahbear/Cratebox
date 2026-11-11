@@ -5,14 +5,13 @@ struct MixerView: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var core: Core
     @EnvironmentObject var fx: FxController
+    @ObservedObject private var mic = WatchMicReceiver.shared
     var compact = false
     var phone = false
     var masterBar = false               // iPhone: just the master section, for the top bar
     var short = false                   // a short iPad (mini): BEAT FX behind a button instead of in the column
     @State private var fxSheet = false
     @Environment(\.phoneMetrics) var m
-    @Environment(\.isPresented) var presented
-    @Environment(\.dismiss) var dismiss
 
     var order: [Int] { [[0, 1], [2, 0, 1], [2, 0, 1, 3]][core.deckCount - 2] }
 
@@ -96,19 +95,14 @@ struct MixerView: View {
                         .padding(.horizontal, 5).frame(height: 26).background(RoundedRectangle(cornerRadius: 4).stroke(Theme.line2))
                 }.buttonStyle(.plain)
             }
-            eqButton
+            if mic.listening {
+                VStack(spacing: 0) {
+                    Knob(label: "", value: mic.volume, color: Theme.hot, size: 20, center: 1) { mic.volume = $0 }
+                    Text(mic.duckOn && mic.talking ? "TALK" : "MIC").font(.system(size: 6.5, weight: .bold)).foregroundStyle(mic.phoneMuted || mic.watchMuted ? Theme.muted : mic.duckOn && mic.talking ? Theme.cue : Theme.hot)
+                }
+            }
             MeterView(level: { let p = app.core.lastSnapshot.masterPeak; return Double(max(p.0, p.1)) }).frame(width: 5, height: 24)
         }
-    }
-    /// EQ: opens the master EQ (lit while it's on). From the MASTER popover, the popover closes first: a sheet
-    /// can't come up over it.
-    var eqButton: some View {
-        Button {
-            if presented { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { app.eqShown = true } } else { app.eqShown = true }
-        } label: {
-            Text("EQ").font(.system(size: 10, weight: .bold)).fixedSize().padding(.horizontal, 6).frame(height: 24).foregroundStyle(core.mixer.eq.on ? Color.black : Theme.fg)
-                .background(RoundedRectangle(cornerRadius: 4).fill(core.mixer.eq.on ? Theme.accent : Theme.raise))
-        }.buttonStyle(.plain).accessibilityLabel("Master EQ, \(core.mixer.eq.on ? "on" : "off")")
     }
 
     var fullBody: some View {
@@ -121,7 +115,7 @@ struct MixerView: View {
                 Knob(label: "Cue/Mst", value: core.mixer.headMix, size: 28, center: 0) { core.mixer.headMix = $0 }
                 LitButton(label: "MST", on: core.mixer.masterCue, color: Theme.cue) { core.toggleMasterCue() }
                 Knob(label: "Master", value: core.mixer.master, size: 28, center: 0.8) { core.mixer.master = $0 }
-                LitButton(label: "EQ", on: core.mixer.eq.on, color: Theme.accent) { app.eqShown = true }
+                if mic.listening { Knob(label: "Mic", value: mic.volume, color: Theme.hot, size: 28, center: 1) { mic.volume = $0 } }
                 MeterView(level: { let p = app.core.lastSnapshot.masterPeak; return Double(max(p.0, p.1)) }).frame(width: 8, height: 40)
             }
             crossfader
@@ -205,7 +199,7 @@ struct BeatFXView: View {
         VStack(spacing: 5) {
             HStack(spacing: 4) {
                 Menu {
-                    ForEach(0..<FX_LIST.count, id: \.self) { k in Button(FX_LIST[k].0.rawValue) { fx.select(FX_LIST[k].0) } }
+                    ForEach(fx.kinds, id: \.self) { k in Button(k.rawValue) { fx.select(k) } }
                 } label: {
                     Text(fx.fx.rawValue).font(.system(size: 12, weight: .bold)).frame(maxWidth: .infinity, minHeight: 28)
                         .background(RoundedRectangle(cornerRadius: 6).fill(Theme.raise))

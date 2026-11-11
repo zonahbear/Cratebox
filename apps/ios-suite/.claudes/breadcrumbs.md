@@ -15,6 +15,16 @@
   mode overflowed (two columns of decks), so on a short iPad 4-deck mode now uses the iPhone pattern: the two decks the
   controller is on, plus the 2-channel phone mixer. SE MIX/LIBRARY picker widened to 132 (LIBRARY was truncating).
 
+## 2026-10-23: Cratebox Mic (watch mic experiment)
+- Added watch app target `CrateboxMic` (ios/WatchMic, watchOS 10+), phone receiver `ios/App/WatchMicReceiver.swift`,
+  shared wire + ring `ios/Shared/WatchMicWire.swift`, Settings page `ios/App/Views/WatchMicView.swift`.
+- Path: CallKit outgoing call on the watch (TN3135 VoIP exemption) → UDP 24 kHz Int16 mono, 10 ms packets → phone
+  jitter buffer → mixed onto master in AudioHost's source node (after the limiter, not recorded).
+- testflight.yml now needs secret IOS_PROFILE_HEAT_WATCH_BASE64 (watch App ID profile). Setup: ios/HEAT-APP.md.
+- Written without Xcode (no Mac in the cloud sandbox): first compile is the TestFlight run. Fix errors from its log.
+- Next: Jonah runs the test plan in HEAT-APP.md; decide go/no-go on real latency and the no-Wi-Fi result.
+- Watch only, never in the shipping app (com.zonahbear.cratebox.suite). ios.yml simulator runs now also build the
+  watch target and need a watchOS simulator runtime.
 ## 2026-10-23: compact phone layout (commit 88aec82, same branch)
 
 - Real SE testers run Display Zoom: 568 × 320 pt. The 540 pt deck row pushed the strips off (middle wasn't fixed-width).
@@ -52,6 +62,58 @@
 - CI: `-demo -eject [-stopped]` shots (stand-in "DJ USB"). Not tested on a real stick yet.
 - Next: check CI run, screenshots to Jonah, port to personal/heat (his OK before pushing it: it uploads to TestFlight).
 
+### 2026-10-23 06:55 Cratebox Mic: Bluetooth fallback didn't connect on build 14
+- Jonah: "still no bluetooth". Cause unknown (WC errors were swallowed). Build 15 change: phone starts Watch Connectivity at app launch (not on Listen, so a background launch by the watch still has a delegate), both sides show the link state (activated / reachable / app installed / last error), the watch's timeout message includes it.
+- Next: Jonah reads the watch's "BT …" line and the phone's "Watch link …" line with phone Wi-Fi off. If "phone NOT in reach" or errors persist with the phone app open, WC can't carry it during a CallKit call → Wi-Fi + travel router.
+
+### 2026-10-23 08:05 Cratebox Mic: Wi-Fi only; gain, board volume, feedback filter
+- Bluetooth (Watch Connectivity) fallback: no packet ever reached the phone with Wi-Fi off; phone saw "watch app open: no". Jonah moved on ("right"), so treat the mic as Wi-Fi only. The WC code is still in, harmless.
+- Added: Settings → Apple Watch as a mic → Mic gain (-12...+24 dB, `cb.watchMicGainDb`), Feedback filter (`cb.watchMicFeedback`, `ios/App/MicFeedback.swift`: 100 Hz HPF + up to 8 auto notches, Q 30, detector = peak ≥25 dB over bins 3-8 away, same bin, not fading, ~200 ms), notch list + Reset.
+- Board: MIC knob in the mixer (top bar on iPhone, master row on iPad) while Listen is on; `cb.watchMicVol`, squared curve, MIDI-learnable action `micVol` ("Watch mic volume"). The FLX4 MIC LEVEL knob sends no MIDI (absent from Mixxx's full FLX4 mapping; Pioneer's MIDI list not reachable), so it can't be mapped.
+- Soft knee above 0.8 on the mic in mix(). Untested on device; the detector thresholds are first guesses.
+
+### 2026-10-23 08:10 Cratebox Mic: tested good
+- Build 20 on device: FLX4 MIC LEVEL knob DOES send MIDI (my "no MIDI" call from the Mixxx map was wrong); Jonah mapped it to Watch mic volume. Feedback filter "MUCH better". Wi-Fi only.
+- Unmerged on claude/project-thread-uceof1: footer text fix (MIC LEVEL works). Rides the next personal/heat merge, to save macOS minutes.
+
+### 2026-10-23 08:45 Cratebox Mic: Link switch (Bluetooth / Wi-Fi / Auto), Bluetooth without CallKit, crash log
+- Jonah: on Bluetooth the phone shows the link connected but the call fails, then the watch app crashes. Bluetooth is his main case; latency OK.
+- Watch: Link button cycles bt/wifi/auto (`mic.mode`, default bt). Bluetooth = no CallKit: own .playAndRecord session + `audio` background mode, WC only. MicLog.swift writes a crash-surviving log (+ uncaught ObjC exceptions); "Last session log" on the watch, "Send log to phone" (transferUserInfo).
+- Phone: Link picker (`cb.watchMicMode`, default bt; bt = no NWListener), "Bluetooth messages from the watch" counter, Watch log section with Copy.
+- Crash cause still unknown (no log yet). Next: Jonah reproduces, sends log.
+
+### 2026-10-23 09:45 Cratebox Mic: auto duck
+- Build for PR #16 was refused because the repo had been made private (no free macOS minutes); Jonah made it public again 08:48.
+- Auto duck (Settings → Apple Watch as a mic → Auto duck): `cb.duckOn` (off), `cb.duckDb` (-12), `cb.micGate` (mic only while talking, on), `cb.voiceDb` (-35 dBFS after gain), `cb.duckHold` (0.6 s). Detector on the network queue per 10 ms packet: level > threshold AND > adaptive floor + 10 dB, 3 packets running → bumps `voiceStamp`; audio thread holds for holdFrames and ducks master channels only (15 ms attack, ~0.5 s release) before adding the voice. Mixer MIC label shows TALK.
+
+### 2026-10-23 18:40 Cratebox Mic: Bluetooth audio works (build 22); latency worse on both links
+- Fix: phone drops standing delay (lowest buffer level before each packet over 1 s, beyond target + 10 ms, is trimmed) on top of the target+150 ms cap; watch never sends stale audio (ring capped to max(30 ms, 2× mic IO buffer), `out` capped likewise), "late drops" shown on the BT line.
+- Unverified which side caused it; asked Jonah for watch Round trip / Phone buffer / Mic buffer and phone Buffered now.
+
+## 2026-10-23 19:00 Watch mic: Bluetooth delay grew without limit
+- Jonah (build 23): in Bluetooth mode the watch's Round trip climbs to 10,000 ms. Cause: WCSession.sendMessageData queues
+  every send and never drops, so when the link is slower than 25 messages/s the delay grows forever.
+- Fix (MicCall.swift `sendWC`): every message is answered by the phone; at most 2 unanswered at once (2 s timeout);
+  packets gather meanwhile (bigger messages), capped at 10 (100 ms), oldest dropped ("late drops"). Pings ride along.
+- Wi-Fi lag report: code path unchanged since build 20; suspected link mismatch (both apps default Bluetooth). Asked
+  Jonah to set Link = Wi-Fi on both and read the watch's "Via". Next idea if confirmed: phone accepts both links always.
+- 19:05 Watch log from Jonah: no crashes; WC goes unreachable ~0.5 s into every CallKit call (Auto = Wi-Fi in
+  practice); Wi-Fi sessions really used UDP, so the link-mismatch theory was wrong. Watch stats are hidden under the
+  call screen, so a new `.report(rttMs, lateDrops)` packet (type 5) goes with each ping and the phone shows
+  "Round trip (watch)" / "Late drops (watch)" under Link. Wi-Fi lag cause still open (need Buffered now + output route).
+
+## 2026-10-23 19:30 PUFF: Puffco as an instrument (personal/heat only)
+- HEAT panel → "HOLD for PUFF": slot 4 at one temperature (default 500°F, `cb.tc.holdF`), 120 s, no curve steering,
+  same backup/restore + 600°F cutoff. Reads the bowl ~10/s; `TrueCurve.PuffDrop` (CrateboxKit) turns the dip below
+  the settled temperature into 0...1 (dead 3°F, full `cb.tc.puffFull` = 40°F; settled freezes while falling, lets go
+  in ~1.5 s on recovery). Beat FX "PUFF" (FxKind.puff, only listed while a Puffco/sim is connected, `fx.puffReady`):
+  tape warble = 4.5 ms ± 3.5 ms sine-swept delay, rate 2→7 Hz, LEVEL caps it; amount via `EngineCommand.fxMod`.
+- Simulator: SimHeater.airflow (draw), "Hold to hit" button. Tests: testPuffDropFollowsADraw, testPuffWarbleStaysFinite.
+- Not compiled here (no Swift on the CI box), not on a real Puffco. Real drop size/noise and BLE read rate unknown: tune
+  dead/full after Jonah's first real hits. Never port PUFF to the shipping app.
+- 19:35 Jonah (build 27, real Puffco): "needs better temp dip on inhale". Change: dead 3 → 1.5°F, dip also counts fall
+  speed (0.5 s ahead past 2°F/s), "Full warble at" default Auto (`cb.tc.puffFull2` = 0: 85% of biggest recent dip,
+  ≥6°F, ~60 s memory) plus 4/8/15/25/40. Panel readout: dip / biggest / full at / reads/s, so Jonah can send real numbers.
 ## 2026-10-23 19:40: SYNC retimed a playing deck when the other deck loaded (branch claude/project-thread-wtndnj)
 
 - Jonah's repros: 140 playing with SYNC, load a 75 on the other deck → 75; 72.5 playing synced, load a 72.5 → 36.25.
@@ -65,32 +127,6 @@
   (not run: no Swift here; ios.yml is the compiler). Web: Cratebox tests/test_sync.py 14/14 with the new checks.
 - Not changed: SYNC off still jumps to the tempo fader's position (old behaviour).
 - personal/heat still needs the same commit (Core.swift applies cleanly there; push to it uploads TestFlight).
-
-## 2026-10-27 22:40: code review of the shipping app + personal/heat (PR #27, branch claude/project-thread-p0805m)
-
-- Report: project files `ios-review/index.html` (published as an artifact). Findings F1-F9 fixed, P1-P9 proposed.
-- Key fix: `DeckModel.playhead()` = now() + core.lag() x speed. `now()` is the HEARD position (AppModel.smoothClock
-  subtracts audio.latency); relative jumps and phase matching must use playhead() or they land short on Bluetooth.
-- Engine `.unload` now trashes the track (was freed on the audio thread). Library background analysis passes Settings.bpmRange.
-- Merging PR #27 = TestFlight upload (testflight.yml on preview/truecurve-usb). Waiting on Jonah's go.
-- personal/heat port: 3 patches in project files `ios-review/personal-heat-port/` (PR #26 BPM range, the review fixes,
-  HEAT wording). Not pushed: pushing personal/heat uploads Cratebox HEAT to TestFlight.
-- Open proposals needing Jonah: relative-drag tempo/cross faders (P1), streaming decode (P2), 44 pt targets (P3).
-
-## 2026-10-27 23:55: ChatGPT + Gemini cross-review of PR #27 (commit a864304)
-
-- Table of every claim (confirmed / rejected, with file:line) is in the report, section "Cross-review results".
-- Engine track hand-off: `retired` (audio thread only) → swap into `trash` under the try-lock → snapshot swaps it
-  out and frees after unlocking. Never append to `trash` from apply() (that raced snapshot()).
-- USB backups are named by the flattened full path + ms stamp + random tail (every ANLZ file is ANLZ0000.DAT).
-- Recorder tap is lock-free on the audio thread (try-lock publish, drop-and-count when full); stop reports errors.
-- Load task must not write TrackInfo: Devices.readAnalysis(at:) → RBRead value, Devices.apply on main.
-- Staged USB playlist edits persist in Application Support/Cratebox/usb/<stick>.playlists.json with the db hashes.
-- Rejected: Gemini's auto-loop/hot-cue lag concern (loops wrap by modulo; hot cues are absolute), contentShape-only
-  44 pt targets (can't exceed the frame), "SYNC still locks" wording (shared lag cancels).
-- New proposals P10-P13 (group write journal, re-analyse on BPM range change, SYNC phase-offset indicator, async REC stop).
-- HEAT port: 5 patches now (0004 = this commit, 0005 = HEAT recorder note). Still not pushed.
-
 ## 2026-10-28 01:20: second cross-review round (R1-R4), proposals, EQ tap (PR #27)
 
 - R1: DeckModel's optimistic pos/posT are stamped with the AUDIO clock (`audioNow = core.clock() + core.lag()`),
@@ -106,6 +142,24 @@
 - Open: P2 (streaming/mono decode: changes analysis input, parity risk), P9 (measure new devices).
 - HEAT (personal/heat only): Engine.recordAfterMix + recordMixed → REC includes the watch mic; slot-4 backup kept in
   UserDefaults `cb.tc.restore.<id>` and restored on the next connect after the device's own cycle.
+## 2026-10-28 06:20-07:00: theremin, GLOW, 3 decks, quick library (personal/heat, thread "Add theremin, GLOW and 3 decks to Cratebox HEAT")
+
+- PUFF (FxUnit.swift) is now Cratebox OS's theremin: voice 220→880 Hz with the hit (150 ms glide, 5.5 Hz vibrato,
+  0.18 2nd harmonic, ×0.22×hit) over the tape warble. Same maths in Cratebox-Linux src/fx.rs and web cratebox.html (#11).
+- GLOW: TrueCurve.Glow (rainbow + music envelope, FX depth knob = brightness/speed/sensitivity/nothing) +
+  Lorax.Path.lanternCmd/lanternColor (HA-Puff paths, untested on a Proxy). HeatController.glowLoop: ≤5 writes/s,
+  never while a curve/HOLD runs, 3 refusals = paused. UserDefaults cb.tc.glow / cb.tc.glowKnob. UI: GlowRow in HeatPanel.
+- 3 decks: Core.three + deckCount/activeDecks/setDecks/cycleDecks (prefs cb.three); AppModel.setDecks fixes the
+  controller sides; MIDIEngine.setSide refuses decks ≥ deckCount, so the right layer stays on 2. DECKS button
+  label "N DECKS", Settings/compact menu = Picker 2/3/4.
+- FLX4 0x96 0x48/0x49 (SHIFT+LOAD) → "loadShift" deck 3/4 (assumed from the old map, which sent them to load 1/2;
+  not checked on hardware). Quick library (BrowserOverlay): BPM / KEY sort chips (LibraryPane.setStoredSort, shared
+  with the library's own sort via a notification) and a load button per active deck.
+- Tests: TrueCurveTests testPuffSingsHigherTheHarderTheHit / testGlowBreathesWithTheMusic, CoreTests testThreeDecks /
+  testShiftLoadGoesToDecks3And4. ios.yml app build still fails on the empty WatchMic AppIcon (known), so app-target
+  code is only compiled by testflight.yml.
+- Only the HEAT build got these (Jonah: one TestFlight build). The shipping app (preview/truecurve-usb) has none of it.
+
 
 ## 2026-10-28: Touch mode (was Compact layout)
 
@@ -138,54 +192,3 @@
   The UI calls `syncPressed()`, which ignores the release that ends a hold. The FLX4's SYNC (MIDI) still just toggles.
 - Tests: testSyncFlipFlop140And92EndsOnTheBeat, testSyncMultipliersStayInTheTempoRange, testHoldSyncMakesTheMaster.
   The web app and Linux still have the old ¼-beat deadband and no range limit (parity gap).
-
-## 2026-11-10: second review pass (branch claude/project-thread-t5561g → preview/truecurve-usb). NOT COMPILED: no Swift toolchain in the cloud session
-
-- DeckPlayer `.seek` now clears `ended`. Before, after a track ran out, CUE/seek then PLAY could leave the deck showing stopped while it
-  sounded: reports still carried `ended` and `DeckModel.onReport` switched `playing` off. Reproduced and fixed the same way in the web app
-  (30 of 30 with a 100 ms stall) and in Cratebox-Linux. Likelier here with big Bluetooth buffers.
-- `syncPressed()` ignores the release that ends a hold for 15 s instead of 2 s: the release is timed from when the hold fired (0.5 s in),
-  so holding SYNC over ~2.5 s toggled SYNC off on release. Needs a phone check.
-- Finding, not changed: `Engine.apply(.mixer(let m))` does `mixer = m` on the audio thread, which frees the previous MixerState's 8 arrays there
-  on every knob or fader move. Hand the old value to the main thread like `retired`, or make MixerState fixed-size.
-- Finding, not changed: analysis (bar 1) now differs from the web app and Linux, which pick bar 1 from spectrum changes (Cratebox PR #15,
-  Cratebox-Linux PR #48; on 46 unseen real tracks agreement with rekordbox went 19 → 30 of 43). Port `beatGrid`'s new vote to Swift and
-  regenerate the oracle fixtures. The web copy of cratebox.html here also needs a sync once #15 merges.
-- personal/heat needs the same two fixes as its own change (never merged from here). HEAT there should also get truecurve PR #4's two
-  fail-safes (stop after 3 s with no temperature reading; no run without a slot 4 backup).
-
-## 2026-11-10 22:40Z: Jonah's TODO list for iOS (branch claude/project-thread-t5561g, from preview/truecurve-usb 24bbebb)
-
-NOT COMPILED: no Swift here and GitHub had no free macOS runners all evening (TestFlight run 42878900563 cancelled
-unstarted four times; that also means #28 itself has never been compiled). First compile = first run that gets a Mac.
-
-- Beat counter: `DeckModel.barBeat()` (same rule as the web's `barBeat`), shown in every PhoneLane (phones, Touch mode,
-  WAVE, iPad 4-deck) and the iPad deck header.
-- Tempo: `cycleRange()` keeps the tempo (the fader moves to the same % in the new range, or its end), then calls
-  `core.rangeChanged` → `MIDIEngine.holdPickup("tempo")` so a hardware fader takes over without a jump. The track's
-  own tempo (`origBpm()`) shows beside the playing one whenever they differ (`origTempo` in DeckView.swift).
-- VINYL: `DeckModel.vinyl` / `setVinyl` / `platterTouch` (pref `cb.vinyl<i>`). Off = the platter top never holds the
-  track, it nudges. Buttons: iPad transport row (VINYL), phone pad-tab row and iPad 4-deck row (V), Touch mode deck ⋯.
-  The phone edge strips had no room: 364 of 390 pt used on the shortest island phones.
-  Dragging the waveform still scratches in either mode.
-- Master EQ: `MasterEQ` in MixerState (10 bands 31 Hz-16 kHz, ±12 dB, 8 presets), `PeakBand` in the engine after BEAT FX
-  on MASTER and before the master level + limiter; `Core.setEQ(...)`, pref `cb.eq`. Screen: Views/MasterEQView.swift,
-  opened by EQ in the master section (iPad, phone top bar / MASTER popover), Touch mode ⋯, and Settings.
-- Walkthrough: Views/TourView.swift, six pages, Skip on every page. Offered once on first launch (`cb.tourSeen`), only
-  when there are no launch arguments (CI always passes -demo), and from Settings → Show the walkthrough.
-- Tests added (unrun): CoreTests testRangeChangeKeepsTheTempo / testVinylMode / testBarBeatCounter / testMasterEQSettings,
-  EngineTests testMasterEQBoostsItsBand.
-- Other iOS thread (claude/project-thread-ggbual, Apple Intelligence) touches Analysis.swift, DeckPlayer.swift (PCMTrack
-  init), Library.swift, LibraryView.swift, project.yml, SmartSearch.swift: none of the files above.
-- Next: get one macOS run through, fix what the compiler says, check the screenshots (EQ sheet on an SE-size screen,
-  the V tab on a 16e). personal/heat has none of this yet.
-
-## 2026-11-10 22:35Z: Intel Mac runners, first compile
-- GitHub's arm64 Mac pool cancelled TestFlight unstarted 4 times. Jonah: "try the intel pool". ios.yml and testflight.yml
-  now `runs-on: macos-15-intel`: picked up in 6 s. Simulators there are x86_64; the archive is still arm64 (generic/platform=iOS).
-- TestFlight run 42913806647 on claude/project-thread-t5561g @ 8283c23 (= #28 + the TODO features): ARCHIVE SUCCEEDED,
-  UPLOADED build 47.1 (Xcode 26.3). First compile of #28 and of d63cfd8; no fixes needed.
-- ios.yml run 42913811801 (same commit, devices none): "Core tests" step finished; check its final gate before merging PR #29.
-- Next: merge PR #29 into preview/truecurve-usb (triggers one more TestFlight build from the merge commit). Nothing tried
-  on a device: VINYL, range change + FLX4 soft takeover, master EQ sound, walkthrough layout on SE all need Jonah's hands.
-  personal/heat does not have these features.

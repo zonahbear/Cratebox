@@ -116,6 +116,7 @@ struct PhoneTopBar: View {
             Text(app.statusText).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).layoutPriority(-1)
             // a narrow phone: CUE/MST, MST and MASTER in a popover behind one button
             if m.narrowBar { MasterButton() } else { MixerView(masterBar: true) }
+            HeatButton()
             LitButton(label: "WAVE", on: app.waveMode, color: Theme.accent) { withAnimation(.easeInOut(duration: 0.2)) { app.waveMode.toggle() } }
             LitButton(label: "\(core.deckCount) DECKS", on: core.four, color: Theme.fg) { app.cycleDecks() }
             DriveEjectButton()
@@ -266,11 +267,6 @@ struct PhoneDeck: View {
                     Text("SCR").font(.system(size: 11, weight: .heavy)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity, minHeight: m.tabH)
                         .foregroundStyle(color).background(RoundedRectangle(cornerRadius: 6).fill(Theme.raise))
                 }.buttonStyle(.plain).accessibilityLabel("Scratch deck \(deck.i + 1)")
-                // VINYL, as one letter: the row has no room for the word
-                Button { deck.setVinyl(!deck.vinyl) } label: {
-                    Text("V").font(.system(size: 11, weight: .heavy)).frame(maxWidth: .infinity, minHeight: m.tabH)
-                        .foregroundStyle(deck.vinyl ? Color.black : Theme.muted).background(RoundedRectangle(cornerRadius: 6).fill(deck.vinyl ? color : Theme.raise))
-                }.buttonStyle(.plain).accessibilityLabel("Deck \(deck.i + 1) vinyl mode \(deck.vinyl ? "on" : "off")")
             }
             VStack(spacing: 4) {
                 HStack(spacing: 4) { ForEach(0..<4, id: \.self) { p in PadCell(deck: deck, p: p, height: app.core.four ? m.pad - 3 : m.pad) } }

@@ -14,6 +14,8 @@ final class AudioHost {
     private let previewScratch: [UnsafeMutablePointer<Float>] = (0..<8).map { _ in
         let p = UnsafeMutablePointer<Float>.allocate(capacity: AudioHost.previewChunk); p.initialize(repeating: 0, count: AudioHost.previewChunk); return p
     }
+    /// where the watch mic goes (WatchMicReceiver.mix): 0 = master on 1/2, 2 = master on 3/4, -1 = left only (split)
+    private let micMaster: UnsafeMutablePointer<Int> = { let p = UnsafeMutablePointer<Int>.allocate(capacity: 1); p.initialize(to: 0); return p }()
     var previewOn: Bool {
         get { previewFlag.pointee }
         set { previewFlag.pointee = newValue }
@@ -26,6 +28,7 @@ final class AudioHost {
     var running: Bool { av.isRunning }
 
     func start() {
+        engine.recordAfterMix = true            // REC gets the watch mic too (set before the audio thread starts)
         configureSession()
         build()
         builtFor = routeKey()
@@ -103,6 +106,7 @@ final class AudioHost {
             fmt = AVAudioFormat(standardFormatWithSampleRate: AudioHost.sampleRate, channelLayout: layout)
         }
         let eng = engine, prev = preview, flag = previewFlag, scratch = previewScratch, chunk = AudioHost.previewChunk
+        let mic = WatchMicReceiver.shared, micAt = micMaster
         var ptrs = [UnsafeMutablePointer<Float>]()
         ptrs.reserveCapacity(8)
         var sp = [UnsafeMutablePointer<Float>]()
@@ -126,6 +130,10 @@ final class AudioHost {
                     done += n
                 }
             }
+            // the recording gets the master with the watch mic and its duck in it, like the speakers
+            var recorded = false
+            eng.recordMixed { l, r, n in mic.mix(ptrs, Int(frames), master: micAt.pointee, rec: (l, r, n)); recorded = true }
+            if !recorded { mic.mix(ptrs, Int(frames), master: micAt.pointee) }
             return noErr
         }
         var started = false
@@ -144,6 +152,7 @@ final class AudioHost {
         source = node
         engine.post(.output(outputMode(ch)))
         preview.post(.output(outputMode(ch)))
+        setMicMaster(outputMode(ch))
         describe(); measureLatency()
         return true
     }
@@ -179,7 +188,8 @@ final class AudioHost {
         return s.currentRoute.outputs.map { $0.uid }.joined(separator: "+") + "/\(s.outputNumberOfChannels)"
     }
     /// headphones on a plain stereo output: mono master left, mono cue right (a splitter cable)
-    func setSplit(_ on: Bool) { engine.post(.output(on ? .split : outputMode(outputChannels))); preview.post(.output(on ? .split : outputMode(outputChannels))) }
+    func setSplit(_ on: Bool) { engine.post(.output(on ? .split : outputMode(outputChannels))); preview.post(.output(on ? .split : outputMode(outputChannels))); setMicMaster(on ? .split : outputMode(outputChannels)) }
+    private func setMicMaster(_ m: OutputMode) { micMaster.pointee = m == .quadSwapped ? 2 : m == .split ? -1 : 0 }
     func outputMode(_ ch: Int) -> OutputMode {
         if ch >= 4 { return routing == "swapped" ? .quadSwapped : .quad }
         return UserDefaults.standard.bool(forKey: "cb.split") ? .split : .stereo

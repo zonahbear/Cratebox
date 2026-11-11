@@ -12,7 +12,6 @@ struct ContentView: View {
         if UIDevice.current.userInterfaceIdiom == .phone {
             PhoneScreen(settings: $settings)
                 .sheet(isPresented: $settings) { SettingsView() }
-                .sheet(isPresented: $app.eqShown) { MasterEQView() }
                 .sheet(item: Binding(get: { app.gridDeck.map { GridTarget(id: $0) } }, set: { app.gridDeck = $0?.id })) { t in GridEditor(deck: core.decks[t.id]) }
         } else { pad }
     }
@@ -28,7 +27,6 @@ struct ContentView: View {
             .background(Theme.bg)
         }
         .sheet(isPresented: $settings) { SettingsView() }
-        .sheet(isPresented: $app.eqShown) { MasterEQView() }
         .sheet(item: Binding(get: { app.gridDeck.map { GridTarget(id: $0) } }, set: { app.gridDeck = $0?.id })) { t in GridEditor(deck: core.decks[t.id]) }
     }
     struct GridTarget: Identifiable { let id: Int }
@@ -77,6 +75,7 @@ struct ContentView: View {
             Text(app.audio.outputChannels >= 4 ? "4 ch · cue on 3/4" : "2 ch").font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.muted)
             Text(app.statusText).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).layoutPriority(-1)
             RecButton()
+            HeatButton()
             LitButton(label: "WAVE", on: app.waveMode, color: Theme.accent) { withAnimation(.easeInOut(duration: 0.2)) { app.waveMode.toggle() } }
             LitButton(label: "\(core.deckCount) DECKS", on: core.four, color: Theme.fg) { app.cycleDecks() }
             DriveEjectButton()
@@ -164,10 +163,7 @@ struct SettingsView: View {
                         Toggle("Split (mono master left, mono cue right, with a splitter cable)", isOn: $split).onChange(of: split) { _, v in app.audio.setSplit(v) }
                     }
                 }
-                Section {
-                    Button("Master EQ…") { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { app.eqShown = true } }
-                    Button("Show the walkthrough") { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { app.tourShown = true } }
-                } footer: { Text("Master EQ: ten bands on the whole mix, \(core.mixer.eq.on ? "on" : "off") now. The walkthrough is the short tour offered the first time the app opens.") }
+                Section("Watch mic (personal build)") { NavigationLink("Apple Watch as a mic…") { WatchMicView() } }
                 Section("Look") {
                     Toggle("Phrases (Intro / Build / Drop… on the waveforms)", isOn: $phrases)
                     Picker("Waveform", selection: $waveStyle) { Text("RGB (red lows, green mids, blue highs)").tag("rgb"); Text("3-band").tag("3band") }
@@ -240,7 +236,7 @@ struct LearnView: View {
     @EnvironmentObject var app: AppModel
     @State private var hint = "Pick a control, then move or press it on the controller."
     let decked = ["play", "cue", "sync", "jog", "tempo", "fader", "trim", "hi", "mid", "low", "cfx", "pfl", "loopIn", "loopOut", "reloop", "keylock", "quant", "load", "jogSide"]
-    let global = ["xfader", "headMix", "master", "masterCue", "browse", "browsePress", "fxOn", "fxSelect", "fxBeatDown", "fxBeatUp", "fxDepth"]
+    let global = ["xfader", "headMix", "master", "masterCue", "browse", "browsePress", "fxOn", "fxSelect", "fxBeatDown", "fxBeatUp", "fxDepth", "micVol"]
     var body: some View {
         Form {
             Section { Text(hint).font(.callout) }

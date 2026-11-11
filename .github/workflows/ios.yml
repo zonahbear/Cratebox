@@ -21,7 +21,7 @@ defaults:
     working-directory: apps/ios-suite
 jobs:
   build:
-    runs-on: macos-15-intel   # GitHub's arm64 Mac pool has not been picking jobs up (Nov 2026); simulators here are x86_64
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - name: Xcode
@@ -70,7 +70,7 @@ jobs:
             [ "${dev%% *}" = iPhone ] && xcrun simctl ui "$UDID" appearance dark || true
             gtimeout 240 xcrun simctl bootstatus "$UDID" -b > /dev/null 2>&1 || true
             xcrun simctl install "$UDID" "$APP"
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo | tee -a ../ci.log
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo | tee -a ../ci.log
             sleep 25
             xcrun simctl spawn "$UDID" launchctl list 2>/dev/null | grep -q cratebox && echo "SIM RUNNING $dev" | tee -a ../ci.log || echo "SIM NOT RUNNING $dev (crashed?)" | tee -a ../ci.log
             n=$(echo "$dev" | tr ' ()' '___')
@@ -79,52 +79,57 @@ jobs:
             # left deck on PLAY and right on PADS; on other phones, the Settings switch forcing it
             if [ "${dev#iPhone SE}" != "$dev" ]; then
               for v in "568x320:" "568x320:-four" "568x320:-pads" "568x320:-eject"; do
-                xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-                xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -screen "${v%%:*}" ${v#*:} > /dev/null || true
+                xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+                xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -screen "${v%%:*}" ${v#*:} > /dev/null || true
                 sleep 15
                 xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_zoom${v#*:}.png" || true
               done
             elif [ "${dev%% *}" = iPhone ]; then
-              xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-              xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -pads -cb.compact YES > /dev/null || true
+              xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+              xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -pads -cb.compact YES > /dev/null || true
               sleep 15
               xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_compact.png" || true
             fi
             # EJECT (a stand-in "DJ USB" drive): pressed with deck 1 playing, then with every deck stopped
             if [ "${dev%% *}" = iPhone ]; then
               for v in "eject:-eject" "eject_stopped:-eject -stopped"; do
-                xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-                xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo ${v#*:} > /dev/null || true
+                xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+                xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo ${v#*:} > /dev/null || true
                 sleep 18
                 xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_${v%%:*}.png" || true
               done
             fi
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -four > /dev/null || true
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -four > /dev/null || true
             sleep 20
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_4decks.png" || true
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -browse > /dev/null || true
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -browse > /dev/null || true
             sleep 20
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_browse.png" || true
             # WAVE mode, 2 and 4 decks (deck 1 playing, so the FLX4 lanes glow)
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -wave > /dev/null || true
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -wave > /dev/null || true
             sleep 20
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_wave.png" || true
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -four -wave > /dev/null || true
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -four -wave > /dev/null || true
             sleep 20
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_wave4.png" || true
+            # HEAT (TrueCurve mini) on the simulator device, preheating to the Quartz Banger's 520°F while the demo plays
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -demo -heat > /dev/null || true
+            sleep 25
+            xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_heat.png" || true
             # the suite's other two modes: Deck Bridge, and Cratebox USB on a copy of the test stick (no audio: the scan flags it)
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -bridge > /dev/null || true
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -bridge > /dev/null || true
             sleep 12
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_bridge.png" || true
-            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
-            DATA=$(xcrun simctl get_app_container "$UDID" com.zonahbear.cratebox.suite data 2>/dev/null || true)
+            xcrun simctl terminate "$UDID" com.zonahbear.cratebox.heat || true
+            DATA=$(xcrun simctl get_app_container "$UDID" com.zonahbear.cratebox.heat data 2>/dev/null || true)
             if [ -n "$DATA" ]; then mkdir -p "$DATA/Documents/DemoUSB" && cp -R ../tests/fixtures/rekordbox_usb/PIONEER "$DATA/Documents/DemoUSB/"; fi
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -usb -demo > /dev/null || true
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -usb -demo > /dev/null || true
             sleep 25
             xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_usb.png" || true
             gtimeout 60 xcrun simctl spawn "$UDID" log show --last 1m --predicate 'process == "Cratebox"' --style compact 2>/dev/null | grep -iE "fault|crash|fatal" | head -10 | tee -a ../ci.log || true
@@ -151,8 +156,8 @@ jobs:
             xcrun simctl boot "$UDID" || true
             gtimeout 240 xcrun simctl bootstatus "$UDID" -b > /dev/null 2>&1 || true
             xcrun simctl install "$UDID" "$APP" || true
-            xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -metrics YES > /dev/null || true
-            DATA=$(xcrun simctl get_app_container "$UDID" com.zonahbear.cratebox.suite data 2>/dev/null || true)
+            xcrun simctl launch "$UDID" com.zonahbear.cratebox.heat -metrics YES > /dev/null || true
+            DATA=$(xcrun simctl get_app_container "$UDID" com.zonahbear.cratebox.heat data 2>/dev/null || true)
             for k in $(seq 1 20); do [ -s "$DATA/Documents/metrics.txt" ] && break; sleep 1; done
             { echo "== $NAME"; cat "$DATA/Documents/metrics.txt" 2>/dev/null || echo "no metrics (app didn't start?)"; } | tee -a "$OUT"
             xcrun simctl shutdown "$UDID" || true
@@ -168,7 +173,7 @@ jobs:
         working-directory: .
         env: { LOGS: "${{ github.ref == 'refs/heads/main' && 'ci-logs' || 'ci-logs-preview' }}" }
         run: |
-          { echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; cd apps/ios-suite; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ../..; } > summary.txt || true
+          { cd apps/ios-suite; echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ../..; } > summary.txt || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git fetch origin "$LOGS" || true
           git checkout --orphan ci-tmp && git rm -rfq --cached . >/dev/null

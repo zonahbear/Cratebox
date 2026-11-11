@@ -1,6 +1,6 @@
 # CLAUDE.md: Cratebox Suite (iOS)
 
-> Monorepo (2026-11-11): this folder is `apps/ios-suite/` in zonahbear/Cratebox. Paths below are relative to it; workflows
+> Monorepo (2026-11-11): this folder is `apps/ios-suite/` in zonahbear/Cratebox, branch **personal/heat** (never merges into main). Paths below are relative to it; workflows
 > live in the root `.github/workflows/`. Start at the root [AGENTS.md](../../AGENTS.md).
 
 Read this first. Keep it short. (The full repo map is in PR #3, branch `claude/project-thread-497h2z`. When that merges,
@@ -13,7 +13,7 @@ fold this file into it.)
   size. If a device is missing, measure it (ios.yml, `measure: true`) and add it there first.
 - HEAT never goes into the shipping app (`com.zonahbear.cratebox.suite`). It lives only on `personal/heat`
   (`com.zonahbear.cratebox.heat`), which never merges back.
-- Installs only via TestFlight (sideloading retired). macOS CI is manual-only, on `macos-15-intel` (the arm64 pool stopped picking jobs up, Nov 2026).
+- Installs only via TestFlight (sideloading retired). macOS CI is manual-only.
 
 ## Breadcrumbs
 

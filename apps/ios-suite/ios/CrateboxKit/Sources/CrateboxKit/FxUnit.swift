@@ -8,6 +8,8 @@ import Foundation
 public enum FxKind: String, CaseIterable {
     case none = "", echo = "ECHO", delay = "DELAY", pingPong = "PING PONG", reverb = "REVERB", flanger = "FLANGER"
     case filter = "FILTER", trans = "TRANS", roll = "ROLL", hpf = "HPF", lpf = "LPF"
+    /// Cratebox HEAT only: a theremin over a tape warble, played by a Puffco (HeatController's HOLD sets `mod` from the temperature drop)
+    case puff = "PUFF"
 }
 
 public struct FxClock { public var t0 = 0.0, beat0 = 0.0, bps = 0.0, spb = 0.5
@@ -40,6 +42,11 @@ public final class FxSlot {
     public internal(set) var on = false
     public internal(set) var beats = 0.5
     public internal(set) var depth = 0.6
+    /// PUFF: how hard the Puffco is being hit right now, 0...1 (set from outside, smoothed here)
+    public internal(set) var mod = 0.0
+    var modS = 0.0, lfo = 0.0
+    /// PUFF's theremin voice: its phase and gliding pitch (Hz)
+    var thPh = 0.0, thF = 220.0
     var g = 0.0, inG = 0.0                // smoothed: effect amount / feed into delays and reverb
     public internal(set) var active = false   // on, or still ringing out
     var dL: FloatRing?, dR: FloatRing?, w = 0
@@ -57,7 +64,8 @@ public final class FxSlot {
         cf = [0, 0, 0, 0, 0]
     }
     /// The JS slot "set" message: nil leaves a setting as it is.
-    public func set(fx newFx: FxKind? = nil, beats b: Double? = nil, depth d: Double? = nil, on o: Bool? = nil) {
+    public func set(fx newFx: FxKind? = nil, beats b: Double? = nil, depth d: Double? = nil, on o: Bool? = nil, mod m: Double? = nil) {
+        if let m { mod = min(1, max(0, m)) }
         if let newFx, newFx != fx { fx = newFx; roll = nil; cfReady = false }
         if let b { beats = b }
         if let d { depth = d }
@@ -170,6 +178,27 @@ public final class FxUnit {
                     dl0[w] = Float(xl + dl * 0.6); dr0[w] = Float(xr + dr * 0.6)
                     w += 1; if w == dn { w = 0 }
                     el = (xl + dl * depth) / (1 + 0.6 * depth); er = (xr + dr * depth) / (1 + 0.6 * depth)
+                } else if fx == .puff {
+                    // theremin: a sine voice whose pitch glides with the hit (A3 220 Hz light pull ... A5 880 Hz hard rip,
+                    // ~150 ms portamento, 5.5 Hz vibrato) and whose volume swells with it, over a gentle tape warble
+                    // (a sine-swept 1-8 ms delay, no dry mix) that the hit also deepens; LEVEL/DEPTH caps both.
+                    // Same as Cratebox OS (Cratebox-Linux src/fx.rs)
+                    s.modS += (s.mod - s.modS) * (1 / (0.15 * sr))       // ~150 ms glide: BLE readings arrive in steps
+                    let a = s.modS * depth
+                    s.lfo += 5.5 / sr; if s.lfo >= 1 { s.lfo -= 1 }
+                    let vib = sin(2 * Double.pi * s.lfo)
+                    let want = 220 * pow(2, 2 * s.modS) * pow(2, 0.25 * a * vib / 12)
+                    s.thF += (want - s.thF) * (1 / (0.04 * sr))
+                    s.thPh += s.thF / sr; if s.thPh >= 1 { s.thPh -= 1 }
+                    // a touch of second harmonic so it sings rather than beeps
+                    let voice = (sin(2 * Double.pi * s.thPh) + 0.18 * sin(4 * Double.pi * s.thPh)) * 0.22 * a
+                    let dd = (0.0045 + 0.0025 * a * vib) * sr
+                    var rp = Double(w) - dd; if rp < 0 { rp += Double(dn) }
+                    let i0 = Int(rp), f = rp - Double(i0), i1 = i0 + 1 == dn ? 0 : i0 + 1
+                    dl0[w] = Float(xl); dr0[w] = Float(xr)
+                    el = Double(dl0[i0]) + (Double(dl0[i1]) - Double(dl0[i0])) * f + voice
+                    er = Double(dr0[i0]) + (Double(dr0[i1]) - Double(dr0[i0])) * f + voice
+                    w += 1; if w == dn { w = 0 }
                 } else if fx == .filter || fx == .hpf || fx == .lpf {
                     if (i & 31) == 0 || !s.cfReady {
                         let c: (Double, Double, Double, Double, Double)
