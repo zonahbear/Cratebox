@@ -17,11 +17,13 @@ struct ContentView: View {
         } else { pad }
     }
     var pad: some View {
-        GeometryReader { g in
+        // state is read here, in the body, not inside the reader's closure (see PhoneFrame: Xcode 27)
+        let wave = app.waveMode
+        return GeometryReader { g in
             VStack(spacing: 6) {
                 topBar
                 // a short iPad (mini, ~724 pt): BEAT FX folds into a button and the library can get smaller
-                if app.waveMode { WaveStack().frame(maxHeight: .infinity) } else { mix(compact: g.size.height < 900, short: g.size.height < 800) }
+                if wave { WaveStack().frame(maxHeight: .infinity) } else { mix(compact: g.size.height < 900, short: g.size.height < 800) }
                 LibraryPane().frame(minHeight: g.size.height < 800 ? 130 : 180)
             }
             .padding(6)
