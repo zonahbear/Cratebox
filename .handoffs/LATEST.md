@@ -1,24 +1,22 @@
 # Current Workspace State
 
-Memo 2026-11-11 21:40Z · agent: claude (coder) · task ALL-4 (+ MONO-6, MONO-12) · branch claude/project-thread-b7gf7r · base main 4181a99 · PR https://github.com/zonahbear/Cratebox/pull/19 · tree clean after push
+Memo 2026-11-11 21:50Z · agent: claude (debugger) · task MONO-5 · branch claude/project-thread-b7gf7r · base main 24d8b21 · PR (this one) · tree clean after push
 
 ## 📍 Where We Stopped
-- **Active Task:** ALL-4. Jonah confirmed "antimatter" means Google Antigravity. He OK'd merging PR #19 (iOS ports + Codex review docs fixes, see memo 20261111-2050Z).
-- **Current State:** Antigravity adapter `.agents/rules/cratebox.md` added. It's a pointer to the shared files only. PR #19 is being merged.
-- **Blockers/Bugs:** MONO-4 (TestFlight secrets) is unchanged. The adapter's auto-loading is unverified until someone opens the repo in Antigravity.
+- **Active Task:** MONO-5. The Cloudflare production build is failing again. The previous memo (20261111-2140Z) was wrong to call it resolved.
+- **Current State:** PR #19 merged (24d8b21). The production Workers Build failed on 24d8b21, although #19 changed no site files. Nothing to fix in the repo, as far as can be seen from here.
+- **Blockers/Bugs:** Needs the Cloudflare build log (Workers → cratebox → Deployments/Builds), which requires Jonah's sign-in.
 
 ## 🛠️ Environmental Verification
-- Reported, not verified: the search summary of antigravity.google/docs/rules says Antigravity reads AGENTS.md, GEMINI.md and `.agents/rules/*.md`. The page itself isn't reachable from the cloud session.
-- PASSED: GLOBAL_PLAN parses (`python3 -m json.tool .agent/GLOBAL_PLAN.json`, repo root).
+- Verified (check runs) on main: db99c7f FAIL, 8992a27 FAIL, 4181a99 PASS, 24d8b21 FAIL.
+- PASSED at 24d8b21, repo root: `bash apps/web/site/build.sh`.
+- PASSED at 24d8b21, repo root: `npx -y wrangler@4 deploy --dry-run`.
+- Verified: TestFlight run 43103643432 on 24d8b21 shows the "NOT BUILT / NOT UPLOADED" warning, so it works.
 
 ## 📦 Changes Introduced in This Session
-- .agents/rules/cratebox.md: new Antigravity adapter.
-- .agent/CONTEXT_MAP.md: lists the adapter.
-- .agent/SYSTEM_PROMPT.md: `antigravity/` branch prefix.
-- .agent/GLOBAL_PLAN.json: ALL-4 is now the smoke check only.
+- .agent/GLOBAL_PLAN.json: MONO-5 back to blocked with the evidence; MONO-6 and MONO-12 done.
 
 ## ⏭️ Precise Next Steps for Incoming Model
-1. [ ] Jonah (on his machine): open the repo in Antigravity and ask it "what are the hard rules and the active task?" from the root and from apps/web.
-2. [ ] HEAT-2: merge main into personal/heat (needs Jonah's go).
-3. [ ] Jonah: MONO-4, MONO-9, MONO-2, MONO-11.
-4. [ ] Agents: ALL-2, ALL-3, ALL-5.
+1. [ ] Jonah: open the failed build for 24d8b21 in the Cloudflare dashboard and paste the log's error lines. Or check Settings → Build: the build command should be `bash apps/web/site/build.sh` or empty (wrangler.toml has it), root directory `/`.
+2. [ ] With the log: fix it, then confirm a green production check on the next main push.
+3. [ ] HEAT-2 (needs Jonah's go). Jonah: MONO-4, MONO-9, MONO-2, MONO-11. Agents: ALL-2, ALL-3, ALL-5. ALL-4 = Antigravity smoke check on Jonah's machine.

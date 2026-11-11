@@ -11,3 +11,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-11 · claude · .handoffs/004_claude_coder.md · PR #19 also ports suite 988438f..99d4b73 (MATCH sort, MIX IN/OUT, Beat grids).
 - 2026-11-11 · claude · .handoffs/20261111-2050Z_claude_MONO-12_coder.md · Codex review acted on (rules, claims, memo names, maps, TestFlight NOT BUILT); stick-write rule and sideloading text removed per Jonah.
 - 2026-11-11 · claude · .handoffs/20261111-2140Z_claude_ALL-4_coder.md · Antigravity adapter .agents/rules/cratebox.md; PR #19 merged on Jonah's OK.
+- 2026-11-11 · claude · .handoffs/20261111-2150Z_claude_MONO-5_debugger.md · #19 merged; Cloudflare production failed again on 24d8b21 (MONO-5 reopened); TestFlight NOT BUILT warning confirmed.
