@@ -27,6 +27,52 @@ enum AIMode {
     static var on: Bool { UserDefaults.standard.bool(forKey: key) }
 }
 
+/// Settings → AI mode → Beat grids: whose grid a track gets when it's loaded. A grid fixed by hand always stays.
+enum AppleGridMode: Int {
+    case off        // rekordbox's, or Cratebox's own analysis
+    case prefer     // Apple's instead of Cratebox's own; rekordbox's grids stay
+    case only       // Apple's instead of rekordbox's too
+    static let key = "cb.ai.grid"
+    static var now: AppleGridMode { AIMode.on && AppleMusic.usable ? AppleGridMode(rawValue: UserDefaults.standard.integer(forKey: key)) ?? .off : .off }
+}
+
+/// The library's MATCH sort: how well each track would follow what's playing, onto the deck that's free
+enum Suggest {
+    struct Context { let now: NextTrack.Item, opts: NextTrack.Options, target: Int }
+    static weak var app: AppModel?
+    private static var memo: (at: Double, ctx: Context?)?
+    /// what's heard now (the playing deck started last, else any loaded deck) and the deck a track would go on.
+    /// Kept for half a second: every row of the list asks
+    static func context() -> Context? {
+        let t = ProcessInfo.processInfo.systemUptime
+        if let m = memo, t - m.at < 0.5 { return m.ctx }
+        let ctx = build()
+        memo = (t, ctx)
+        return ctx
+    }
+    private static func build() -> Context? {
+        guard let app else { return nil }
+        let decks = app.core.activeDecks.map { app.core.decks[$0] }
+        let ready = decks.filter { $0.loaded && $0.bpm > 0 }
+        guard let on = ready.filter({ $0.playing }).max(by: { $0.startedAt < $1.startedAt }) ?? ready.first else { return nil }
+        let target = decks.first { $0 !== on && !$0.playing } ?? decks.first { $0 !== on } ?? on
+        var now = NextTrack.Item(id: on.track?.id ?? "", bpm: on.effBpm(), key: on.keyNow())
+        if let l = AppleMusic.shared.lite(now.id) { now.energy = l.lufs.map { NextTrack.energy(lufs: $0) }; now.shares = l.shares }
+        return Context(now: now, opts: NextTrack.Options(range: target.range, keylock: target.mt), target: target.i)
+    }
+    static func score(_ t: LibTrack, _ c: Context) -> NextTrack.Result? {
+        guard let b = t.info.bpm, b > 0 else { return nil }
+        var it = NextTrack.Item(id: t.id, bpm: b, key: t.info.key)
+        if let l = AppleMusic.shared.lite(t.id) { it.energy = l.lufs.map { NextTrack.energy(lufs: $0) }; it.shares = l.shares }
+        return NextTrack.score(now: c.now, cand: it, c.opts)
+    }
+    /// "87" for a row, "" when there's nothing playing to match or the track can't follow on that deck
+    static func label(_ t: LibTrack?) -> String {
+        guard AIMode.on, let t, let c = context(), let r = score(t, c) else { return "" }
+        return String(Int(r.score.rounded()))
+    }
+}
+
 final class AppleMusic: ObservableObject {
     static let shared = AppleMusic()
     /// this build has the framework (made with the iOS 27 SDK)
@@ -50,7 +96,11 @@ final class AppleMusic: ObservableObject {
     @Published private(set) var analysed = 0
     weak var app: AppModel?
     /// what's been analysed (or failed): the file's size and date, and the format version
-    struct Stamp: Codable { var size: Int64, mtime: Double, ver: Int, failed: String? }
+    struct Stamp: Codable {
+        var size: Int64, mtime: Double, ver: Int, failed: String?
+        /// the little the library's MATCH sort needs, kept here so sorting doesn't open every track's results
+        var lufs: Double? = nil, shares: [Double]? = nil, lite: Bool? = nil
+    }
     private var index = [String: Stamp]()
     private var cache = [String: AppleFeatures]()
     private var job: Task<Void, Never>?
@@ -60,6 +110,7 @@ final class AppleMusic: ObservableObject {
     private var subs = Set<AnyCancellable>()
     private var deadFolder = [String: Double]()   // music folders found unreachable, and when
     private var saveWork: DispatchWorkItem?
+    private var mixCache = [String: (bpm: Double, first: Double, r: MixPoints.Result)]()
     private let dir: URL
 
     private init() {
@@ -70,9 +121,11 @@ final class AppleMusic: ObservableObject {
     }
     func attach(_ app: AppModel) {
         self.app = app
+        Suggest.app = app
         // new folders, a stick plugged in: look for tracks to analyse a few seconds after the list settles
         app.library.$tracks.debounce(for: .seconds(4), scheduler: RunLoop.main).sink { [weak self] _ in self?.kick() }.store(in: &subs)
         kick()
+        backfill()
     }
 
     // ---- results ----
@@ -94,6 +147,44 @@ final class AppleMusic: ObservableObject {
         s.ver == AppleFeatures.VER && s.size == t.rec.size && (t.rec.mtime == 0 || s.mtime == 0 || abs(s.mtime - t.rec.mtime) < 1)
     }
     private func saveIndex() { if let d = try? JSONEncoder().encode(index) { try? d.write(to: dir.appendingPathComponent("index.json"), options: .atomic) } }
+
+    // ---- for the decks and the library: Apple's grid, mix points, and what MATCH needs ----
+    /// Apple's results for a track when Settings → AI mode → Beat grids asks for Apple's grid (nil: off, or not
+    /// analysed yet). The grid itself is made at load (AppModel.load), once rekordbox's tempo is known for the octave
+    func gridSource(_ t: LibTrack) -> AppleFeatures? { AppleGridMode.now == .off ? nil : features(t) }
+    /// loudness and vocal / drum / bass shares for a track, if Apple has analysed it
+    func lite(_ id: String) -> (lufs: Double?, shares: [Double]?)? {
+        guard AIMode.on, let s = index[id], s.failed == nil, s.ver == AppleFeatures.VER else { return nil }
+        return (s.lufs, s.shares)
+    }
+    /// where to mix a loaded track in and out, on the deck's grid (nil without Apple's results). Asked for by the
+    /// waveforms many times a second, so the answer is kept until the grid changes
+    func mixPoints(_ info: TrackInfo?, bpm: Double, first: Double, duration: Double) -> MixPoints.Result? {
+        guard AIMode.on, let info, bpm > 0 else { return nil }
+        if let c = mixCache[info.id], c.bpm == bpm, c.first == first { return c.r }
+        guard let t = app?.library.track(info.id), let f = features(t) else { return nil }
+        let r = MixPoints.suggest(f, bpm: bpm, firstBeat: first, duration: duration)
+        if mixCache.count > 64 { mixCache.removeAll() }
+        mixCache[info.id] = (bpm, first, r)
+        return r
+    }
+    /// tracks analysed before the stamps kept loudness and shares: read their results once, off the main thread
+    private func backfill() {
+        let todo = index.filter { $0.value.failed == nil && $0.value.ver == AppleFeatures.VER && $0.value.lite != true }.map { ($0.key, file($0.key)) }
+        guard !todo.isEmpty else { return }
+        DispatchQueue.global(qos: .utility).async {
+            var found = [String: (Double?, [Double]?)]()
+            for (id, u) in todo {
+                guard let d = try? Data(contentsOf: u), let f = try? JSONDecoder().decode(AppleFeatures.self, from: d) else { continue }
+                found[id] = (f.lufs, f.shares)
+            }
+            DispatchQueue.main.async {
+                for (id, v) in found where self.index[id] != nil { self.index[id]!.lufs = v.0; self.index[id]!.shares = v.1; self.index[id]!.lite = true }
+                self.saveIndex()
+                self.objectWillChange.send()
+            }
+        }
+    }
 
     // ---- the background queue ----
     private var playing: Bool { app?.core.decks.contains { $0.playing } ?? false }
@@ -152,7 +243,8 @@ final class AppleMusic: ObservableObject {
             if f.size == 0 { f.size = size }
             if f.mtime == 0 { f.mtime = mtime }
             // the library's size and date win for the stamp (that's what `current` compares against)
-            index[id] = Stamp(size: size, mtime: mtime, ver: AppleFeatures.VER, failed: nil)
+            index[id] = Stamp(size: size, mtime: mtime, ver: AppleFeatures.VER, failed: nil, lufs: f.lufs, shares: f.shares, lite: true)
+            mixCache[id] = nil
             if let d = try? JSONEncoder().encode(f) { try? d.write(to: file(id), options: .atomic) }
             cache[id] = f
             analysed += 1
@@ -290,15 +382,21 @@ final class AppleMusic: ObservableObject {
             let i = t.info
             var src = i.gridManual ? "hand-fixed" : i.rbGrid ? "rekordbox" : "Cratebox"
             var cmp = GridCompare.Result()
-            if let b = i.bpm, b > 0, let fb = i.firstBeat {
-                cmp = GridCompare.compare(.init(bpm: b, firstBeat: fb, beats: i.gridManual ? nil : i.rbBeats, beat0: i.rbBeat0), apple: f)
+            // a track whose grid in use is Apple's own: compare with what it had before (rekordbox's, or Cratebox's)
+            var refBpm = i.bpm, refFirst = i.firstBeat, refBeats = i.gridManual ? nil : i.rbBeats, refBeat0 = i.rbBeat0
+            if i.appleGrid {
+                if let u = Devices.shared.anlzURL(t), let x = Devices.readAnalysis(at: u) { refBpm = x.bpm; refFirst = x.firstBeat; refBeats = x.beats; refBeat0 = x.beat0 }
+                else { refBpm = i.autoBpm; refFirst = i.autoFirst; refBeats = nil; src = "Cratebox" }
+            }
+            if let b = refBpm, b > 0, let fb = refFirst {
+                cmp = GridCompare.compare(.init(bpm: b, firstBeat: fb, beats: refBeats, beat0: refBeat0), apple: f)
             } else if let b = i.bpm, b > 0, let tempo = f.tempo {
                 // a BPM but no grid (a stick that isn't plugged in, or a tag's BPM): only the tempos can be compared
                 src = "BPM only"
                 cmp.tempoRatio = tempo / b
                 cmp.tempoMult = [1.0, 0.5, 2.0].first { abs(tempo / b / $0 - 1) < 0.02 }
             }
-            return Row(id: t.id, title: i.title, artist: i.artist, source: src, bpm: i.bpm, appleBpm: f.tempo, key: i.key, appleKey: f.key, cmp: cmp,
+            return Row(id: t.id, title: i.title, artist: i.artist, source: src, bpm: refBpm ?? i.bpm, appleBpm: f.tempo, key: i.key, appleKey: f.key, cmp: cmp,
                        vocals: f.share("vocal", duration: i.duration), lufs: f.lufs, seconds: f.seconds)
         }
     }
