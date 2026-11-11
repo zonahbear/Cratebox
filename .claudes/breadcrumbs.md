@@ -8,3 +8,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
   Jonah's first merge (main 0b52c0a) had conflict markers in 7 files, stale iOS and no truecurve.
 - 2026-11-11 · claude · .handoffs/002_claude_coder.md · #16 merged, personal/heat pushed, #31 ported (PR), app/windows releases started, docs cleanup (app maps = AGENTS.md, agents.txt removed). Cloudflare prod build failing: needs log.
 - 2026-11-11 · claude · .handoffs/003_claude_coder.md · #18 merged; a4bc095 (Apple half/double-time compare) ported as a PR.
+- 2026-11-11 · claude · .handoffs/004_claude_coder.md · PR #19 also ports suite 988438f..99d4b73 (MATCH sort, MIX IN/OUT, Beat grids).

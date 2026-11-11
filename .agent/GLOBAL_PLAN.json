@@ -81,7 +81,7 @@
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "#31 ported and merged as #18 (4181a99, suite 28ec954). Follow-up a4bc095 (half/double-time Apple comparison) ported in the next PR."
+      "notes": "#31 ported and merged as #18 (4181a99, suite 28ec954). Follow-ups ported in PR #19: a4bc095 (half/double-time Apple comparison) and 988438f + breadcrumbs to 99d4b73 (MATCH sort, MIX IN/OUT, Beat grids setting)."
     },
     {
       "id": "MONO-7",
