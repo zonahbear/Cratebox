@@ -4,8 +4,11 @@ Checks: Quartz Banger is the default curve; curves pasted from TrueCurve show up
 preheats, runs and finishes with the panel closed; the HEAT button shows the bowl temperature meanwhile; the
 playing deck's position keeps advancing the whole time with no page errors; profile slot 4 and the active slot
 are put back afterwards; Stop ends a run early. Also the phone layout keeps the button.
+<<<<<<< HEAD:services/api/tests/test_truecurve.py
 HEAT is hidden by default: seven taps on the version line open the 21+ notice, accepting it shows the
 Experimental switch (off), switching it on shows the button, and the switch is locked while a curve runs.
+=======
+>>>>>>> temp-source/main:tests/test_truecurve.py
 
     python tests/test_truecurve.py
 """
@@ -19,6 +22,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_cratebox as T  # noqa: E402
 from test_fourdeck import load_all  # noqa: E402
 
+<<<<<<< HEAD:services/api/tests/test_truecurve.py
 UNLOCK = "localStorage.setItem('cb.heatUnlocked', '1'); localStorage.setItem('cb.heat', '1');"
 QUICK = {"Quick Test": {"points": [{"t": 0, "f": 500}, {"t": 4, "f": 490}, {"t": 8, "f": 470}], "smooth": True}}
 
@@ -61,16 +65,26 @@ def egg(b, check):
     page.close()
 
 
+=======
+QUICK = {"Quick Test": {"points": [{"t": 0, "f": 500}, {"t": 4, "f": 490}, {"t": 8, "f": 470}], "smooth": True}}
+
+
+>>>>>>> temp-source/main:tests/test_truecurve.py
 def main():
     T.PORT = 8671
     srv = T.serve()
     check = T.check
     errors = []
     with sync_playwright() as p:
+<<<<<<< HEAD:services/api/tests/test_truecurve.py
         b = p.chromium.launch(**({"executable_path": os.environ["CRATEBOX_CHROME"]} if os.environ.get("CRATEBOX_CHROME") else {}), args=["--autoplay-policy=no-user-gesture-required"])
         egg(b, check)
         page = b.new_page(viewport={"width": 1440, "height": 790})
         page.add_init_script(UNLOCK)
+=======
+        b = p.chromium.launch(args=["--autoplay-policy=no-user-gesture-required"])
+        page = b.new_page(viewport={"width": 1440, "height": 790})
+>>>>>>> temp-source/main:tests/test_truecurve.py
         page.on("pageerror", lambda e: errors.append(str(e)))
         page.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
         page.click("#startBtn")
@@ -128,7 +142,10 @@ def main():
         # phone: the HEAT button stays in the header
         ctx = b.new_context(viewport={"width": 844, "height": 390}, is_mobile=True, has_touch=True,
                             user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1")
+<<<<<<< HEAD:services/api/tests/test_truecurve.py
         ctx.add_init_script(UNLOCK)
+=======
+>>>>>>> temp-source/main:tests/test_truecurve.py
         ph = ctx.new_page()
         ph.goto(f"http://127.0.0.1:{T.PORT}/cratebox.html")
         ph.click("#startBtn")

@@ -132,6 +132,7 @@ button.tag:not(.on):hover { color: var(--fg); border-color: var(--muted); }
 .setpanel .hsel { max-width: none; width: 100%; }
 .setpanel { width: 330px; }
 /* Settings sits in the header: its panel drops down over the app */
+<<<<<<< HEAD:services/api/cratebox.html
 /* computers and tablets: Settings is a window in the middle of the screen (two columns when there's room), not a drop-down */
 /* (not the HEAT drop-down, which shares .setpanel: as a window it was shifted up and left, its top row off the screen) */
 header .setpanel.setpanel:not(.tcpanel) { top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(780px, calc(100vw / var(--uiz, 1) - 32px)); max-height: calc(var(--vh, 100vh) - 48px);
@@ -145,6 +146,8 @@ header .setwinhead { grid-column: 1 / -1; display: flex; align-items: center; ju
 header .setwinhead b { font-family: var(--f-disp); letter-spacing: .08em; font-size: 15px; }
 #setPanel::backdrop { background: #000a; }
 .setgear { font-size: 18px; }
+=======
+>>>>>>> temp-source/main:cratebox.html
 header .setpanel { position: fixed; inset: auto; margin: 0; color: var(--fg); top: 48px; max-height: calc(var(--vh, 100vh) - 64px); overflow-y: auto; z-index: 40; }
 .ctlpanel { display: grid; gap: 4px; padding-bottom: 8px; margin-bottom: 4px; border-bottom: 1px solid var(--line2); }
 .ctlnote { margin: 2px 0; font-size: 11px; color: var(--muted); line-height: 1.4; }
@@ -880,6 +883,7 @@ html[data-theme="booth"] .hbtn, html[data-theme="booth"] .hsel, html[data-theme=
 header .tcpanel { top: 48px; }
 .tcgo { height: 34px; margin-top: 8px; font-size: 13px; font-weight: 600; }
 #tcGo.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
+<<<<<<< HEAD:services/api/cratebox.html
 #tcMsg:empty, #tcPuffInfo:empty { display: none; }
 .tcpanel { max-height: calc(100vh - 64px); overflow-y: auto; }
 #tcHold.danger { background: #8e2b33; border-color: #b33a45; color: #fff; }
@@ -894,6 +898,10 @@ html.phone .tcwrap { display: revert !important; }
 #heatExp { margin-top: 10px; padding-top: 8px; border-top: 1px solid #ff9a4d66; }
 #heatExp > label:first-child { color: #ff9a4d; }
 .age21 { display: inline-block; margin-right: 6px; padding: 0 5px; border: 1px solid #ff9a4d; border-radius: 4px; color: #ff9a4d; font-size: 11px; font-weight: 700; }
+=======
+#tcMsg:empty { display: none; }
+html.phone .tcwrap { display: revert !important; }
+>>>>>>> temp-source/main:cratebox.html
 html.phone #tcBtn { height: 26px; font-size: 11px; }
 </style>
 </head>
@@ -917,9 +925,14 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     <select class="hsel" id="hpDev" hidden></select>
     <button class="hbtn" id="cueTest" title="Beep in the headphones only">Test cue</button>
     <div class="setwrap">
+<<<<<<< HEAD:services/api/cratebox.html
         <button class="iconbtn setgear" id="setBtn" aria-expanded="false" aria-label="Settings" title="Settings" popovertarget="setPanel">⚙</button>
         <div class="setpanel" id="setPanel" popover hidden>
           <div class="setwinhead"><b>Settings</b><button class="iconbtn" id="setClose" aria-label="Close settings" title="Close (Esc)">✕</button></div>
+=======
+        <button class="hbtn" id="setBtn" aria-expanded="false" popovertarget="setPanel">Settings ▾</button>
+        <div class="setpanel" id="setPanel" popover hidden>
+>>>>>>> temp-source/main:cratebox.html
           <label for="rangeSel">BPM range <small>where half/double-time tracks land</small></label>
           <select class="hsel" id="rangeSel"><option>58-115</option><option>68-135</option><option>78-155</option><option>88-175</option><option>70-180</option><option value="custom">Custom</option></select>
           <div id="rangeCustom" hidden><input class="hsel" id="bpmLo" type="number" min="40" max="150" step="1" style="width:5em"> to <input class="hsel" id="bpmHi" type="number" min="79" max="300" step="1" style="width:5em"> BPM</div>
@@ -968,7 +981,11 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
           </div>
         </div>
       </div>
+<<<<<<< HEAD:services/api/cratebox.html
     <div class="setwrap tcwrap" hidden>
+=======
+    <div class="setwrap tcwrap">
+>>>>>>> temp-source/main:cratebox.html
       <button class="hbtn" id="tcBtn" aria-expanded="false" popovertarget="tcPanel" title="TrueCurve: run a heat curve on your Puffco while you play">HEAT ▾</button>
       <div class="setpanel tcpanel" id="tcPanel" popover hidden>
         <label>TrueCurve <small>heat curves for Peak Pro / Proxy</small></label>
@@ -977,6 +994,7 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
         <label for="tcCurve">Curve</label>
         <select class="hsel" id="tcCurve"></select>
         <button class="hbtn tcgo" id="tcGo" disabled>Start curve</button>
+<<<<<<< HEAD:services/api/cratebox.html
         <label for="tcHoldF">HOLD for PUFF <small>one temperature, no curve</small></label>
         <div class="ctlrow" style="align-items:center"><input type="number" class="hsel" id="tcHoldF" min="350" max="590" step="5" style="width:72px" aria-label="Hold temperature, °F"><span class="ctlnote">°F</span><span class="spacer"></span>
           <span class="ctlnote">Full at</span><select class="hsel" id="tcFull" aria-label="Full effect at this temperature drop"><option value="0">Auto</option><option value="4">4°F drop</option><option value="8">8°F drop</option><option value="15">15°F drop</option><option value="25">25°F drop</option><option value="40">40°F drop</option></select></div>
@@ -988,6 +1006,8 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
         <div class="ctlrow" style="align-items:center"><label style="margin:0" title="The Puffco's lantern drifts through the rainbow and brightens with the music. Paused during a heat run or HOLD"><input type="checkbox" id="tcGlow"> GLOW</label>
           <span class="ctlnote">FX knob sets</span><select class="hsel" id="tcGlowKnob" aria-label="What the FX knob sets for GLOW"><option value="intensity">brightness</option><option value="speed">speed</option><option value="sensitivity">sensitivity</option><option value="off">nothing</option></select>
           <span class="tcswatch" id="tcSwatch" hidden></span></div>
+=======
+>>>>>>> temp-source/main:cratebox.html
         <p class="ctlnote" id="tcMsg"></p>
         <div class="ctlrow"><button class="hbtn" id="tcPaste" title="In TrueCurve, press Copy curves for Cratebox, then this">Paste curves from TrueCurve</button></div>
         <p class="ctlnote">Uses profile slot 4 while it runs and puts it back after. Close this and keep mixing: the button shows the bowl temperature.</p>
@@ -1045,6 +1065,7 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
 <div id="recPanel" hidden><div class="row"><b id="recTitle">RECORDING SAVED</b><span class="spacer"></span><button class="iconbtn" id="recClose" aria-label="Close">✕</button></div>
   <span class="ctlnote" id="recInfo"></span><pre id="recList"></pre>
   <div class="row"><button class="hbtn" id="recSaveAgain">Save recording again</button><button class="hbtn" id="recSaveList">Save tracklist</button></div></div>
+<<<<<<< HEAD:services/api/cratebox.html
 <dialog class="rbwarn" id="heatSheet" aria-labelledby="heatSheetTitle"><div class="panel">
   <h3 id="heatSheetTitle"><span class="age21">21+</span>Experimental: HEAT</h3>
   <p>HEAT runs heat curves on a Puffco Peak Pro or Proxy over Bluetooth while you play. It's an experiment, tested on one Proxy, and it isn't made by or affiliated with Puffco.</p>
@@ -1057,6 +1078,8 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
   <label><input type="checkbox" id="heatAge"> I'm 21 or older and I understand this is experimental.</label>
   <div class="row"><button class="hbtn" id="heatNo">Not now</button><button class="hbtn" id="heatYes" disabled>Unlock</button></div>
 </div></dialog>
+=======
+>>>>>>> temp-source/main:cratebox.html
 <dialog class="sheet" id="reportSheet" closedby="any" aria-label="Report a problem"><div class="panel report">
   <h3>REPORT A PROBLEM<span class="spacer"></span><button class="iconbtn" id="reportClose" aria-label="Close">✕</button></h3>
   <label for="reportWhat">What happened? What did you do just before?</label>
@@ -1071,7 +1094,10 @@ html.phone #tcBtn { height: 26px; font-size: 11px; }
     <span class="ctlnote" id="reportNote">No GitHub account? Copy it and send it to the developer.</span>
   </div>
 </div></dialog>
+<<<<<<< HEAD:services/api/cratebox.html
 <dialog class="sheet" id="eqSheet" closedby="any" aria-label="EQ, trim and filter"><div class="panel"><h3>EQ · TRIM · CFX<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="eqBody"></div></div></dialog>
+=======
+>>>>>>> temp-source/main:cratebox.html
 <dialog class="sheet" id="fxSheet" closedby="any" aria-label="Beat FX"><div class="panel"><h3>BEAT FX<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="fxBody"></div></div></dialog>
 <dialog class="sheet" id="deckSheet" closedby="any" aria-labelledby="deckSheetTitle"><div class="panel"><h3 id="deckSheetTitle">DECK<span class="spacer"></span><button class="iconbtn" data-close aria-label="Close">✕</button></h3><div id="deckBody"></div></div></dialog>
 <div id="start">
@@ -3602,15 +3628,23 @@ function setBrowse(on) {
 }
 // under the button, kept inside the window (positions in the app's own units: the interface zoom divided out).
 // Runs before the panel shows, so its width comes from the stylesheet rather than its (not yet laid out) box.
+<<<<<<< HEAD:services/api/cratebox.html
 // (now a centred window: the stylesheet places it, so this only clears positions an older version set)
 function placeSetPanel() {
   const p = $("#setPanel");
   p.style.top = p.style.left = "";
+=======
+function placeSetPanel() {
+  const p = $("#setPanel"), r = $("#setBtn").getBoundingClientRect(), z = UIZ || 1, w = parseFloat(getComputedStyle(p).width) || 330;
+  p.style.top = (r.bottom + 6) / z + "px";
+  p.style.left = Math.max(8, Math.min(innerWidth - w * z - 8, r.left)) / z + "px";
+>>>>>>> temp-source/main:cratebox.html
 }
 function closeSetPanel() {
   const p = $("#setPanel");
   if (POPOVER) { if (p.matches(":popover-open")) p.hidePopover(); } else p.hidden = true;
 }
+<<<<<<< HEAD:services/api/cratebox.html
 $("#setClose").addEventListener("click", (e) => { e.stopPropagation(); closeSetPanel(); });
 // the window's two columns: playing and analysis on the left, look, controller and the rest from "Look" on
 if (!PHONE) {
@@ -3621,6 +3655,8 @@ if (!PHONE) {
   for (const k of kids) { if (k === split) right = true; (right ? b : a).append(k); }
   if (split) p.append(a, b); else p.append(a, ...b.children);
 }
+=======
+>>>>>>> temp-source/main:cratebox.html
 if (POPOVER) {
   // the button opens it (popovertarget); Esc or a press anywhere else closes it
   $("#setPanel").hidden = false;
@@ -6989,7 +7025,10 @@ const TC = (() => {
   const now = () => performance.now();
   const cToF = (c) => c * 9 / 5 + 32, fToC = (f) => (f - 32) * 5 / 9;
   const MIN_F = 350, MAX_F = 590, CUTOFF_F = 600, SLOT = 3;
+<<<<<<< HEAD:services/api/cratebox.html
   const BLIND_MS = 3000;   // a run stops when the bowl temperature can't be read for this long (as in TrueCurve)
+=======
+>>>>>>> temp-source/main:cratebox.html
   const store = {
     get(k, d) { try { const v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
     set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
@@ -7078,10 +7117,14 @@ const TC = (() => {
   const CH_CMD = "60133d5c-5727-4f2c-9697-d842c5292a3c", CH_REPLY = "8dc5ec05-8f7d-45ad-99db-3fbde65dbd9c", CH_VER = "05434bca-cc7f-4ef6-bbb3-b1c520b9800c";
   const LORAX_KEY = new Uint8Array([0x64, 0xc6, 0x45, 0x62, 0x56, 0xf2, 0x6f, 0x5b, 0x1c, 0xa1, 0x27, 0x37, 0xa5, 0xdd, 0x71, 0xfb]);
   const P = { mode: "/p/app/mc", state: "/p/app/stat/id", temp: "/p/app/htr/temp", tempAlt: "/p/htr/temp", live: "/p/app/thc/temp", slot: "/p/app/hcs", soc: "/p/bat/soc",
+<<<<<<< HEAD:services/api/cratebox.html
     pTemp: (s) => `/u/app/hc/${s}/temp`, pTime: (s) => `/u/app/hc/${s}/time`,
     // the lantern (mood light): on/off (1 byte) and its colour (r, g, b, 0, mode 1 = static, 0, 0, 0). From community
     // reverse engineering (HA-Puff puffco_ble, MIT), checked on a Peak Pro there, not on a Proxy
     lanternCmd: "/p/app/ltrn/cmd", lanternColor: "/p/app/ltrn/colr" };
+=======
+    pTemp: (s) => `/u/app/hc/${s}/temp`, pTime: (s) => `/u/app/hc/${s}/time` };
+>>>>>>> temp-source/main:cratebox.html
   class Ble {
     constructor() { this.kind = "ble"; this.seq = 0; this.pending = new Map(); this.q = Promise.resolve(); this.connected = false; this.tempPath = P.temp; this.onDisconnect = null; }
     async connect() {
@@ -7244,8 +7287,11 @@ const TC = (() => {
       const r = await this.read(P.pTime(s), 4);
       return !r || r.length < 4 || Math.abs(new DataView(r.buffer, r.byteOffset, 4).getFloat32(0, true) - secs) <= 1;
     }
+<<<<<<< HEAD:services/api/cratebox.html
     lantern(on) { return this.write(P.lanternCmd, new Uint8Array([on ? 1 : 0])); }
     lanternColor(c) { return this.write(P.lanternColor, new Uint8Array([c[0], c[1], c[2], 0, 1, 0, 0, 0])); }
+=======
+>>>>>>> temp-source/main:cratebox.html
     start() { return this.write(P.mode, new Uint8Array([7])); }
     async stop() { let ok = false; for (let i = 0; i < 3; i++) { if (await this.write(P.mode, new Uint8Array([8]))) ok = true; await sleep(45); } return ok; }
     async probeLiveFormat() {
@@ -7267,7 +7313,10 @@ const TC = (() => {
       this.truth = { tau: 3.0, heatMax: 15, coolK: 0.011, dead: 0.45 };
       this.y = 74; this.state = 5; this.slotIdx = 0; this.u = 74; this.cmds = [];
       this.slots = [0, 1, 2, 3].map(() => ({ temp: 485, time: 45 })); this.endAt = 0;
+<<<<<<< HEAD:services/api/cratebox.html
       this.airflow = 0;                                   // a pretend draw for PUFF (0..1): extra cooling
+=======
+>>>>>>> temp-source/main:cratebox.html
     }
     async connect() {
       this.connected = true; let last = now();
@@ -7275,7 +7324,11 @@ const TC = (() => {
         const t = now(), dt = (t - last) / 1000; last = t;
         while (this.cmds.length && this.cmds[0].at <= t) this.u = this.cmds.shift().u;
         const heating = this.state === 7 || this.state === 8;
+<<<<<<< HEAD:services/api/cratebox.html
         this.y = plantStep(this.y, heating ? this.u : 70, dt, this.truth, this.airflow * 12);
+=======
+        this.y = plantStep(this.y, heating ? this.u : 70, dt, this.truth);
+>>>>>>> temp-source/main:cratebox.html
         if (this.state === 7 && this.y >= this.u - 6) { this.state = 8; this.endAt = t + this.slots[this.slotIdx].time * 1000; }
         if (this.state === 8 && t >= this.endAt) this.state = 5;
       }, 100);
@@ -7294,6 +7347,7 @@ const TC = (() => {
     async start() { await this._io(); this.state = 7; this.u = this.slots[this.slotIdx].temp; this.cmds = []; return true; }
     async stop() { await this._io(); this.state = 5; return true; }
     async probeLiveFormat() {}
+<<<<<<< HEAD:services/api/cratebox.html
     async lantern(on) { await this._io(); return true; }
     async lanternColor(c) { await this._io(); return true; }
     async setLiveTarget(f) { await this._io(); this.cmds.push({ at: now() + this.truth.dead * 1000, u: clamp(f, MIN_F, MAX_F) }); return true; }
@@ -7369,6 +7423,11 @@ const TC = (() => {
     return rgb.map((u) => clamp(Math.round((u + m) * 255), 0, 255));
   }
 
+=======
+    async setLiveTarget(f) { await this._io(); this.cmds.push({ at: now() + this.truth.dead * 1000, u: clamp(f, MIN_F, MAX_F) }); return true; }
+  }
+
+>>>>>>> temp-source/main:cratebox.html
   // TrueCurve's presets; Quartz Banger (starts at 520 and trails off to 450) is the default
   const PRESETS = {
     "Quartz Banger": [[0, 520], [10, 508], [25, 485], [45, 462], [65, 450]],
@@ -7381,12 +7440,16 @@ const TC = (() => {
   // Proxy reports "ready" (10) for most of a heat cycle, not just "heating" (8)
   const HEATING = new Set([7, 8, 10]);
   const S = { dev: null, running: false, abort: false, phase: "idle", live: null, target: null, state: null, t: null, end: 0, battery: null, msg: "",
+<<<<<<< HEAD:services/api/cratebox.html
     name: store.get("cb.tc.last", "Quartz Banger"),
     // HOLD for PUFF: the hold temperature, the drop that's the full effect (0 = Auto), the hit now, the dip, the readout
     holdF: clamp(+store.get("cb.tc.holdF", 500) || 500, MIN_F, MAX_F), puffFull: +store.get("cb.tc.puffFull", 0) || 0, puff: 0, drop: 0, puffInfo: "",
     // GLOW: on, what the FX knob sets, writes refused in a row
     glowOn: !!store.get("cb.tc.glow", false), glowKnob: store.get("cb.tc.glowKnob", "intensity"), glowFails: 0 };
   const glow = new Glow();
+=======
+    name: store.get("cb.tc.last", "Quartz Banger") };
+>>>>>>> temp-source/main:cratebox.html
   const mine = () => store.get("cb.tc.curves", {});
   const curveDef = (name) => {
     const c = mine()[name];
@@ -7397,7 +7460,11 @@ const TC = (() => {
   const say = (m) => { S.msg = m; render(); };
 
   // ---- panel ----
+<<<<<<< HEAD:services/api/cratebox.html
   const btn = $("#tcBtn"), panel = $("#tcPanel"), sel = $("#tcCurve"), go = $("#tcGo"), holdBtn = $("#tcHold");
+=======
+  const btn = $("#tcBtn"), panel = $("#tcPanel"), sel = $("#tcCurve"), go = $("#tcGo");
+>>>>>>> temp-source/main:cratebox.html
   function fill() {
     const saved = mine();
     sel.innerHTML = "";
@@ -7412,12 +7479,17 @@ const TC = (() => {
   // only touches the DOM when the text changes, so a running curve costs the main loop nothing
   function render() {
     const c = !!S.dev, hot = S.running && S.phase !== "prep";
+<<<<<<< HEAD:services/api/cratebox.html
     const label = !S.running ? "HEAT" : S.phase === "preheat" ? `HEAT ${f0(S.live)}° ↑${f0(S.target)}` : S.phase === "running" ? `HEAT ${f0(S.live)}° ${Math.floor(S.t || 0)}/${Math.round(S.end)}s`
       : S.phase === "hold" ? `HOLD ${f0(S.live)}°` + (S.drop >= 1 ? ` ↓${Math.round(S.drop)}` : "") : "HEAT…";
+=======
+    const label = !S.running ? "HEAT" : S.phase === "preheat" ? `HEAT ${f0(S.live)}° ↑${f0(S.target)}` : S.phase === "running" ? `HEAT ${f0(S.live)}° ${Math.floor(S.t || 0)}/${Math.round(S.end)}s` : "HEAT…";
+>>>>>>> temp-source/main:cratebox.html
     if (label !== lastLabel) { btn.textContent = label + " ▾"; lastLabel = label; }
     btn.classList.toggle("on", hot);
     $("#tcConn").hidden = $("#tcSim").hidden = c; $("#tcDisc").hidden = !c;
     $("#tcDev").textContent = c ? `${S.dev.name}${S.battery != null ? " · " + S.battery + "%" : ""} · bowl ${f0(S.live)}°F` : "No device";
+<<<<<<< HEAD:services/api/cratebox.html
     const holding = S.phase === "hold";
     go.disabled = !c || S.phase === "prep" || holding;
     go.textContent = S.running && !holding ? "Stop" : "Start curve";
@@ -7432,20 +7504,34 @@ const TC = (() => {
     $("#tcHit").hidden = !(holding && S.dev && S.dev.kind === "sim");
     $("#tcSwatch").hidden = !(c && S.glowOn);
     $("#heatSel").disabled = S.running;     // HEAT can't be hidden mid-curve (slot 4 would stay swapped)
+=======
+    go.disabled = !c || S.phase === "prep";
+    go.textContent = S.running ? "Stop" : "Start curve";
+    go.classList.toggle("danger", S.running);
+    sel.disabled = S.running;
+>>>>>>> temp-source/main:cratebox.html
     $("#tcMsg").textContent = S.msg;
   }
   async function connect(dev) {
     say(dev.kind === "sim" ? "Starting the simulator…" : "Pick your device in the browser's list…");
     dev.onDisconnect = () => {
       if (S.running) S.abort = true;
+<<<<<<< HEAD:services/api/cratebox.html
       S.dev = null; say(S.running ? `Connection lost mid-${S.phase === "hold" ? "HOLD" : "curve"}; the device finishes its own cycle at its last temperature.` : "Disconnected.");
       FX.puffReady = false; fxPuff(0);
+=======
+      S.dev = null; say(S.running ? "Connection lost mid-curve; the device finishes its own cycle at its last temperature." : "Disconnected.");
+>>>>>>> temp-source/main:cratebox.html
     };
     try {
       await dev.connect();
       S.dev = dev; say(`Connected to ${dev.name}.`);
+<<<<<<< HEAD:services/api/cratebox.html
       FX.puffReady = true;                      // PUFF is on offer in Beat FX while a Puffco is connected
       idle(); glowLoop(dev);
+=======
+      idle();
+>>>>>>> temp-source/main:cratebox.html
     } catch (e) { say(e && e.name === "NotFoundError" ? "" : "Couldn't connect: " + (e.message || e)); }
   }
   async function idle() {
@@ -7473,8 +7559,11 @@ const TC = (() => {
       if (HEATING.has(await dev.readState())) { await dev.stop(); await sleep(1500); }
       origSlot = await dev.readActiveSlot();
       backup = await dev.backupSlot(SLOT);
+<<<<<<< HEAD:services/api/cratebox.html
       // no backup, no run: without it slot 4 could not be put back afterwards
       if (!backup || backup.temp == null) { backup = null; throw new Error("couldn't read profile slot 4 to back it up; nothing was changed"); }
+=======
+>>>>>>> temp-source/main:cratebox.html
       const startF = Math.round(curve.at(0));
       if (!(await dev.writeProfileTemp(SLOT, startF))) throw new Error("the device refused the start temperature");
       await dev.writeProfileTime(SLOT, Math.min(120, Math.ceil(end + 10)));
@@ -7482,13 +7571,19 @@ const TC = (() => {
       if (!(await dev.start())) throw new Error("the device didn't accept the start command");
       S.phase = "preheat"; S.target = startF; say(`Preheating to ${startF}°F. Back to the decks; it'll run on its own.`);
       const p0 = now();
+<<<<<<< HEAD:services/api/cratebox.html
       let seen = p0;   // when the bowl temperature was last read: never heat blind, the cutoff needs a reading
+=======
+>>>>>>> temp-source/main:cratebox.html
       while (!S.abort) {
         S.live = await dev.readTemp(); S.state = await dev.readState();
         const tp = (now() - p0) / 1000, y = S.live;
         render();
         if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+<<<<<<< HEAD:services/api/cratebox.html
         if (y != null) seen = now(); else if (now() - seen > BLIND_MS) throw new Error("no temperature reading from the device for 3 s");
+=======
+>>>>>>> temp-source/main:cratebox.html
         // some firmware (Proxy) says "heating" long before the bowl is hot, so the temperature has to agree too
         if (y != null && (y >= startF - 8 || (HEATING.has(S.state) && S.state !== 7 && y >= startF - 30))) break;
         if (tp > 6 && !HEATING.has(S.state)) throw new Error(`the device stopped heating during preheat (at ${f0(y)}°F)`);
@@ -7510,7 +7605,10 @@ const TC = (() => {
           if (t > 2 && !HEATING.has(S.state)) { say(`The device ended its heat cycle ${Math.round(t)} s in.`); break; }
         }
         if (y != null && y >= CUTOFF_F) throw new Error(`overheat cutoff at ${y}°F`);
+<<<<<<< HEAD:services/api/cratebox.html
         if (y != null) seen = tn; else if (tn - seen > BLIND_MS) throw new Error("no temperature reading from the device for 3 s");
+=======
+>>>>>>> temp-source/main:cratebox.html
         const u = Math.round(drv.command(t, y, dt) * 10) / 10, diff = Math.abs(u - sent);
         if ((diff >= 1.5 || (diff >= 0.5 && tn - sentAt > 1500)) && await dev.setLiveTarget(u)) { sent = u; sentAt = tn; }
         learner.add(t, y, sent);
@@ -7536,6 +7634,7 @@ const TC = (() => {
       status(completed ? `Heat curve "${name}" done` : `Heat curve "${name}" stopped`, 5000);
     }
   }
+<<<<<<< HEAD:services/api/cratebox.html
   // ---- HOLD: one temperature, played with PUFF ----
   // Same setup and safety as a curve (slot 4 backed up and put back, 600°F cutoff, a lost link leaves the device to
   // finish its cycle), but the target is written once and never steered: the device's own regulator holds it, and
@@ -7619,6 +7718,8 @@ const TC = (() => {
       else if (++S.glowFails === 3) say("This Puffco didn't take lantern colours, so GLOW is paused (turn GLOW off and on to try again).");
     }
   }
+=======
+>>>>>>> temp-source/main:cratebox.html
   function toggle() {
     if (S.running) { S.abort = true; say("Stopping…"); }
     // straight back to the decks: the HEAT button carries the temperature from here
@@ -7657,6 +7758,7 @@ const TC = (() => {
   $("#tcSim").addEventListener("click", () => { if (S.dev) S.dev.disconnect(); connect(new Sim()); });
   $("#tcDisc").addEventListener("click", () => { S.abort = true; S.dev && S.dev.disconnect(); });
   $("#tcPaste").addEventListener("click", paste);
+<<<<<<< HEAD:services/api/cratebox.html
   holdBtn.addEventListener("click", toggleHold);
   const hf = $("#tcHoldF"), full = $("#tcFull"), gl = $("#tcGlow"), gk = $("#tcGlowKnob"), hit = $("#tcHit");
   hf.value = S.holdF; full.value = String(S.puffFull); if (full.value === "") { S.puffFull = 0; full.value = "0"; }
@@ -7713,6 +7815,11 @@ const HEAT = (() => {
   });
   apply();
   return { apply };
+=======
+  if (!navigator.bluetooth) $("#tcConn").title = "This browser has no Web Bluetooth: use Chrome or Edge on a computer or Android, or Bluefy on iPhone";
+  fill(); render();
+  return { S, PRESETS, makeCurve, Sim, connect, run, toggle, fill, get dev() { return S.dev; } };
+>>>>>>> temp-source/main:cratebox.html
 })();
 
 // =====================================================================================
@@ -7996,7 +8103,11 @@ $("#startBtn").addEventListener("click", async () => {
 });
 
 // test hook: lets the automated tests feed MIDI in and read the LED output
+<<<<<<< HEAD:services/api/cratebox.html
 window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour: (on) => setDecks(on ? 4 : 2), setDecks, get NUSE() { return NUSE; }, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, ejectDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC, HEAT };
+=======
+window.cratebox = { VERSION, get showPhrases() { return showPhrases; }, get loadLock() { return loadLock; }, phraseSpans, PHRASE_COLORS, ANALYSIS_VER, FX, FX_LIST, PAD_FX, fxSelect, fxBeat, fxChannel, fxOn, fxDepth, pfxDown, pfxUp, sendClock, get jogSens() { return jogSens; }, barBeat, applyTheme, controlTick, get drawCost() { return drawCost; }, REC, recStart, recStop, setFour, applyUiSize, PL, RB, plNew, plGet, plAdd, plMove, plDelete, setView, renderTree, mountDevice, PAUSE_ANALYSIS_WHILE_PLAYING, setupLayerButtons, ANALYSIS_LANES, ANALYZERS, importXml, exportXml, removeFromPlaylist, setRbEdit, selectRow, treePress, treeMove, decks, M, lib, midiIn, MIDI, useProfile, profileFor, PROFILES, startLearn, stopLearn, addFiles, applyView, loadSelected, lanePps, camelot, A, routeOutput, initAudio, applyHeadphones, WORKLET, TC };
+>>>>>>> temp-source/main:cratebox.html
 </script>
 </body>
 </html>
