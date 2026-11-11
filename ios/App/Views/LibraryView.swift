@@ -111,7 +111,9 @@ struct LibraryPane: View {
                 case .none: return (0, "")
                 }
             }
-            base = base.stableSort { a, b in let x = v(a), y = v(b); return desc ? (x.0 != y.0 ? x.0 > y.0 : x.1 > y.1) : (x.0 != y.0 ? x.0 < y.0 : x.1 < y.1) }
+            // each row's sort value is worked out once, not at every comparison (MATCH scores a track each time)
+            let keyed = base.map { (r: $0, k: v($0)) }.stableSort { a, b in let x = a.k, y = b.k; return desc ? (x.0 != y.0 ? x.0 > y.0 : x.1 > y.1) : (x.0 != y.0 ? x.0 < y.0 : x.1 < y.1) }
+            base = keyed.map { $0.r }
         }
         return base
     }
