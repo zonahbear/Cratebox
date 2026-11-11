@@ -9,15 +9,15 @@ name: TestFlight
 on:
   push:
     branches: [main]   # main carries the shipping app (was preview/truecurve-usb before the monorepo)
-    paths: ["ios-suite/ios/**", ".github/workflows/testflight.yml"]
+    paths: ["apps/ios-suite/ios/**", ".github/workflows/testflight.yml"]
   workflow_dispatch:
 permissions:
   contents: write
 concurrency: { group: testflight, cancel-in-progress: false }
-# monorepo: the iOS suite lives in ios-suite/ (the secrets check and the log step run from the repo root)
+# monorepo: the iOS suite lives in apps/ios-suite/ (the secrets check and the log step run from the repo root)
 defaults:
   run:
-    working-directory: ios-suite
+    working-directory: apps/ios-suite
 jobs:
   upload:
     runs-on: macos-15-intel   # GitHub's arm64 Mac pool has not been picking jobs up (Nov 2026); the archive is still arm64 for iPhones
@@ -137,7 +137,7 @@ jobs:
         if: always() && steps.check.outputs.ready == 'true'
         working-directory: .
         run: |
-          { cd ios-suite; echo "run ${{ github.run_id }} sha ${{ github.sha }} build $BUILD at $(date -u)"; grep -E "error:|ERROR|FAIL|BUILD|ARCHIVE|PROFILE|UPLOADED|identities|CODESIGN|\*\* " ci.log | head -200; echo "---- tail"; tail -60 ci.log; cd ..; } > testflight.txt || true
+          { cd apps/ios-suite; echo "run ${{ github.run_id }} sha ${{ github.sha }} build $BUILD at $(date -u)"; grep -E "error:|ERROR|FAIL|BUILD|ARCHIVE|PROFILE|UPLOADED|identities|CODESIGN|\*\* " ci.log | head -200; echo "---- tail"; tail -60 ci.log; cd ../..; } > testflight.txt || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git checkout --orphan ci-tmp && git rm -rfq --cached . >/dev/null
           git add -f testflight.txt && git commit -qm "testflight ci ${{ github.run_id }}" && git push -qf origin HEAD:ci-logs-testflight

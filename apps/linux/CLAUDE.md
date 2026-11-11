@@ -1,7 +1,7 @@
 # CLAUDE.md: Cratebox-Linux
 
-> Monorepo (2026-11-11): this folder is `linux/` in zonahbear/Cratebox. Paths below are relative to `linux/`; workflows
-> live in the root `.github/workflows/`. Start at the root [CLAUDE.md](../CLAUDE.md).
+> Monorepo (2026-11-11): this folder is `apps/linux/` in zonahbear/Cratebox. Paths below are relative to it; workflows
+> live in the root `.github/workflows/`. Start at the root [AGENTS.md](../../AGENTS.md).
 
 Read this first; it exists so you don't have to re-parse the repo. Update it when you change structure,
 conventions, or finish/start a piece of open work. Keep it under ~150 lines.

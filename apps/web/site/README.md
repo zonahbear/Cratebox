@@ -5,7 +5,7 @@ It runs as one Cloudflare Worker (free plan). Cloudflare builds it from this pri
 no GitHub Actions minutes.
 
 ```
-wrangler.toml          (monorepo root, one level above web/) Worker config: build command, static assets, KV, cron, non-secret settings
+wrangler.toml          (monorepo root, two levels above apps/web/) Worker config: build command, static assets, KV, cron, non-secret settings
 site/build.sh          builds site/dist = site/public + a copy of the web player (cratebox.html etc.) in /player
 site/public/           index.html (landing), privacy.html
 site/src/worker.js     /api/signup, /api/review (approve links), /api/remove, cron that finishes invites

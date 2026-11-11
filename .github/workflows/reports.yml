@@ -1,5 +1,5 @@
 # Problem reports sent from Cratebox ("Report a problem" → Send on GitHub) arrive as issues with a hidden
-# marker. This copies each one into web/reports.txt in the repo, so they're all in one plain text file.
+# marker. This copies each one into apps/web/reports.txt in the repo, so they're all in one plain text file.
 name: Collect problem reports
 on:
   issues:
@@ -32,9 +32,9 @@ jobs:
             echo "------------------------------------------------------------------"
             printf '%s\n' "$BODY" | tr -d '\r' | grep -v 'cratebox-report'
             echo
-          } >> web/reports.txt
+          } >> apps/web/reports.txt
           git config user.name "cratebox-reports"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add web/reports.txt
+          git add apps/web/reports.txt
           git commit -m "Problem report #$NUM"
           for i in 1 2 3; do git push && break; git pull --rebase; done

@@ -8,10 +8,10 @@ on:
 permissions:
   contents: write
 
-# monorepo: the Rust app lives in linux/
+# monorepo: the Rust app lives in apps/linux/
 defaults:
   run:
-    working-directory: linux
+    working-directory: apps/linux
 
 jobs:
   windows:
@@ -34,7 +34,7 @@ jobs:
         run: |
           cd target/x86_64-pc-windows-gnu/release
           sha256sum cratebox.exe > cratebox.exe.sha256
-          v=$(grep -m1 '^version' "$GITHUB_WORKSPACE/linux/Cargo.toml" | cut -d'"' -f2)
+          v=$(grep -m1 '^version' "$GITHUB_WORKSPACE/apps/linux/Cargo.toml" | cut -d'"' -f2)
           gh release delete windows-latest --yes --cleanup-tag 2>/dev/null || true
           gh release create windows-latest --prerelease --target "$GITHUB_SHA" \
             --title "Cratebox for Windows ($v)" \

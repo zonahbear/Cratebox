@@ -1,9 +1,12 @@
 # CLAUDE.md
 
-Claude Code reads this file automatically. Everything shared with other agents lives in AGENTS.md; keep it there.
+Claude Code loads this automatically. Everything shared with other agents lives in `.agent/` and `.handoffs/`;
+keep it there, not here.
 
-@AGENTS.md
 @.handoffs/LATEST.md
+@.agent/SYSTEM_PROMPT.md
+@.agent/CONTEXT_MAP.md
 
-Claude-specific: the user's global rule to log each session in `.claudes/breadcrumbs.md` is satisfied by the
-end-of-session steps in docs/agents/HANDOFF.md (update .handoffs/LATEST.md, append to the breadcrumbs).
+Task list: .agent/GLOBAL_PLAN.json. App maps: apps/<app>/CLAUDE.md. Reviews: .agent/REVIEW.md.
+Jonah's global "breadcrumbs" rule is met by the handoff memo in `.handoffs/` (SYSTEM_PROMPT "Ending a session")
+plus a dated line in `.claudes/breadcrumbs.md`.

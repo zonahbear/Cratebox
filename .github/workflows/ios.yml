@@ -15,10 +15,10 @@ on:
 permissions:
   contents: write
 concurrency: { group: "ios-${{ github.ref }}", cancel-in-progress: true }
-# monorepo: the iOS suite lives in ios-suite/ (the ci-logs step runs from the repo root)
+# monorepo: the iOS suite lives in apps/ios-suite/ (the ci-logs step runs from the repo root)
 defaults:
   run:
-    working-directory: ios-suite
+    working-directory: apps/ios-suite
 jobs:
   build:
     runs-on: macos-15-intel   # GitHub's arm64 Mac pool has not been picking jobs up (Nov 2026); simulators here are x86_64
@@ -168,7 +168,7 @@ jobs:
         working-directory: .
         env: { LOGS: "${{ github.ref == 'refs/heads/main' && 'ci-logs' || 'ci-logs-preview' }}" }
         run: |
-          { echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; cd ios-suite; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ..; } > summary.txt || true
+          { echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; cd apps/ios-suite; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ../..; } > summary.txt || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git fetch origin "$LOGS" || true
           git checkout --orphan ci-tmp && git rm -rfq --cached . >/dev/null

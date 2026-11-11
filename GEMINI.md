@@ -1,6 +1,9 @@
 # GEMINI.md
 
-Gemini CLI reads this file automatically. Everything shared with other agents lives in AGENTS.md; keep it there.
+Gemini CLI loads this automatically. Everything shared with other agents lives in `.agent/` and `.handoffs/`.
 
-@AGENTS.md
 @.handoffs/LATEST.md
+@.agent/SYSTEM_PROMPT.md
+@.agent/CONTEXT_MAP.md
+
+Task list: .agent/GLOBAL_PLAN.json. App maps: apps/<app>/CLAUDE.md. Reviews: .agent/REVIEW.md.

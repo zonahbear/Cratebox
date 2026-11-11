@@ -9,10 +9,10 @@ on:
 permissions:
   contents: write
 
-# monorepo: the Rust app lives in linux/
+# monorepo: the Rust app lives in apps/linux/
 defaults:
   run:
-    working-directory: linux
+    working-directory: apps/linux
 
 jobs:
   iso:
