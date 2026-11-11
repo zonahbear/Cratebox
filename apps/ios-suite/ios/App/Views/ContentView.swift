@@ -129,6 +129,7 @@ struct SettingsView: View {
     @AppStorage("cb.wave") var waveStyle = "rgb"
     @AppStorage("cb.compact") var compact = false
     @AppStorage(AIMode.key) var aiMode = false
+    @AppStorage(AppleGridMode.key) var appleGrid = 0
     @ObservedObject var apple = AppleMusic.shared
     @State private var warn = false
     @State private var learning = false
@@ -192,12 +193,19 @@ struct SettingsView: View {
                         } else {
                             LabeledContent("Apple music analysis", value: "\(apple.analysed) track\(apple.analysed == 1 ? "" : "s")" + (apple.failedCount > 0 ? ", \(apple.failedCount) failed" : ""))
                             if !apple.progress.isEmpty { Text(apple.progress).font(.caption).foregroundStyle(Theme.muted) }
+                            Picker("Beat grids", selection: $appleGrid) {
+                                Text("rekordbox, then Cratebox").tag(0)
+                                Text("rekordbox, then Apple").tag(1)
+                                Text("Apple, even over rekordbox").tag(2)
+                            }
+                            Text(appleGrid == 0 ? "Apple's analysis is only kept beside your grids." : appleGrid == 1 ? "Tracks without a rekordbox grid get Apple's beats and bar 1 when they're loaded. rekordbox's grids stay." : "Every track gets Apple's beats and bar 1 when it's loaded, rekordbox USB tracks too (nothing is written to the stick).")
+                                .font(.caption).foregroundStyle(Theme.muted)
                             NavigationLink("Compare with the grids…") { AppleCompareView() }
                             Button("Analyse everything again", role: .destructive) { apple.clear() }
                         }
                     }
                 } header: { Text("AI mode") } footer: {
-                    Text("One switch for every AI feature, all on this device (nothing is uploaded). Ask the library turns a sentence into a search (Apple Intelligence, iOS 26+). Apple music analysis (iOS 27+) finds beats, bars, key, phrases, vocals and loudness in the background, only while nothing plays. It doesn't change your grids, keys or cues: it's kept beside them so you can compare.")
+                    Text("One switch for every AI feature, all on this device (nothing is uploaded). Ask the library turns a sentence into a search (Apple Intelligence, iOS 26+). Apple music analysis (iOS 27+) finds beats, bars, key, phrases, vocals and loudness in the background, only while nothing plays. It also sorts the library by MATCH (what would follow the playing track best) and marks MIX IN and MIX OUT on a loaded track's waveform. Beat grids chooses whose grid a track gets at its next load: a grid you fixed by hand always stays, a track Apple hasn't analysed yet or whose tempo wanders keeps the grid it has, and Apple's half-time counts are doubled to match. Keys and cues are never changed.")
                 }
                 Section("Recording") {
                     Picker("Format", selection: $recFmt) { Text("WAV (lossless, ~650 MB per hour)").tag("wav"); Text("AAC 256 kbps (~115 MB per hour)").tag("aac") }

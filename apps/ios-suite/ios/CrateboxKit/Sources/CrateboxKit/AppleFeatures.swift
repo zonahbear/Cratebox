@@ -45,6 +45,14 @@ public struct AppleFeatures: Codable, Equatable {
         guard let r = present[instrument], duration > 0 else { return nil }
         return min(1, r.reduce(0) { $0 + max(0, $1.end - $1.start) } / duration)
     }
+    /// how long the analysed audio was, as near as the results say (the activity series covers all of it)
+    public var length: Double { max(Double(activity.values.map { $0.count }.max() ?? 0) * activityStep, beats.last ?? 0) }
+    /// share of the track with vocals, drums and bass, for comparing two tracks' sound; nil when Apple reported none
+    public var shares: [Double]? {
+        let d = length
+        guard d > 0, !present.isEmpty else { return nil }
+        return ["vocal", "drum", "bass"].map { share($0, duration: d) ?? 0 }
+    }
     /// Apple's tempo, or the median beat spacing's if it gave none
     public var tempo: Double? {
         if let bpm, bpm > 0 { return bpm }
@@ -67,6 +75,108 @@ public struct AppleFeatures: Codable, Equatable {
         var out = [Float](repeating: 0, count: n), last: Float = 0
         for i in 0..<n { if cnt[i] > 0 { last = sum[i] / Float(cnt[i]) }; out[i] = last }
         return out
+    }
+}
+
+extension AppleFeatures {
+    /// A beat grid (BPM + bar 1's first beat) from Apple's beats and bars, for a track whose tempo holds steady;
+    /// nil when there are too few beats or they don't sit on one even grid (a live recording, a tempo change).
+    /// Apple often counts half time (70 for 140) and sometimes double: `near` (the BPM we already have, if any)
+    /// says which octave to use; without it the tempo is folded into `range` (Settings → Decks → BPM range).
+    public func grid(near ref: Double? = nil, range: (Double, Double) = (80, 160)) -> (bpm: Double, firstBeat: Double)? {
+        guard beats.count >= 16 else { return nil }
+        let d = zip(beats.dropFirst(), beats).map { $0 - $1 }.sorted()
+        let p0 = d[d.count / 2]
+        guard p0 > 0.15, p0 < 3 else { return nil }
+        // each beat's place on an even grid, then the straight line through them (least squares)
+        // (counted from one beat to the next, so a rough first guess of the spacing can't drift over a whole track,
+        // and a beat Apple missed leaves a gap of two)
+        var k = [0.0]
+        for i in 1..<beats.count { k.append(k[i - 1] + max(1, ((beats[i] - beats[i - 1]) / p0).rounded())) }
+        let n = Double(beats.count)
+        let mk = k.reduce(0, +) / n, mt = beats.reduce(0, +) / n
+        var skk = 0.0, skt = 0.0
+        for i in beats.indices { skk += (k[i] - mk) * (k[i] - mk); skt += (k[i] - mk) * (beats[i] - mt) }
+        guard skk > 0 else { return nil }
+        let p = skt / skk, a = mt - p * mk
+        guard p > 0 else { return nil }
+        // steady enough? at least 85% of the beats within 6% of a beat of the line
+        var good = 0
+        for i in beats.indices where abs(beats[i] - (a + p * k[i])) < 0.06 * p { good += 1 }
+        guard Double(good) >= 0.85 * n else { return nil }
+        var bpm = 60 / p
+        // the octave
+        if let ref, ref > 0 {
+            var best = 1.0
+            for m in [0.5, 2.0] where abs(log(bpm * m / ref)) < abs(log(bpm * best / ref)) { best = m }
+            bpm *= best
+        } else {
+            let lo = max(30, range.0), hi = max(lo * 1.5, range.1)
+            while bpm < lo { bpm *= 2 }
+            while bpm > hi { bpm /= 2 }
+        }
+        if abs(bpm - bpm.rounded()) < 0.01 { bpm = bpm.rounded() }      // 139.997 is 140
+        // bar 1: where Apple's bars start on its own beats (0-3), by majority; then the first such beat, pulled
+        // back to the first bar line at or after 0
+        var votes = [0, 0, 0, 0]
+        for b in bars { let i = Int(((b - a) / p).rounded()); votes[((i % 4) + 4) % 4] += 1 }
+        let shift = bars.isEmpty ? 0 : votes.indices.max { votes[$0] != votes[$1] ? votes[$0] < votes[$1] : $0 > $1 }!
+        let anchor = a + p * Double(shift)
+        let bar = 4 * 60 / bpm
+        let first = anchor - (anchor / bar).rounded(.down) * bar
+        return (bpm, first)
+    }
+}
+
+/// Where to bring a track in and where to start taking it out, from Apple's drums and vocals, on the bar lines of
+/// the grid the deck uses. Suggestions only: nothing is cued, looped or moved.
+public enum MixPoints {
+    public struct Result: Equatable {
+        /// mix in: the first phrase with drums and no vocals over it. mix out: the start of the last stretch
+        /// without vocals. Seconds; nil when Apple's results don't say
+        public var mixIn: Double?, mixOut: Double?
+        /// how long the clean stretch after `mixIn` and from `mixOut` is, in bars (8, 16 or 32; 0 = a cut)
+        public var inBars = 0, outBars = 0
+        public init() {}
+    }
+    /// share of [a, b) covered by the spans
+    static func cover(_ spans: [AppleFeatures.Span]?, _ a: Double, _ b: Double) -> Double {
+        guard let spans, b > a else { return 0 }
+        var s = 0.0
+        for x in spans { s += max(0, min(b, x.end) - max(a, x.start)) }
+        return min(1, s / (b - a))
+    }
+    static func blend(_ bars: Int) -> Int { bars >= 32 ? 32 : bars >= 16 ? 16 : bars >= 8 ? 8 : 0 }
+
+    public static func suggest(_ f: AppleFeatures, bpm: Double, firstBeat: Double, duration: Double) -> Result {
+        var r = Result()
+        guard bpm > 0, duration > 30 else { return r }
+        let drums = f.present["drum"], vocals = f.present["vocal"]
+        guard drums != nil || vocals != nil else { return r }
+        let bar = 4 * 60 / bpm, step = 8 * bar                   // phrases of 8 bars from bar 1
+        var lines = [Double](), t = firstBeat
+        while t < duration - bar { lines.append(t); t += step }
+        guard lines.count >= 4 else { return r }
+        // in: the first phrase in the first half with drums most of the time and next to no vocals
+        func clean(_ a: Double, needDrums: Bool) -> Bool {
+            cover(vocals, a, a + step) <= 0.2 && (!needDrums || drums == nil || cover(drums, a, a + step) >= 0.6)
+        }
+        let firstHalf = lines.filter { $0 < duration * 0.5 }
+        if let i = firstHalf.firstIndex(where: { clean($0, needDrums: true) }) {
+            r.mixIn = lines[i]
+            var n = 1
+            while i + n < lines.count, n < 4, clean(lines[i + n], needDrums: false) { n += 1 }
+            r.inBars = blend(n * 8)
+        }
+        // out: walk back from the end over phrases without vocals (the last line may be a short tail)
+        var j = lines.count - 1, n = 0
+        while j > lines.count / 2, cover(vocals, lines[j], min(duration, lines[j] + step)) <= 0.2 { j -= 1; n += 1 }
+        if n > 0 {
+            let start = lines.count - min(n, 4)
+            r.mixOut = lines[start]
+            r.outBars = blend(Int(((duration - lines[start]) / bar).rounded(.down)))
+        }
+        return r
     }
 }
 
