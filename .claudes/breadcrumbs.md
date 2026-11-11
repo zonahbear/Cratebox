@@ -252,3 +252,15 @@ unstarted four times; that also means #28 itself has never been compiled). First
   builds from this repo until the signing secrets are added to the monorepo; new iOS code changes go to the monorepo.
 - Next: Jonah to confirm 50.1 on his phone; personal/heat still needs the Core.onStatus fix (0e7eab4) and this one
   before any Xcode 27 build.
+
+## 2026-11-11 (afternoon): first overnight Apple analysis, comparison fix, TestFlight run 51
+
+- Jonah's CSV (432 tracks, ~15 s each): Apple tempo same 29%, exactly half 62% (140 → 70), other 9%; key exact 80%.
+  Jonah: half time is fine, account for it (rekordbox and Serato do it too). Never use Apple's BPM raw.
+- Beat / bar-1 columns were blank for 422 rows: `GridCompare` skipped unequal tempos, and stick tracks had rekordbox's
+  BPM but no `firstBeat` until their ANLZ file is read (inferred, not reproduced).
+- Fix a4bc095: `Result.tempoMult` (1, 0.5, 2), `comparable`; `AppleMusic.rows()` calls `Devices.shared.readAnalysis`
+  for stick tracks without a first beat, and labels BPM-without-grid rows "BPM only". CSV has a new `tempo_mult` column.
+  ios.yml run 43049854031 green; TestFlight run 51 uploaded (51.1 expected). Monorepo port: zonahbear/Cratebox PR #19.
+- Next: Jonah re-exports the CSV (no re-analysis needed); read bar-1 agreement from it. Proposal for track / transition
+  suggestions + similarity: https://claude.ai/artifact/R1RpoHyn11ENTGFFfA6Z4s (4 decisions pending, nothing built).
