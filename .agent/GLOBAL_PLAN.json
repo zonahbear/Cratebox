@@ -1,6 +1,6 @@
 {
   "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md).",
-  "updated": "2026-11-11T08:40:00Z",
+  "updated": "2026-11-11T15:50:00Z",
   "tasks": [
     {
       "id": "MONO-1",
@@ -73,15 +73,15 @@
       "id": "MONO-6",
       "title": "Port iOS PR #31 (Music Understanding, old repo, into preview/truecurve-usb) onto a branch here",
       "app": "ios-suite",
-      "status": "review",
+      "status": "done",
       "owner": "claude",
       "branch": null,
-      "pr": null,
+      "pr": 18,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "Ported from cratebox-iOS-suite PR #31 at 28ec954 (Apple Music Understanding, AI mode). coreml.yml not ported (Beat This! dropped). The \"Implement Apple Music Understanding\" thread may push more fixes to the suite branch; re-sync from its final head."
+      "notes": "#31 ported and merged as #18 (4181a99, suite 28ec954). Follow-up a4bc095 (half/double-time Apple comparison) ported in the next PR."
     },
     {
       "id": "MONO-7",
@@ -96,7 +96,7 @@
         "MONO-4"
       ],
       "needs_go": true,
-      "notes": "2026-11-11: cratebox-app.yml and cratebox-windows.yml run on main here -> releases app-latest / windows-latest in zonahbear/Cratebox. Old Cratebox OS updaters still read Cratebox-Linux until they update once (needs LEGACY_RELEASE_TOKEN mirror or one last release there)."
+      "notes": "app-latest and windows-latest published in zonahbear/Cratebox 2026-11-11 08:2xZ. Old Cratebox OS updaters still read Cratebox-Linux until they update once (needs LEGACY_RELEASE_TOKEN mirror or one last release there)."
     },
     {
       "id": "MONO-8",
@@ -174,6 +174,20 @@
       "depends_on": [],
       "needs_go": false,
       "notes": "Agents can't delete remote branches here. Merged: analysis-speed-and-fixes, ios, load-stutter-fix, perf/low-end-drawing, claude/project-thread-{0pjrfq,7i29va,a7yqwi,dqs1br,e218io,jp214s,o1jybq,r8s5wf,t5561g,wtndnj,zh9scy}. Keep: mac-air (9 unmerged commits), ci-logs, personal/heat."
+    },
+    {
+      "id": "MONO-10",
+      "title": "Move iOS work fully into the monorepo: stop pushing to cratebox-iOS-suite once the TestFlight secrets are here",
+      "app": "ios-suite",
+      "status": "todo",
+      "owner": null,
+      "branch": null,
+      "pr": null,
+      "depends_on": [
+        "MONO-4"
+      ],
+      "needs_go": false,
+      "notes": "Until then the Music Understanding thread pushes to the suite branch claude/project-thread-oq8tnx and its commits get ported here."
     }
   ]
 }
