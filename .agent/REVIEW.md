@@ -1,12 +1,15 @@
 # Review checklist (any agent)
 
-Post findings as PR comments, most severe first, each with: file:line, what breaks, a concrete failing scenario,
+Post findings as PR comments (a read-only review you weren't asked to post goes back as a report instead; see
+SYSTEM_PROMPT "Scope"), most severe first, each with: file:line, what breaks, a concrete failing scenario,
 and a suggested fix. Say what you did **not** check. No style nits unless asked.
 
 ## Blockers (request changes)
 
 - Breaks a hard rule in .agent/SYSTEM_PROMPT.md (personal/heat → main, HEAT in the App Store app, audio thread blocking or
-  allocating, HEAT safety limits differing, writes to rekordbox sticks, secrets in the diff, unasked merges/releases).
+  allocating, HEAT safety limits differing, secrets in the diff, unasked merges/releases).
+- A rekordbox stick write without the protections in SYSTEM_PROMPT (opt-in, backup first, read-back, refuse after
+  a rekordbox re-export).
 - Wrong behaviour: logic errors, off-by-one in beat/sample maths, units (°F vs °C, seconds vs samples, pt vs px).
 - Leftover `<<<<<<<` / `>>>>>>>` markers, debug code, or generated files edited by hand (`apps/linux/src/maps.rs`).
 - Workflow changes that trigger on every push or use macOS runners without need.

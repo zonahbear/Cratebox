@@ -1,6 +1,6 @@
-# Signed App Store build of main, uploaded to TestFlight. ios.yml (unsigned IPA for SideStore, preview builds,
-# tests, screenshots) is untouched and keeps running beside this. Until the six secrets below exist this
-# workflow just says so and passes, so merging it early turns nothing red.
+# Signed App Store build of main, uploaded to TestFlight. ios.yml (tests, simulator screenshots) runs beside it.
+# Until the six secrets below exist this workflow passes with a "NOT BUILT / NOT UPLOADED" warning and job
+# summary, so merging early turns nothing red but a green run never looks like a shipped build.
 #   IOS_DIST_P12_BASE64  IOS_DIST_P12_PASSWORD   Apple Distribution certificate + private key (.p12, base64)
 #   IOS_PROFILE_BASE64                           App Store provisioning profile for com.zonahbear.cratebox.suite
 #   ASC_KEY_ID  ASC_ISSUER_ID  ASC_KEY_P8        App Store Connect API key (the .p8 file's text, as is)
@@ -47,7 +47,10 @@ jobs:
           missing=""
           for v in P12 P12_PASSWORD PROFILE ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8; do [ -n "${!v}" ] || missing="$missing $v"; done
           if [ -n "$missing" ]; then
-            echo "::notice::TestFlight skipped, secrets not set:$missing"
+            # the job still passes (so a merge doesn't turn red), but say loudly that nothing shipped
+            echo "::warning title=NOT BUILT / NOT UPLOADED::TestFlight skipped, secrets not set:$missing"
+            echo "## ⚠️ NOT BUILT / NOT UPLOADED" >> "$GITHUB_STEP_SUMMARY"
+            echo "No archive and no TestFlight upload for ${GITHUB_SHA::7}: secrets not set:$missing (GLOBAL_PLAN MONO-4). A green run here does not mean a build shipped." >> "$GITHUB_STEP_SUMMARY"
             echo "ready=false" >> "$GITHUB_OUTPUT"
           else
             echo "ready=true" >> "$GITHUB_OUTPUT"

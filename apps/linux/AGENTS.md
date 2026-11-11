@@ -1,4 +1,4 @@
-# AGENTS.md: Cratebox-Linux
+# AGENTS.md: Cratebox OS / Windows app (apps/linux, was Cratebox-Linux)
 
 > Monorepo (2026-11-11): this folder is `apps/linux/` in zonahbear/Cratebox. Paths below are relative to it; workflows
 > live in the root `.github/workflows/`. Start at the root [AGENTS.md](../../AGENTS.md).
@@ -6,7 +6,7 @@
 Read this first; it exists so you don't have to re-parse the repo. Update it when you change structure,
 conventions, or finish/start a piece of open work. Keep it under ~150 lines.
 
-## What this repo is
+## What this app is
 
 Native Linux port of the Cratebox web app (and the iOS performance mode) in Rust (eframe/egui on glow, cpal for audio, midir for MIDI,
 symphonia for decoding). Two or four decks (deck layers 1⇄3 / 2⇄4), DDJ-FLX4 first, other Pioneer/AlphaTheta controllers via Mixxx-derived maps.
@@ -78,9 +78,9 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
                    the full layer, then cratebox-minimal-install autoremoves Lubuntu's extras (list made in chroot-setup).
                    Also: facetimehd DKMS + firmware, maclight (shell, F5/F6), playerctl media keys (openbox-rc.xml),
                    cratebox-boot-update.service (online at boot → cratebox-update --auto with a saved token)
-.github/workflows/cratebox-app.yml manual-only: app binary → release "app-latest" (overlay/usr/bin/cratebox-update installs it)
-.github/workflows/cratebox-windows.yml manual-only: MinGW cross-build → release "windows-latest" (cratebox.exe)
-.github/workflows/cratebox-os.yml  manual-only ubuntu job → release "kiosk-latest" (ISO in <2 GiB parts)
+../../.github/workflows/cratebox-app.yml manual-only: app binary → release "app-latest" (overlay/usr/bin/cratebox-update installs it)
+../../.github/workflows/cratebox-windows.yml manual-only: MinGW cross-build → release "windows-latest" (cratebox.exe)
+../../.github/workflows/cratebox-os.yml  manual-only ubuntu job → release "kiosk-latest" (ISO in <2 GiB parts)
 ```
 
 ## Build and test
@@ -92,18 +92,18 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
 - `cargo build --release` (x86-64-v3 via `.cargo/config.toml`, target `x86_64-unknown-linux-gnu`, so the binary
   is at `target/x86_64-unknown-linux-gnu/release/cratebox`). Older CPU: `--config 'build.rustflags=[]'`.
 - `python3 tests/make_tracks.py tests/music` (needs numpy) then `cargo test --release`.
-  Tests fall back to `../cratebox/tests/music` if `tests/music` is missing.
+  Tests fall back to `../web/tests/music` if `tests/music` is missing.
 - With no sound card the engine runs on a timer, so timing tests still work in containers.
 - Windows: `rustup target add x86_64-pc-windows-gnu`, `apt install mingw-w64`, `cargo build --release --target
   x86_64-pc-windows-gnu` (one .exe, system DLLs only). Smoke test under Wine + Xvfb works (`wine explorer
   /desktop=cb,WxH cratebox.exe --screenshot Z:\path.png 240`, CRATEBOX_DATA as a Z:\ path). On Windows `ui::fit_scale`
   zooms everything to a 720-pt-high canvas (the MacBook's layout); CRATEBOX_FIT=1 does it on Linux.
-- No CI on pushes. Releases are built by hand with `./build-release.sh`; the Cratebox OS ISO by the manual
-  cratebox-os workflow (Actions minutes are scarce: keep workflows `workflow_dispatch`).
+- No CI on pushes. Releases come from the manual root workflows: cratebox-app (app-latest), cratebox-windows
+  (windows-latest), cratebox-os (ISO); `./build-release.sh` makes the same tarball locally (Actions minutes are scarce: keep workflows `workflow_dispatch`).
 
 ## Conventions
 
-- `main` only; session branches are `claude/...`. Version in `Cargo.toml`.
+- Branches: follow the root rules (`<agent>/<topic>` from `origin/main`, ../../.agent/SYSTEM_PROMPT.md). Version in `Cargo.toml`.
 - Module docs: every file opens with `//!` lines saying what it is and which thread it runs on. Keep that.
 - Audio thread code (player, mixer, engine callback) never blocks: try-lock, no allocation.
 - Ports stay close to the web code (same names, same maths) so results match; `analysis.rs` and `player.rs`
@@ -113,13 +113,13 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
   speaker driver) and hold it; s2idle only; never TLP or HDA power_save tweaks; never remove
   pipewire/wireplumber/rtkit. StartupMute=%00 is per-machine NVRAM (first-boot step in distro/README.md).
 
-## Cross-repo
+## Cross-app (was cross-repo)
 
-- Behaviour reference is **zonahbear/Cratebox** `cratebox.html` (see that repo's CLAUDE.md for its section map).
+- Behaviour reference is `../web/cratebox.html` (section map in ../web/AGENTS.md).
   When the web app's analysis, deck logic or controller maps change, this port drifts; nothing checks it
   automatically.
-- `src/maps.rs` comes from the web app's `MIXXX_MAPS` table (itself from `tools/mixxx2cratebox.py` there).
-- **cratebox-iOS-suite** is a separate Swift port; no shared code.
+- `src/maps.rs` comes from the web app's `MIXXX_MAPS` table (itself from `../web/tools/mixxx2cratebox.py`).
+- `../ios-suite/` is a separate Swift port; no shared code.
 
 ## Gotchas
 
@@ -143,7 +143,8 @@ distro/            Cratebox OS ISO: build-iso.sh remasters Lubuntu 26.04.1 (laye
   (evidence for the "bar 1 half a bar late" report; synthetic tests are all on bar 1, so tuning needs real tracks).
   2026-11-10: bar-1 vote replaced after measuring on 113 real stick tracks (breadcrumbs); ~7% still half a beat off rekordbox.
 - A mounted stick is never copied by itself: Job::Mounted sets App.ask_copy, ui.rs copy_dialog asks, answer_copy(yes) runs copy_device (Jonah's rule, 2026-11-10).
-- rekordbox is read-only here: never writes to a stick (the web app's playlist writer isn't ported).
+- rekordbox sticks are read-only here for now: the web app's playlist writer isn't ported. If you port it, keep its
+  protections (opt-in, backup first, read-back, refuse after a rekordbox re-export; ../../.agent/SYSTEM_PROMPT.md).
 - Header launchers: WEB = cratebox-web (Chromium, xtradeb PPA deb; Chrome only as a fallback on old images), SOULSEEK = cratebox-soulseek (Nicotine+), FILES = pcmanfm-qt; openbox-rc.xml
   gives every window but Cratebox a frame at 80%, resizable. Settings is tabbed (SETTINGS_TABS in ui.rs, one fn per tab).
 - egui closed_line: never repeat the first point at the end (the zero-length segment drew a spike through the globe icon).

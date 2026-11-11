@@ -1,6 +1,6 @@
 {
-  "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md).",
-  "updated": "2026-11-11T15:50:00Z",
+  "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
+  "updated": "2026-11-11T20:45:00Z",
   "tasks": [
     {
       "id": "MONO-1",
@@ -59,33 +59,33 @@
       "id": "MONO-5",
       "title": "Check the first Cloudflare Workers Build on main after the merge",
       "app": "web",
-      "status": "blocked",
-      "owner": "jonah",
+      "status": "done",
+      "owner": null,
       "branch": null,
       "pr": null,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "Production Workers Build FAILED on db99c7f; the live site stays on the last good deploy. wrangler.toml passes `npx wrangler@4 deploy --dry-run` from the root, so suspect a dashboard setting (Workers > cratebox > Settings > Build: build command / root directory / config path still pointing at site/). Needs the build log (Cloudflare sign-in)."
+      "notes": "Verified 2026-11-11 (GitHub check runs): production 'Workers Builds: cratebox' FAILED on db99c7f, 8992a27 and d9acf81, then PASSED on main 4181a99 (08:28Z). Live-site behaviour not re-tested. PR/branch preview builds still fail instantly (known dashboard setting since before the monorepo, see apps/web/AGENTS.md); ignore them on PRs."
     },
     {
       "id": "MONO-6",
       "title": "Port iOS PR #31 (Music Understanding, old repo, into preview/truecurve-usb) onto a branch here",
       "app": "ios-suite",
-      "status": "done",
+      "status": "review",
       "owner": "claude",
-      "branch": null,
-      "pr": 18,
+      "branch": "claude/project-thread-b7gf7r",
+      "pr": 19,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "#31 ported and merged as #18 (4181a99, suite 28ec954). Follow-ups ported in PR #19: a4bc095 (half/double-time Apple comparison) and 988438f + breadcrumbs to 99d4b73 (MATCH sort, MIX IN/OUT, Beat grids setting)."
+      "notes": "#31 merged as #18 (4181a99, suite 28ec954). PR #19 ports the follow-ups a4bc095 (half/double-time Apple comparison) and 988438f..99d4b73 (MATCH sort, MIX IN/OUT, Beat grids); suite ios.yml green at both (reported by the Music Understanding thread). Done when #19 merges."
     },
     {
       "id": "MONO-7",
-      "title": "Move releases (app-latest, windows-latest, kiosk-latest) here; keep Cratebox-Linux until every Cratebox OS machine has updated once",
+      "title": "Publish the Linux/Windows releases (app-latest, windows-latest, kiosk-latest) from this repo",
       "app": "linux",
       "status": "in_progress",
       "owner": "claude",
@@ -96,7 +96,35 @@
         "MONO-4"
       ],
       "needs_go": true,
-      "notes": "app-latest and windows-latest published in zonahbear/Cratebox 2026-11-11 08:2xZ. Old Cratebox OS updaters still read Cratebox-Linux until they update once (needs LEGACY_RELEASE_TOKEN mirror or one last release there)."
+      "notes": "Verified: app-latest and windows-latest published here 2026-11-11 from db99c7f (runs 42986160083, 42986164510). kiosk-latest not rebuilt here yet (Jonah's rule: no new ISO for app changes). Legacy updater migration split out as MONO-11."
+    },
+    {
+      "id": "MONO-11",
+      "title": "Move old Cratebox OS machines off the Cratebox-Linux releases",
+      "app": "linux",
+      "status": "todo",
+      "owner": "jonah",
+      "branch": null,
+      "pr": null,
+      "depends_on": [
+        "MONO-4"
+      ],
+      "needs_go": true,
+      "notes": "cratebox-update now reads this repo first, then Cratebox-Linux, but machines on an older updater only read Cratebox-Linux until they update once. Needs LEGACY_RELEASE_TOKEN (mirror step in cratebox-app.yml) or one last release there. Unknown: how many machines still run the old updater (Jonah's MacBook at least)."
+    },
+    {
+      "id": "MONO-12",
+      "title": "Act on the Codex handoff review: rules, claims, memo names, app maps, TestFlight NOT BUILT summary, stick-write rule removed, sideloading text removed",
+      "app": "repo",
+      "status": "review",
+      "owner": "claude",
+      "branch": "claude/project-thread-b7gf7r",
+      "pr": 19,
+      "depends_on": [
+        "MONO-1"
+      ],
+      "needs_go": false,
+      "notes": "Jonah 2026-11-11: remove the no-stick-writes hard rule (keep the protections documented) and every SideStore/sideloading mention. Follow-ups: ALL-2..ALL-5, HEAT-2."
     },
     {
       "id": "MONO-8",
@@ -108,9 +136,9 @@
       "pr": null,
       "depends_on": [
         "MONO-3",
-        "MONO-5",
         "MONO-6",
-        "MONO-7"
+        "MONO-7",
+        "MONO-11"
       ],
       "needs_go": true,
       "notes": ""
@@ -188,6 +216,68 @@
       ],
       "needs_go": false,
       "notes": "Until then the Music Understanding thread pushes to the suite branch claude/project-thread-oq8tnx and its commits get ported here."
+    },
+    {
+      "id": "ALL-2",
+      "title": "Mirror check: web files copied into apps/ios-suite (cratebox.html, sw.js, tools/*.js, tests/)",
+      "app": "web,ios-suite",
+      "status": "todo",
+      "owner": null,
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "notes": "Codex review 2026-11-11: at 4181a99 cratebox.html and tests/test_cratebox.py differ between apps/web and apps/ios-suite; sw.js and tools/*.js match. Define the mirrored set and allowed differences, add a sync command and a cheap Ubuntu check. Also tools/*.js are hand-kept copies of cratebox.html sections."
+    },
+    {
+      "id": "ALL-3",
+      "title": "One verification entry point per app that checks prerequisites and runs the right tests",
+      "app": "all",
+      "status": "todo",
+      "owner": null,
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "notes": "Codex review 2026-11-11: unpinned playwright/numpy, browser path discovery, fixtures. Record tool versions with results. Keep real-track/hardware checks separate."
+    },
+    {
+      "id": "ALL-4",
+      "title": "Adapter for Google Antigravity (if that's the 'antimatter' tool) + fresh-session smoke check of every agent's entry file",
+      "app": "repo",
+      "status": "todo",
+      "owner": null,
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": true,
+      "notes": "Codex review 2026-11-11. Unverified which product Jonah means. Smoke check: from the root and from an app folder, ask each tool for the active task, hard rules, app map and verification command."
+    },
+    {
+      "id": "ALL-5",
+      "title": "Cheap Ubuntu check for agent metadata: GLOBAL_PLAN ids/deps/statuses, LATEST == newest memo, no conflict markers or retired paths in docs",
+      "app": "repo",
+      "status": "todo",
+      "owner": null,
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "notes": "Codex review 2026-11-11. Path-filtered or workflow_dispatch only (hard rule 6)."
+    },
+    {
+      "id": "HEAT-2",
+      "title": "Merge main into personal/heat so its docs and workflows get the 2026-11-11 rule changes",
+      "app": "ios-suite",
+      "status": "todo",
+      "owner": null,
+      "branch": "personal/heat",
+      "pr": null,
+      "depends_on": [
+        "MONO-6"
+      ],
+      "needs_go": true,
+      "notes": "personal/heat still has the old SideStore/sideloading wording and the old stick-write rule. Merge main into it, never the reverse (hard rule 1)."
     }
   ]
 }

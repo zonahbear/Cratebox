@@ -6,7 +6,7 @@ Quick parse of the whole repo. Details live in each app's own map; read only the
 
 ```
 .agent/            machine memory: SYSTEM_PROMPT.md (rules), CONTEXT_MAP.md (this), GLOBAL_PLAN.json (tasks), REVIEW.md
-.handoffs/         NNN_<agent>_<role>.md memos (append-only log) + LATEST.md (copy of the newest)
+.handoffs/         <YYYYMMDD-HHMM>Z_<agent>_<TASK-ID>_<role>.md memos (append-only log; 001-004 = old numbering) + LATEST.md (copy of the newest)
 apps/web/        browser player cratebox.html (one file, no build; SOURCE OF TRUTH for it) + website/Worker in site/
 apps/linux/      Rust/egui app: Cratebox OS (Linux kiosk ISO in distro/) and the Windows .exe
 apps/ios-suite/  native Swift iOS app (ios/), Deck Bridge, a copy of the web files the parity oracles read
@@ -46,7 +46,7 @@ relative to it, "this repo" = the app folder.
 | File | App | Output |
 |---|---|---|
 | ios.yml | ios-suite | tests + simulator screenshots → ci-logs / ci-logs-preview branches |
-| testflight.yml | ios-suite | push to main (apps/ios-suite/ios/**) → TestFlight; needs the 6 secrets in the file |
+| testflight.yml | ios-suite | push to main (apps/ios-suite/ios/**) → TestFlight; needs the 6 secrets in the file. Without them the run is green but says NOT BUILT / NOT UPLOADED: green ≠ shipped |
 | cratebox-app.yml | linux | release `app-latest` (+ mirror to Cratebox-Linux when `LEGACY_RELEASE_TOKEN` is set) |
 | cratebox-windows.yml | linux | release `windows-latest` |
 | cratebox-os.yml | linux | release `kiosk-latest` (ISO in parts) |
