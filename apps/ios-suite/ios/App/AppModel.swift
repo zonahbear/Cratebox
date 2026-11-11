@@ -233,6 +233,7 @@ final class AppModel: ObservableObject, ControlTarget {
         let d = core.decks[deck]
         if let why = d.canLoad() { status(why); return }
         guard let url = Devices.shared.url(for: t) ?? library.fileURL(t) else { status("\(t.rec.title) isn't in a connected folder"); return }
+        AppleMusic.shared.yield()          // loading comes first: the background analysis lets go of the phone
         d.beginLoad(t.info)
         status("Loading \(t.info.title) into deck \(deck + 1)...", 0)
         let info = t.info

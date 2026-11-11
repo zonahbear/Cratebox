@@ -11,7 +11,6 @@ struct PhoneScreen: View {
     @EnvironmentObject var core: Core
     @Binding var settings: Bool
     @State private var islandLeft = PhoneScreen.islandOnLeft()
-    @AppStorage("cb.compact") private var compactPref = false
 
     /// Touch mode (CompactPhone.swift) is the only layout on a phone without an island (SE: the strips only cost width) or a
     /// screen too small for the full one (Display Zoom); Settings → Look can turn it on anywhere else
@@ -43,8 +42,11 @@ struct PhoneScreen: View {
         // the whole screen: a reader that itself ignores the safe area gets the full size.
         // What's shown lives in PhoneFrame, a view of its own: built with Xcode 27, state read inside this reader's
         // closure no longer redrew it (LIBRARY, WAVE and DECKS changed nothing on screen), a view's own body does
+        // (the same went for Settings → Look → Touch mode, which is why PhoneFrame reads that setting itself, and
+        // for the island's side, read here in the body)
+        let left = islandLeft
         return GeometryReader { g in
-            PhoneFrame(settings: $settings, size: g.size, ins: ins, band: band, islandLeft: islandLeft, compactPref: compactPref)
+            PhoneFrame(settings: $settings, size: g.size, ins: ins, band: band, islandLeft: left)
         }
         .background(Theme.bg)
         .ignoresSafeArea()
@@ -64,7 +66,8 @@ struct PhoneFrame: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var core: Core
     @Binding var settings: Bool
-    let size: CGSize, ins: UIEdgeInsets, band: CGFloat, islandLeft: Bool, compactPref: Bool
+    let size: CGSize, ins: UIEdgeInsets, band: CGFloat, islandLeft: Bool
+    @AppStorage("cb.compact") private var compactPref = false       // Settings → Look → Touch mode
 
     var body: some View {
         let l = core.four ? app.midi.side[0] : 0, r = core.four ? app.midi.side[1] : 1
