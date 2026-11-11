@@ -1,0 +1,4 @@
+# Root-level tooling (each folder has its own .gitignore)
+.wrangler/
+node_modules/
+.DS_Store

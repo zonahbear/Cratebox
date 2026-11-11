@@ -1,0 +1,31 @@
+# Cratebox
+
+> DJ software for the Pioneer DDJ-FLX4, in one public monorepo (github.com/zonahbear/Cratebox, owner Jonah): a
+> browser player, a Rust app for Linux (Cratebox OS) and Windows, and a native iOS app. Worked on by several AI
+> agents in turn (Claude, ChatGPT/Codex, Gemini, Grok, Copilot); the repo is their only shared memory.
+
+Read the first four in order, then only the map of the app you touch.
+
+## Start here
+
+- [.handoffs/LATEST.md](.handoffs/LATEST.md): savestate. Where the last agent stopped; exact next steps.
+- [.agent/SYSTEM_PROMPT.md](.agent/SYSTEM_PROMPT.md): hard rules and rules of engagement (start, handoff, bugs, features).
+- [.agent/CONTEXT_MAP.md](.agent/CONTEXT_MAP.md): architecture map, branches, verification commands, workflows.
+- [.agent/GLOBAL_PLAN.json](.agent/GLOBAL_PLAN.json): machine-readable task list (status, owner, branch, depends_on).
+
+## Apps
+
+- [apps/web/CLAUDE.md](apps/web/CLAUDE.md): web player `apps/web/cratebox.html` (source of truth) and the website.
+- [apps/linux/CLAUDE.md](apps/linux/CLAUDE.md): Rust app, Cratebox OS ISO, Windows build.
+- [apps/ios-suite/CLAUDE.md](apps/ios-suite/CLAUDE.md): Swift iOS app, Deck Bridge.
+
+## Reviews and handoffs
+
+- [.agent/REVIEW.md](.agent/REVIEW.md): review checklist.
+- [.handoffs/](.handoffs/): numbered memos `NNN_<agent>_<role>.md`, newest copied to LATEST.md.
+- [.github/pull_request_template.md](.github/pull_request_template.md): what every PR states.
+
+## Optional
+
+- [agents.txt](agents.txt): plain-text brief to paste into a chat that can't read the repo.
+- Per-app history: `apps/<app>/.claudes/breadcrumbs.md`; user-facing changes: `apps/<app>/CHANGELOG.md`.

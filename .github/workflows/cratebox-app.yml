@@ -1,0 +1,63 @@
+# Cratebox app only (a few minutes): builds the binary and publishes it to the "app-latest"
+# release, which `cratebox-update` (the "Update Cratebox" menu entry on Cratebox OS) installs, with a few
+# small OS files (os-files.tar.gz) so session fixes don't need a new ISO.
+# Manual only, like cratebox-os.
+name: cratebox-app
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# monorepo: the Rust app lives in apps/linux/
+defaults:
+  run:
+    working-directory: apps/linux
+
+jobs:
+  app:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Cratebox
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev
+          cargo build --release
+          ./target/x86_64-unknown-linux-gnu/release/cratebox --version
+
+      - name: Publish to the app-latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # small Cratebox OS files cratebox-update may refresh too (session, updater, 2x scaling); nothing
+          # that needs a rebuild step (grub, initramfs) goes in here
+          tar -czf target/x86_64-unknown-linux-gnu/release/os-files.tar.gz --owner=0 --group=0 -C distro/overlay \
+            usr/bin/cratebox-update usr/bin/cratebox-web usr/bin/cratebox-soulseek usr/libexec/cratebox-kiosk-session usr/libexec/cratebox-boot-update usr/share/xsessions/cratebox.desktop \
+            usr/share/applications/cratebox-update.desktop usr/share/cratebox-os/openbox-rc.xml etc/X11/Xsession.d/45cratebox-hidpi
+          cd target/x86_64-unknown-linux-gnu/release
+          sha256sum cratebox > cratebox.sha256
+          sha256sum os-files.tar.gz > os-files.tar.gz.sha256
+          gh release delete app-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create app-latest --prerelease --target "$GITHUB_SHA" \
+            --title "Cratebox app ($(./cratebox --version))" \
+            --notes "Built from $GITHUB_SHA. On Cratebox OS: menu → Update Cratebox." \
+            cratebox cratebox.sha256 os-files.tar.gz os-files.tar.gz.sha256
+
+      # Machines whose cratebox-update predates the monorepo only look at zonahbear/Cratebox-Linux. Until they
+      # have all updated once (the new updater checks this repo first), mirror app-latest there too. Needs a
+      # secret LEGACY_RELEASE_TOKEN (fine-grained, Contents: read and write on Cratebox-Linux); skipped without it.
+      - name: Mirror app-latest to Cratebox-Linux (old updaters)
+        env:
+          GH_TOKEN: ${{ secrets.LEGACY_RELEASE_TOKEN }}
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::notice::LEGACY_RELEASE_TOKEN not set, Cratebox-Linux's app-latest not updated"; exit 0; }
+          cd target/x86_64-unknown-linux-gnu/release
+          gh release delete app-latest -R zonahbear/Cratebox-Linux --yes --cleanup-tag 2>/dev/null || true
+          gh release create app-latest -R zonahbear/Cratebox-Linux --prerelease \
+            --title "Cratebox app ($(./cratebox --version))" \
+            --notes "Mirror of zonahbear/Cratebox app-latest, built from $GITHUB_SHA. On Cratebox OS: menu → Update Cratebox." \
+            cratebox cratebox.sha256 os-files.tar.gz os-files.tar.gz.sha256

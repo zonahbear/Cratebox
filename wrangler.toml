@@ -1,0 +1,33 @@
+# Cloudflare Worker for the Cratebox website (apps/web/site/). Setup steps: apps/web/site/README.md.
+# Static files come from apps/web/site/dist (built by apps/web/site/build.sh); /api/* runs apps/web/site/src/worker.js.
+# At the repo root (monorepo) so Workers Builds needs no "root directory" change; paths are relative to this file.
+name = "cratebox"
+main = "apps/web/site/src/worker.js"
+compatibility_date = "2025-09-01"
+
+[build]
+command = "bash apps/web/site/build.sh"
+
+[assets]
+directory = "apps/web/site/dist"
+binding = "ASSETS"
+# Serve .html paths as-is (no redirects): the player's service worker and manifest point at cratebox.html.
+html_handling = "none"
+
+# Signups, rate limits and cached App Store Connect ids (namespace "cratebox"; the id is not a secret).
+[[kv_namespaces]]
+binding = "DB"
+id = "79b878980e2c49279dfee7bb42bb9e47"
+
+# Finishes invites for people who accepted Apple's team email.
+[triggers]
+crons = ["*/15 * * * *"]
+
+[vars]
+SITE_URL = "https://cratebox.zonahbear.workers.dev"
+ASC_BUNDLE_ID = "com.zonahbear.cratebox.suite"
+ASC_GROUP_NAME = ""          # internal TestFlight group to use; empty = the app's first internal group
+ASC_ROLE = "MARKETING"       # team role for testers; Apple allows MARKETING or DEVELOPER (or higher) for internal testing
+AUTO_APPROVE = "false"       # "true" invites without asking you first
+MAIL_FROM = "Cratebox <onboarding@resend.dev>"
+# Secrets, never in this file: ASC_KEY_ID ASC_ISSUER_ID ASC_KEY_P8 RESEND_API_KEY ADMIN_EMAIL LINK_SECRET

@@ -1,0 +1,426 @@
+import SwiftUI
+import CrateboxKit
+
+enum SortKey: String, CaseIterable { case none, title, artist, bpm, key, time }
+
+struct LibraryPane: View {
+    @EnvironmentObject var app: AppModel
+    @EnvironmentObject var library: Library
+    @EnvironmentObject var playlists: Playlists
+    @EnvironmentObject var devices: Devices
+    @EnvironmentObject var core: Core
+    @State private var query = ""
+    @State private var sorts: [String: [String]] = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
+    @State private var showSidebar = true
+    // what the Files picker was opened for: 0 a music folder, 1 a rekordbox USB, 2 rekordbox XML. Kept apart
+    // from `picking`, which SwiftUI clears when the sheet closes (before the result arrives)
+    @State private var pickMode = 0
+    @State private var picking = false
+    @State private var renaming: String?
+    @State private var renameText = ""
+    @State private var editMode: EditMode = .inactive
+    @State private var exported: URL?
+    @State private var askBase = false
+    @State private var basePath = ""
+
+    // ---- what the list shows ----
+    var viewKey: String { LibraryPane.key(app.view) }
+    static func key(_ v: AppModel.LibraryView) -> String {
+        switch v {
+        case .collection: return "all"
+        case .playlist(let id): return "pl:" + id
+        case .device(let d): return "dev:" + d
+        case .devicePlaylist(let d, let id): return "devpl:\(d):\(id)"
+        }
+    }
+    static func storedSort(_ v: AppModel.LibraryView) -> (SortKey, Bool) {
+        let s = ((UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:])[key(v)] ?? []
+        return (SortKey(rawValue: s.first ?? "") ?? .none, s.count > 1 && s[1] == "desc")
+    }
+    var sort: (SortKey, Bool) {
+        let s = sorts[viewKey] ?? []
+        return (SortKey(rawValue: s.first ?? "") ?? .none, s.count > 1 && s[1] == "desc")
+    }
+    func setSort(_ k: SortKey) {
+        let (cur, desc) = sort
+        if k == .none { sorts[viewKey] = nil } else { sorts[viewKey] = [k.rawValue, cur == k && !desc ? "desc" : "asc"] }
+        UserDefaults.standard.set(sorts, forKey: "cb.sorts")
+    }
+    static let sortsChanged = Notification.Name("cb.sortsChanged")
+    /// the quick library (browse overlay) sorts the same list: same key twice flips it, a new key starts ascending
+    static func setStoredSort(_ v: AppModel.LibraryView, _ k: SortKey) {
+        var all = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
+        let (cur, desc) = storedSort(v)
+        if k == .none { all[key(v)] = nil } else { all[key(v)] = [k.rawValue, cur == k && !desc ? "desc" : "asc"] }
+        UserDefaults.standard.set(all, forKey: "cb.sorts")
+        NotificationCenter.default.post(name: sortsChanged, object: nil)
+    }
+    struct Row: Identifiable { let id: String; let pos: Int; let t: LibTrack? ; let title: String; let artist: String }
+    var rows: [Row] { LibraryPane.build(app.view, library, playlists, devices, query: query, sort: sort) }
+    /// the list for a view: also what the controller's browse knob walks when the library isn't on screen
+    static func build(_ view: AppModel.LibraryView, _ library: Library, _ playlists: Playlists, _ devices: Devices, query: String, sort: (SortKey, Bool)) -> [Row] {
+        var base: [Row]
+        switch view {
+        case .collection: base = library.tracks.filter { $0.device == nil }.enumerated().map { Row(id: $0.element.id, pos: $0.offset, t: $0.element, title: $0.element.info.title, artist: $0.element.info.artist) }
+        case .playlist(let id):
+            let p = playlists.get(id)
+            base = (p?.items ?? []).enumerated().map { k, tid in
+                let t = library.track(tid)
+                return Row(id: "\(k)|\(tid)", pos: k, t: t, title: t?.info.title ?? p?.meta[tid]?["title"] ?? tid, artist: t?.info.artist ?? p?.meta[tid]?["artist"] ?? "")
+            }
+        case .device(let d): base = library.tracks.filter { $0.device == d }.enumerated().map { Row(id: $0.element.id, pos: $0.offset, t: $0.element, title: $0.element.info.title, artist: $0.element.info.artist) }
+        case .devicePlaylist(let d, let id):
+            let dev = devices.list.first { $0.id == d }, n = dev?.tree.first { $0.id == id }
+            base = (n?.tracks ?? []).enumerated().map { k, rid in
+                let t = dev?.byRbId[rid]
+                return Row(id: "\(k)|\(rid)", pos: k, t: t, title: t?.info.title ?? "Track \(rid)", artist: t?.info.artist ?? "")
+            }
+        }
+        let q = query.lowercased()
+        if !q.isEmpty {
+            base = base.filter { r in
+                r.title.lowercased().contains(q) || r.artist.lowercased().contains(q) || (r.t.flatMap { Keys.camelot($0.info.key)?.label.lowercased() } == q)
+            }
+        }
+        let (k, desc) = sort
+        if k != .none {
+            func v(_ r: Row) -> (Double, String) {
+                switch k {
+                case .title: return (0, r.title.lowercased())
+                case .artist: return (0, r.artist.lowercased())
+                case .bpm: return (r.t?.info.bpm ?? 0, "")
+                case .key: return (Double(r.t.flatMap { Keys.camelot($0.info.key)?.sort } ?? 99), "")
+                case .time: return (r.t?.info.duration ?? 0, "")
+                case .none: return (0, "")
+                }
+            }
+            base = base.stableSort { a, b in let x = v(a), y = v(b); return desc ? (x.0 != y.0 ? x.0 > y.0 : x.1 > y.1) : (x.0 != y.0 ? x.0 < y.0 : x.1 < y.1) }
+        }
+        return base
+    }
+    func pick(_ m: Int) { pickMode = m; picking = true }
+    var editable: Bool {
+        switch app.view {
+        case .playlist: return sort.0 == .none && query.isEmpty
+        case .devicePlaylist: return devices.editable && sort.0 == .none && query.isEmpty
+        default: return false
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            if showSidebar { sidebar.frame(width: 210) ; Divider() }
+            VStack(spacing: 0) {
+                toolbar
+                header
+                list
+            }
+        }
+        .background(Theme.panel)
+        // one picker for all three (SwiftUI only honours one .fileImporter per view)
+        .fileImporter(isPresented: $picking, allowedContentTypes: pickMode == 2 ? [.xml] : [.folder]) { r in
+            let mode = pickMode
+            switch r {
+            case .success(let u): if mode == 2 { app.importXml(u) } else if mode == 1 { devices.open(u) } else { _ = library.addFolder(u) }
+            case .failure(let e): app.status("Couldn't open that: \(e.localizedDescription)")
+            }
+        }
+        .sheet(item: Binding(get: { exported.map { Shared(url: $0) } }, set: { exported = $0?.url })) { s in ShareSheet(items: [s.url]) }
+        .alert("Where is your music folder on the computer rekordbox runs on?", isPresented: $askBase) {
+            TextField("e.g. C:\\Users\\you\\Music", text: $basePath)
+            Button("OK") { UserDefaults.standard.set(basePath.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: "[\\\\/]+$", with: "", options: .regularExpression), forKey: "cb.basePath") }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("rekordbox needs full paths. The folder you added in Cratebox is the last part of it.") }
+        .alert("Rename", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
+            TextField("Name", text: $renameText)
+            Button("OK") { commitRename() }
+            Button("Cancel", role: .cancel) { renaming = nil }
+        }
+    }
+
+    var toolbar: some View {
+        HStack(spacing: 6) {
+            Button { showSidebar.toggle() } label: { Image(systemName: "sidebar.left") }.buttonStyle(.plain)
+            Text(title).font(.system(size: 13, weight: .bold)).lineLimit(1)
+                .padding(.horizontal, 4).background(RoundedRectangle(cornerRadius: 4).stroke(app.browseFocusTree ? Theme.loop : .clear, lineWidth: 1.5))
+            TextField("Search title, artist or key (8A)", text: $query).textFieldStyle(.roundedBorder).font(.system(size: 12)).frame(maxWidth: 260)
+            Spacer()
+            if !library.progress.isEmpty { Text(library.progress).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1) }
+            if editable { EditButton().font(.system(size: 12)) }
+        }.padding(6).environment(\.editMode, $editMode)
+    }
+    var title: String {
+        switch app.view {
+        case .collection: return "Collection"
+        case .playlist(let id): return playlists.get(id)?.name ?? "Playlist"
+        case .device(let d): return devices.list.first { $0.id == d }?.name ?? "Device"
+        case .devicePlaylist(let d, let id): let dev = devices.list.first { $0.id == d }; return "\(dev?.name ?? "") · \(dev?.tree.first { $0.id == id }?.name ?? "")"
+        }
+    }
+    var header: some View {
+        HStack(spacing: 0) {
+            col("#", .none, 26)
+            col("Title", .title, nil)
+            col("Artist", .artist, nil)
+            col("BPM", .bpm, 54)
+            col("Key", .key, 40)
+            col("Time", .time, 46)
+            Text("Load").frame(width: CGFloat(core.deckCount) * 31 + 8).font(.system(size: 10)).foregroundStyle(Theme.muted)
+        }.padding(.horizontal, 6).frame(height: 22).background(Theme.raise)
+    }
+    func col(_ label: String, _ k: SortKey, _ w: CGFloat?) -> some View {
+        let (cur, desc) = sort
+        let t = label + (cur == k && k != .none ? (desc ? " ▾" : " ▴") : "")
+        return Button { setSort(k) } label: {
+            Text(t).font(.system(size: 10, weight: cur == k ? .bold : .regular)).foregroundStyle(cur == k && k != .none ? Theme.fg : Theme.muted)
+                .frame(maxWidth: w == nil ? .infinity : w, alignment: .leading)
+        }.buttonStyle(.plain).frame(width: w)
+    }
+
+    var list: some View {
+        let rs = rows
+        DispatchQueue.main.async { app.visibleTrackIds = rs.compactMap { $0.t?.id } }
+        return listBody(rs).onReceive(NotificationCenter.default.publisher(for: LibraryPane.sortsChanged)) { _ in
+            sorts = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
+        }
+    }
+    func listBody(_ rs: [Row]) -> some View {
+        ScrollViewReader { proxy in List(selection: Binding(get: { app.selection.map { Set([$0]) } ?? [] }, set: { app.selection = $0.first })) {
+            ForEach(rs) { r in row(r).tag(r.t?.id ?? r.id).listRowInsets(EdgeInsets(top: 0, leading: 6, bottom: 0, trailing: 6)).listRowBackground(Theme.panel) }
+                .onMove(perform: editable ? { from, to in move(from, to) } : nil)
+                .onDelete(perform: editable ? { del($0) } : nil)
+        }
+        // the browse knob moves the selection: keep it in view
+        .onChange(of: app.selection) { _, sel in
+            if let sel, let r = rs.first(where: { $0.t?.id == sel }) { withAnimation(.easeOut(duration: 0.12)) { proxy.scrollTo(r.id, anchor: .center) } }
+        }
+        .onAppear { app.libraryShown = true }
+        .onDisappear { app.libraryShown = false }
+        }
+        .listStyle(.plain).environment(\.editMode, $editMode)
+        .scrollContentBackground(.hidden)
+        .overlay {
+            if rs.isEmpty && app.view == .collection {
+                VStack(spacing: 8) {
+                    Text("No music yet").font(.headline)
+                    Text("Add the folder you DJ from (on this iPhone/iPad, in iCloud Drive, or on a USB drive). Cratebox reads it in place: nothing is copied.").font(.caption).foregroundStyle(Theme.muted).multilineTextAlignment(.center).frame(maxWidth: 360)
+                    Button("Add music folder…") { pick(0) }.buttonStyle(.borderedProminent)
+                }
+            }
+        }
+    }
+    func row(_ r: Row) -> some View {
+        let t = r.t
+        let ref = refKey
+        return HStack(spacing: 0) {
+            Text("\(r.pos + 1)").frame(width: 26, alignment: .leading).foregroundStyle(Theme.dim)
+            Text(r.title).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(t == nil ? Theme.dim : Theme.fg)
+            Text(r.artist).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(Theme.muted)
+            Text(t.map { ($0.info.bpm ?? 0) > 0 ? String(format: "%.1f", $0.info.bpm!) : ($0.analysed ? "?" : "…") } ?? "").frame(width: 54, alignment: .leading).font(Theme.mono)
+            keyCell(t, ref).frame(width: 40, alignment: .leading)
+            Text(t.map { $0.info.duration > 0 ? clockShort($0.info.duration) : "" } ?? "").frame(width: 46, alignment: .leading).font(Theme.mono).foregroundStyle(Theme.muted)
+            HStack(spacing: 3) {
+                ForEach(core.activeDecks, id: \.self) { d in
+                    Button { if let t { app.load(t, deck: d) } } label: {
+                        Text("\(d + 1)").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
+                            .background(RoundedRectangle(cornerRadius: 4).fill(onDeck(t) == d ? Theme.deck[d] : Theme.raise)).foregroundStyle(onDeck(t) == d ? Color.black : Theme.deck[d])
+                    }.buttonStyle(.borderless)
+                }
+            }.frame(width: CGFloat(core.deckCount) * 31 + 8)
+        }
+        .font(.system(size: 12)).frame(height: 30)
+        .contentShape(Rectangle())
+        .onTapGesture(count: 2) { if let t { app.load(t, deck: core.decks.firstIndex { core.deckActive($0.i) && !$0.playing } ?? 0) } }
+        .onTapGesture { app.selection = t?.id }
+        .contextMenu { if let t { addToMenu([t]) } }
+    }
+    var refKey: Int {
+        let p = core.decks.filter { $0.playing && $0.loaded }.sorted { $0.startedAt > $1.startedAt }
+        return p.first?.keyNow() ?? -1
+    }
+    func keyCell(_ t: LibTrack?, _ ref: Int) -> some View {
+        guard let t, let c = Keys.camelot(t.info.key) else { return AnyView(Text(t.map { $0.analysed ? "?" : "…" } ?? "").foregroundStyle(Theme.dim)) }
+        let match = ref >= 0 && Keys.mixes(t.info.key, ref)
+        return AnyView(Text(c.label).font(.system(size: 12, weight: match ? .heavy : .semibold, design: .monospaced)).foregroundStyle(Theme.keyColor(c.num, c.letter))
+            .padding(.horizontal, 3).background(RoundedRectangle(cornerRadius: 3).stroke(match ? Theme.ok : .clear)))
+    }
+    func onDeck(_ t: LibTrack?) -> Int? { guard let t else { return nil }; return core.decks.firstIndex { $0.track === t.info } }
+    func clockShort(_ s: Double) -> String { String(format: "%d:%02d", Int(s) / 60, Int(s) % 60) }
+
+    @ViewBuilder func addToMenu(_ tracks: [LibTrack]) -> some View {
+        Menu("Add to playlist") {
+            ForEach(playlists.lists.filter { !$0.folder }) { p in Button(playlists.path(p)) { playlists.add(tracks, to: p.id); app.status("Added to \(p.name)") } }
+            Button("New playlist…") { let p = playlists.new(playlists.nextName("Playlist")); playlists.add(tracks, to: p.id); renaming = "pl:" + p.id; renameText = p.name }
+        }
+        if devices.editable, let d = devices.list.first(where: { tracks.first?.device == $0.id }) {
+            Menu("Add to \(d.name) playlist") {
+                ForEach(d.tree.filter { !$0.folder }, id: \.id) { n in Button(n.name) { devices.add(tracks, to: n.id, in: d) } }
+            }
+        }
+    }
+    func move(_ from: IndexSet, _ to: Int) {
+        switch app.view {
+        case .playlist(let id): playlists.move(from: from, to: to, in: id)
+        case .devicePlaylist(let dv, let id): if let d = devices.list.first(where: { $0.id == dv }) { devices.move(from: from, to: to, in: id, of: d) }
+        default: break
+        }
+    }
+    func del(_ at: IndexSet) {
+        switch app.view {
+        case .playlist(let id): playlists.remove(at: at, from: id)
+        case .devicePlaylist(let dv, let id): if let d = devices.list.first(where: { $0.id == dv }) { devices.remove(at: at, from: id, in: d) }
+        default: break
+        }
+    }
+
+    // ---- the tree: collection, playlists, devices ----
+    var sidebar: some View {
+        List {
+            Button { app.view = .collection } label: { Label("Collection", systemImage: "music.note.list") }.listRowBackground(app.view == .collection ? Theme.raise : Theme.panel)
+            Section {
+                ForEach(treeRows(nil, 0), id: \.0.id) { p, depth in plRow(p, depth) }
+            } header: {
+                HStack(spacing: 10) {
+                    Text("PLAYLISTS").lineLimit(1).fixedSize()
+                    Spacer(minLength: 2)
+                    Button { let p = playlists.new(playlists.nextName("Playlist")); renaming = "pl:" + p.id; renameText = p.name } label: { Image(systemName: "plus") }
+                    Button { let p = playlists.new(playlists.nextName("Folder"), folder: true); renaming = "pl:" + p.id; renameText = p.name } label: { Image(systemName: "folder.badge.plus") }
+                    Menu {
+                        Button("Import rekordbox XML…") { pick(2) }
+                        Button("Export to rekordbox XML") { if let u = app.exportXml() { exported = u } }
+                        Button("Music folder path for export…") { basePath = UserDefaults.standard.string(forKey: "cb.basePath") ?? ""; askBase = true }
+                    } label: { Image(systemName: "ellipsis.circle") }
+                }
+            }
+            Section {
+                ForEach(devices.list) { d in deviceRows(d) }
+            } header: {
+                HStack { Text("DEVICES"); Spacer(); Button("+ USB") { pick(1) }.font(.system(size: 11)) }
+            }
+            Section("FOLDERS") {
+                ForEach(library.folders.filter { !$0.device }) { f in
+                    Text(f.name).font(.system(size: 12)).lineLimit(1).contextMenu { Button("Rescan") { library.scan(f) }; Button("Remove", role: .destructive) { library.removeFolder(f) } }
+                }
+                Button("Add music folder…") { pick(0) }.font(.system(size: 12))
+            }
+        }
+        .listStyle(.sidebar).scrollContentBackground(.hidden).background(Theme.panel)
+    }
+    func treeRows(_ parent: String?, _ depth: Int) -> [(Playlist, Int)] {
+        playlists.children(parent).flatMap { p in [(p, depth)] + (p.folder ? treeRows(p.id, depth + 1) : []) }
+    }
+    func plRow(_ p: Playlist, _ depth: Int) -> some View {
+        let cur = app.view == .playlist(p.id)
+        return HStack {
+            Image(systemName: p.folder ? "folder" : "list.bullet").foregroundStyle(Theme.muted)
+            Text(p.name).lineLimit(1)
+            Spacer()
+            if !p.folder { Text("\(p.items.count)").font(Theme.mono).foregroundStyle(Theme.dim) }
+        }
+        .font(.system(size: 12)).padding(.leading, CGFloat(depth) * 12)
+        .contentShape(Rectangle())
+        .onTapGesture { if !p.folder { app.view = .playlist(p.id) } }
+        .listRowBackground(cur ? Theme.raise : Theme.panel)
+        .contextMenu {
+            Button("Rename") { renaming = "pl:" + p.id; renameText = p.name }
+            Menu("Move to") {
+                Button("Top level") { playlists.moveList(p.id, into: nil) }
+                ForEach(playlists.lists.filter { $0.folder && $0.id != p.id }) { f in Button(playlists.path(f)) { playlists.moveList(p.id, into: f.id) } }
+            }
+            Button("Delete", role: .destructive) { if app.view == .playlist(p.id) { app.view = .collection }; playlists.delete(p.id) }
+        }
+    }
+    @ViewBuilder func deviceRows(_ d: Device) -> some View {
+        HStack {
+            Image(systemName: "externaldrive")
+            Text(d.name + (d.saving ? " · saving…" : d.unsaved ? " · not saved" : "")).lineLimit(1)
+            Spacer()
+            Text("\(d.byRbId.count)").font(Theme.mono).foregroundStyle(Theme.dim)
+            Button { devices.eject(d) } label: { Image(systemName: "eject.fill").font(.system(size: 12)) }.buttonStyle(.borderless)
+        }
+        .font(.system(size: 12)).contentShape(Rectangle()).onTapGesture { app.view = .device(d.id) }
+        .listRowBackground(app.view == .device(d.id) ? Theme.raise : Theme.panel)
+        .contextMenu {
+            if devices.editable {
+                Button("New playlist on \(d.name)") { let id = devices.newNode("Playlist", folder: false, in: d); renaming = "dev:\(d.id):\(id)"; renameText = "Playlist" }
+                Button("New folder on \(d.name)") { let id = devices.newNode("Folder", folder: true, in: d); renaming = "dev:\(d.id):\(id)"; renameText = "Folder" }
+                if d.unsaved && !d.saving { Button("Try saving again") { devices.write(d) } }
+            }
+            Button("Name it in Cratebox…") { renaming = "devname:\(d.id)"; renameText = d.name }
+            Button("Eject", role: .destructive) { devices.eject(d) }
+        }
+        ForEach(devTree(d, 0, 1), id: \.0.id) { n, depth in
+            let cur = app.view == .devicePlaylist(d.id, n.id)
+            HStack {
+                Image(systemName: n.folder ? "folder" : "list.bullet").foregroundStyle(Theme.muted)
+                Text(n.name).lineLimit(1)
+                Spacer()
+                if !n.folder { Text("\(n.tracks.count)").font(Theme.mono).foregroundStyle(Theme.dim) }
+            }
+            .font(.system(size: 12)).padding(.leading, CGFloat(depth) * 12)
+            .contentShape(Rectangle())
+            .onTapGesture { if !n.folder { app.view = .devicePlaylist(d.id, n.id) } }
+            .listRowBackground(cur ? Theme.raise : Theme.panel)
+            .contextMenu { devNodeMenu(n, d) }
+            .overlay(alignment: .trailing) {
+                // the same as a long press, for finding it
+                Menu { devNodeMenu(n, d) } label: { Image(systemName: "ellipsis").font(.system(size: 12)).frame(width: 28, height: 24).contentShape(Rectangle()) }
+                    .padding(.trailing, n.folder ? 0 : 26)
+            }
+        }
+    }
+    func devTree(_ d: Device, _ parent: UInt32, _ depth: Int) -> [(PDBPlaylist, Int)] {
+        d.tree.filter { $0.parent == parent }.sorted { $0.sort < $1.sort }.flatMap { n in [(n, depth)] + (n.folder ? devTree(d, n.id, depth + 1) : []) }
+    }
+    func copy(_ n: PDBPlaylist, _ d: Device) {
+        let p = playlists.new(n.name)
+        playlists.add(devices.tracks(of: n, in: d), to: p.id)
+        app.status("Copied \"\(n.name)\" to your playlists. It plays from \(d.name) while that's plugged in.")
+    }
+    /// everything you can do to a rekordbox playlist or folder on a stick (editing: Settings, behind the disclaimer)
+    @ViewBuilder func devNodeMenu(_ n: PDBPlaylist, _ d: Device) -> some View {
+        if !n.folder { Button("Copy to my playlists") { copy(n, d) } }
+        if devices.editable {
+            Button("Rename") { renaming = "dev:\(d.id):\(n.id)"; renameText = n.name }
+            if n.folder {
+                Button("New playlist in \(n.name)") { let id = devices.newNode("Playlist", folder: false, parent: n.id, in: d); renaming = "dev:\(d.id):\(id)"; renameText = "Playlist" }
+                Button("New folder in \(n.name)") { let id = devices.newNode("Folder", folder: true, parent: n.id, in: d); renaming = "dev:\(d.id):\(id)"; renameText = "Folder" }
+            } else {
+                Button("Duplicate") { devices.duplicate(n.id, in: d) }
+            }
+            Menu("Move to") {
+                if n.parent != 0 { Button("Top level") { devices.moveNode(n.id, into: 0, in: d) } }
+                ForEach(d.tree.filter { $0.folder && $0.id != n.id && $0.id != n.parent }, id: \.id) { f in Button(f.name) { devices.moveNode(n.id, into: f.id, in: d) } }
+            }
+            Button("Delete from \(d.name)", role: .destructive) { if app.view == .devicePlaylist(d.id, n.id) { app.view = .device(d.id) }; devices.delete(n.id, in: d) }
+        } else {
+            Button("Turn on editing (Settings → rekordbox USB playlists)") { app.status("Settings → rekordbox USB playlists → Editable (untested: back up the stick first)", 7) }
+        }
+    }
+    func commitRename() {
+        guard let r = renaming else { return }
+        let name = renameText.trimmingCharacters(in: .whitespaces)
+        renaming = nil
+        guard !name.isEmpty else { return }
+        if r.hasPrefix("pl:") { playlists.rename(String(r.dropFirst(3)), name); return }
+        if r.hasPrefix("devname:") { if let d = devices.list.first(where: { $0.id == String(r.dropFirst(8)) }) { devices.nickname(d, name) }; return }
+        let parts = r.split(separator: ":")
+        if parts.count >= 3, let id = UInt32(parts.last!) {
+            let dv = parts.dropFirst().dropLast().joined(separator: ":")
+            if let d = devices.list.first(where: { $0.id == dv }) { devices.rename(id, name, in: d) }
+        }
+    }
+}
+
+extension Array {
+    func stableSort(_ less: (Element, Element) -> Bool) -> [Element] {
+        enumerated().sorted { a, b in less(a.element, b.element) || (!less(b.element, a.element) && a.offset < b.offset) }.map { $0.element }
+    }
+}
+
+struct Shared: Identifiable { let url: URL; var id: String { url.path } }
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+    func makeUIViewController(context: Context) -> UIActivityViewController { UIActivityViewController(activityItems: items, applicationActivities: nil) }
+    func updateUIViewController(_ c: UIActivityViewController, context: Context) {}
+}
