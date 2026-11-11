@@ -11,31 +11,47 @@ Applies to Claude, ChatGPT/Codex, Gemini, Grok, Copilot and humans alike. Read i
 3. HEAT safety (slot 4 backup/restore, 600°F cutoff, 350-590°F clamp, stop after 3 s without a reading, no run
    without a slot 4 backup) stays identical in truecurve, `apps/web/cratebox.html`, `apps/linux/src/heat.rs`
    and personal/heat.
-4. Never write to a rekordbox USB stick from web or linux (read-only). iOS writes stay behind its Proving Ground.
-5. No secrets in the repo (it is **public**). Keys live in GitHub secrets only.
-6. iOS ships only via signed TestFlight/App Store. No sideloading routes.
-7. Workflows stay `workflow_dispatch` (or narrow path filters): Actions minutes are scarce, macOS costs 10x.
-8. iOS device sizes come only from `apps/ios-suite/docs/device-sizes.md`; never estimate them.
-9. Analysis changes are checked on real tracks (Jonah's rekordbox USB), not only synthetic ones.
-10. Don't merge to `main`, publish releases, or delete branches/repos/files you didn't create without Jonah's OK.
+4. No secrets in the repo (it is **public**). Keys live in GitHub secrets only.
+5. iOS ships only through TestFlight and the App Store, built and signed with Apple's official developer tools.
+6. Workflows stay `workflow_dispatch` (or narrow path filters): Actions minutes are scarce, macOS costs 10x.
+7. iOS device sizes come only from `apps/ios-suite/docs/device-sizes.md`; never estimate them.
+8. Analysis changes are checked on real tracks (Jonah's rekordbox USB), not only synthetic ones.
+9. Don't merge to `main`, publish releases, or delete branches/repos/files you didn't create without Jonah's OK.
+
+Writing to a rekordbox USB stick is allowed (Jonah, 2026-11-11), but only the way web and iOS already do it: opt-in
+setting, playlist tables only, `export.pdb.cratebox-backup` before the first write, read back after each write, and
+refuse if rekordbox exported to the stick after it was opened. Linux doesn't write yet (writer not ported).
+
+## Scope: what the person asked decides what you may change
+
+Read-only work (a review or audit you weren't asked to post, a question, advice) writes nothing: no task claim, no
+memo, no commits, no PR comments, no PRs. Hand back a report instead. Everything below applies to sessions that
+change the repo.
 
 ## Starting a session
 
 1. Read `.handoffs/LATEST.md` → this file → `.agent/CONTEXT_MAP.md` → the map of the one app you touch
    (`apps/<name>/AGENTS.md`). Don't re-scan the repo.
-2. `git fetch`; look at `.agent/GLOBAL_PLAN.json`. Pick a task whose `status` is `todo` and whose `depends_on` are
-   `done`. If its `owner` is another agent, leave it.
-3. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `grok/`, `copilot/`) from `origin/main`.
-4. In GLOBAL_PLAN.json set the task's `status: "in_progress"`, `owner`, `branch`; commit that first.
+2. `git fetch`; look at `.agent/GLOBAL_PLAN.json` on `origin/main`. Pick a task whose `status` is `todo` and whose
+   `depends_on` are `done`. If its `owner` is another agent, leave it.
+3. **Open pull requests are the claim board** (a claim on an unpushed branch is invisible to everyone else). Before
+   claiming, look for an open PR whose title starts with the task id; if there is one, the task is taken.
+4. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `antigravity/`, `grok/`, `copilot/`) from `origin/main`. In
+   GLOBAL_PLAN.json set the task's `status: "in_progress"`, `owner`, `branch`; commit, push, and open a draft PR
+   titled `<TASK-ID>: <what>` right away. That draft PR is the claim. Two drafts for one id: the older one keeps it.
 
 ## Ending a session (or switching models): the handoff
 
 1. Commit and push. Nothing may live only in a local checkout or a chat.
-2. Write the next memo `.handoffs/NNN_<agent>_<role>.md` (NNN = last number + 1, role = coder / reviewer /
-   debugger / planner), using the four sections below, and copy it over `.handoffs/LATEST.md` (a copy, not a
-   symlink: Windows checkouts break symlinks). Never edit older memos.
+2. Write a memo `.handoffs/<YYYYMMDD-HHMM>Z_<agent>_<TASK-ID>_<role>.md` (UTC time, role = coder / reviewer /
+   debugger / planner; the time + task keep parallel branches from picking the same name; 001-004 are the old
+   numbering). Start it with one line: task id, branch, base and head SHA, PR link, working tree clean or not.
+   Then the four sections below. Copy it over `.handoffs/LATEST.md` (a copy, not a symlink: Windows checkouts
+   break symlinks). If LATEST.md conflicts on merge, keep the newer memo. Never edit older memos.
    - **📍 Where We Stopped**: active task, current state, blockers/bugs.
-   - **🛠️ Environmental Verification**: last test run and result (PASSED/FAILED, which test), exact command to re-run.
+   - **🛠️ Environmental Verification**: last test run and result (PASSED/FAILED, which test), exact command and
+     working directory to re-run, and where the evidence is (run URL). Say "reported" for results you didn't see
+     yourself, "verified" for ones you did, and the SHA each was at. A skipped CI job is not a pass.
    - **📦 Changes Introduced in This Session**: files created/modified, one line each.
    - **⏭️ Precise Next Steps for Incoming Model**: numbered `[ ]` items, concrete enough to start without asking.
 3. Update the task in GLOBAL_PLAN.json (`status`, `notes`, `pr`). Add new tasks you discovered.

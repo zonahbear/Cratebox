@@ -14,14 +14,11 @@ edges and please report them.
 This is a fork of Cratebox for iOS (the `ios` branch of [zonahbear/Cratebox](https://github.com/zonahbear/Cratebox),
 which is left as it was). It installs **beside** Cratebox, not over it (bundle ID `com.zonahbear.cratebox.suite`).
 
-## Install (free Apple ID)
+## Install
 
-1. Download **CrateboxSuite.ipa** from the [`ios-latest` release](https://github.com/zonahbear/cratebox-iOS-suite/releases/tag/ios-latest). Every push to `main` rebuilds it.
-2. Install **SideStore** on the iPhone or iPad once (its setup needs a computer one time to make a pairing file; its guide covers Windows, macOS and Linux). AltStore works too.
-3. In SideStore: **My Apps → +**, pick `CrateboxSuite.ipa`, sign in with your Apple ID when it asks.
-4. A free Apple ID's signature lasts 7 days; SideStore refreshes it. Your library, cues and settings stay.
-
-A free Apple ID allows 3 sideloaded apps at once (SideStore counts as one), so Cratebox and Cratebox Suite together fill it.
+Through TestFlight: sign up for the beta on the Cratebox website, accept Apple's invite, then install from the
+TestFlight app. Builds come from `.github/workflows/testflight.yml` (signed with Apple's developer tools, uploaded
+to App Store Connect).
 
 ## Performance Mode
 
@@ -111,8 +108,8 @@ open puts the right version back.
 ## Building
 
 GitHub Actions (`.github/workflows/ios.yml`) on macOS: the CrateboxKit tests (`swift test`), then
-`xcodegen generate` and an unsigned `xcodebuild` packaged as `CrateboxSuite.ipa` and published to `ios-latest`,
-then a launch in the iPhone and iPad simulators with screenshots to the `ci-logs` branch.
+`xcodegen generate` and a simulator build, then a launch in the iPhone and iPad simulators with screenshots to the
+`ci-logs` branch. Installable builds come only from `.github/workflows/testflight.yml`.
 
 Locally on a Mac: `brew install xcodegen && cd ios && xcodegen generate && open Cratebox.xcodeproj`.
 

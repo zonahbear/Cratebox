@@ -22,7 +22,7 @@
 ## Handoff
 
 - Agent / model:
-- [ ] Handoff memo `.handoffs/NNN_<agent>_<role>.md` written and copied to LATEST.md
+- [ ] Handoff memo `.handoffs/<YYYYMMDD-HHMM>Z_<agent>_<TASK-ID>_<role>.md` written and copied to LATEST.md
 - [ ] Task updated in `.agent/GLOBAL_PLAN.json`
 - [ ] App map / CHANGELOG updated if needed
-- [ ] No hard rule in .agent/SYSTEM_PROMPT.md broken (personal/heat, HEAT, audio thread, HEAT safety, sticks, secrets)
+- [ ] No hard rule in .agent/SYSTEM_PROMPT.md broken (personal/heat, HEAT, audio thread, HEAT safety, secrets)

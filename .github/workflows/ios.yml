@@ -1,5 +1,5 @@
 name: iOS checks
-# Tests and simulator screenshots only; installs come from TestFlight (testflight.yml), sideloading is retired.
+# Tests and simulator screenshots only; installs come from TestFlight (testflight.yml).
 # Manual only (Actions → iOS build → Run workflow, pick the branch): each run costs ~130 of the private repo's
 # monthly minutes (macOS counts 10x). TestFlight (testflight.yml) is the normal install route now.
 on:

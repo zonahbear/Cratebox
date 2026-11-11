@@ -1,29 +1,24 @@
 # Current Workspace State
 
-Memo 002 · 2026-11-11 08:40Z · agent: claude (coder) · branch: claude/project-thread-b7gf7r
+Memo 2026-11-11 21:40Z · agent: claude (coder) · task ALL-4 (+ MONO-6, MONO-12) · branch claude/project-thread-b7gf7r · base main 4181a99 · PR https://github.com/zonahbear/Cratebox/pull/19 · tree clean after push
 
 ## 📍 Where We Stopped
-- **Active Task:** Jonah: "merge 16 and heat, port and publish", then "clean everything up and make it less confusing".
-- **Current State:** #16 merged (db99c7f). `personal/heat` pushed (0b5b95c, main merged in). Cleanup PR open (this
-  memo). iOS #31 port ready as a separate PR (MONO-6), left unmerged for review. app-latest + windows-latest
-  workflows started on main.
-- **Blockers/Bugs:** Cloudflare production build FAILED on main (MONO-5); live site unaffected (last good deploy
-  stays). Local `npx wrangler@4 deploy --dry-run` passes, so it's likely a dashboard build setting. Needs the log.
+- **Active Task:** ALL-4. Jonah confirmed "antimatter" means Google Antigravity. He OK'd merging PR #19 (iOS ports + Codex review docs fixes, see memo 20261111-2050Z).
+- **Current State:** Antigravity adapter `.agents/rules/cratebox.md` added. It's a pointer to the shared files only. PR #19 is being merged.
+- **Blockers/Bugs:** MONO-4 (TestFlight secrets) is unchanged. The adapter's auto-loading is unverified until someone opens the repo in Antigravity.
 
 ## 🛠️ Environmental Verification
-- `npx wrangler@4 deploy --dry-run` from the repo root → PASSED (13 asset files, KV + vars bound).
-- Same command on the old layout (0701f9f) → PASSED too, so the difference is on Cloudflare's side.
-- Port of #31: apps/ios-suite tree == suite branch 28ec954 except AGENTS.md/CLAUDE.md and the moved workflows.
-- Not run: iOS tests (macOS only; the other thread runs ios.yml on xcode-27 in the suite repo).
+- Reported, not verified: the search summary of antigravity.google/docs/rules says Antigravity reads AGENTS.md, GEMINI.md and `.agents/rules/*.md`. The page itself isn't reachable from the cloud session.
+- PASSED: GLOBAL_PLAN parses (`python3 -m json.tool .agent/GLOBAL_PLAN.json`, repo root).
 
 ## 📦 Changes Introduced in This Session
-- Cleanup: each app's map is now `apps/<app>/AGENTS.md`; `apps/<app>/CLAUDE.md` only imports it.
-- Removed `agents.txt` (duplicate of LLMS.txt). Docs point to the app AGENTS.md files.
-- `.agent/GLOBAL_PLAN.json`: MONO-1 done, MONO-5 blocked, MONO-6 review, MONO-7 in progress, MONO-9 added.
+- .agents/rules/cratebox.md: new Antigravity adapter.
+- .agent/CONTEXT_MAP.md: lists the adapter.
+- .agent/SYSTEM_PROMPT.md: `antigravity/` branch prefix.
+- .agent/GLOBAL_PLAN.json: ALL-4 is now the smoke check only.
 
 ## ⏭️ Precise Next Steps for Incoming Model
-1. [ ] Jonah: open the failed Workers Build log (link on the main commit's "Workers Builds: cratebox" check) and
-       share the error; or clear any build command / root directory / config path in Workers → cratebox → Settings → Build.
-2. [ ] Check releases app-latest and windows-latest in zonahbear/Cratebox (Actions runs of cratebox-app.yml / cratebox-windows.yml).
-3. [ ] Review/merge the iOS #31 port PR after the suite thread's xcode-27 screenshots confirm 28ec954 (re-sync if it moved).
-4. [ ] Jonah: MONO-9 (delete merged branches, close PR #3), MONO-4 (secrets), MONO-2 (truecurve).
+1. [ ] Jonah (on his machine): open the repo in Antigravity and ask it "what are the hard rules and the active task?" from the root and from apps/web.
+2. [ ] HEAT-2: merge main into personal/heat (needs Jonah's go).
+3. [ ] Jonah: MONO-4, MONO-9, MONO-2, MONO-11.
+4. [ ] Agents: ALL-2, ALL-3, ALL-5.

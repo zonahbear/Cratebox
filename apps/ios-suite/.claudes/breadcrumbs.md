@@ -236,3 +236,54 @@ unstarted four times; that also means #28 itself has never been compiled). First
   build 49.1 from 0e7eab4 (includes #30's Ask the library + AI mode + Apple analysis). Not tried on a device.
 - Jonah (03:16Z): drop the Beat This! Core ML model; Music Understanding covers it. coreml.yml / convert.py from #30 are
   still in the tree, unused.
+
+## 2026-11-11 (later): Xcode 27 redraw bug, TestFlight run 50
+
+- TestFlight 49.1 (first Xcode 27 build): LIBRARY / WAVE / DECKS tapped (state saved) but the phone screen never changed.
+  Cause: on the iOS 27 SDK, app state read inside `PhoneScreen`'s `GeometryReader` closure no longer redraws it
+  (child views with their own `@EnvironmentObject`, like the top bar, still do).
+- Fix 28ec954: the screen's contents are `PhoneFrame` (PhoneLayout.swift), which reads state in its own body; the iPad
+  `pad` (ContentView.swift) captures `waveMode` in the body. Verified by ios.yml run 42983849649 on `xcode-27`
+  (shots: iPhone 17 Pro wave + browse, iPad wave). TestFlight run 50 uploaded from 28ec954 (build 50.1 expected).
+- Not checked: Deck Bridge and USB screens also read state inside GeometryReader closures (BridgeScreen.swift:16,
+  CrateboxUSBView.swift:69). If they stop updating on Xcode 27 builds, apply the same pattern.
+- Rule of thumb for Xcode 27: don't read observed state inside a GeometryReader closure; pass the size to a child view.
+- Monorepo: this branch at 28ec954 is merged in zonahbear/Cratebox main under apps/ios-suite (PR #18). TestFlight still
+  builds from this repo until the signing secrets are added to the monorepo; new iOS code changes go to the monorepo.
+- Next: Jonah to confirm 50.1 on his phone; personal/heat still needs the Core.onStatus fix (0e7eab4) and this one
+  before any Xcode 27 build.
+
+## 2026-11-11 (afternoon): first overnight Apple analysis, comparison fix, TestFlight run 51
+
+- Jonah's CSV (432 tracks, ~15 s each): Apple tempo same 29%, exactly half 62% (140 → 70), other 9%; key exact 80%.
+  Jonah: half time is fine, account for it (rekordbox and Serato do it too). Never use Apple's BPM raw.
+- Beat / bar-1 columns were blank for 422 rows: `GridCompare` skipped unequal tempos, and stick tracks had rekordbox's
+  BPM but no `firstBeat` until their ANLZ file is read (inferred, not reproduced).
+- Fix a4bc095: `Result.tempoMult` (1, 0.5, 2), `comparable`; `AppleMusic.rows()` calls `Devices.shared.readAnalysis`
+  for stick tracks without a first beat, and labels BPM-without-grid rows "BPM only". CSV has a new `tempo_mult` column.
+  ios.yml run 43049854031 green; TestFlight run 51 uploaded (51.1 expected). Monorepo port: zonahbear/Cratebox PR #19.
+- Next: Jonah re-exports the CSV (no re-analysis needed); read bar-1 agreement from it. Proposal for track / transition
+  suggestions + similarity: https://claude.ai/artifact/R1RpoHyn11ENTGFFfA6Z4s (4 decisions pending, nothing built).
+
+## 2026-11-11 (later): track suggestions, mix points, Apple grid setting (PR #31, commit 988438f)
+
+Jonah: "Go ahead with track suggestions and mix in points. On supported devices, allow to use strictly/prefer Apple
+Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All behind AI mode.
+
+- **Beat grids** (Settings → AI mode, `cb.ai.grid`, `AppleGridMode` in AppleMusic.swift): 0 off, 1 prefer (Apple's grid
+  instead of Cratebox's own; rekordbox's stay), 2 only (Apple's over rekordbox's too). Applied in `AppModel.load()`, so
+  at the next load of a track. Hand-fixed grids (`gridManual`, incl. rekordbox XML imports) always stay. The grid is
+  `AppleFeatures.grid(near:range:)` (Kit): least-squares line through Apple's beats, nil when under 16 beats or the
+  tempo wanders (then the track keeps its grid), octave folded to rekordbox's / the track's BPM, else Settings BPM range.
+  `TrackInfo.appleGrid` (saved as `TrackRecord.appleGrid`) marks it; the pre-Apple grid stays in autoBpm/autoFirst and
+  comes back when the setting is turned off. Deck label says APPLE GRID. Keys and cues are not touched.
+- **MATCH** sort (`SortKey.match`; LibraryView column, BrowserView chip): `Suggest` (AppleMusic.swift) scores every
+  track against the playing deck with Kit `NextTrack` (tempo fit on the free deck's range, key, plus energy from LUFS
+  and vocal/drum/bass shares when Apple analysed both). Stamps in AppleMusic's index now keep lufs + shares (`backfill`
+  reads old results once). Untuned: `NextTrack.energy(lufs:)` is a guess; played-this-session isn't tracked; pace unused.
+- **MIX IN / MIX OUT** markers (`MixPoints.suggest`, Kit; drawn in WaveformView + OverviewView, green): 8-bar phrase
+  lines on the deck's grid; in = first phrase in the first half with drums and no vocals, out = start of the last
+  vocal-free stretch. Suggestions only, nothing is cued.
+- Test tracks: Jonah's USB backup is at `C:\Users\zonah\Desktop\usb backup` on his PC (out of date, fine for reference).
+- Next: device check by Jonah; then maybe markers → hot cues, "More like this" similarity list, transition warnings.
+- Shipped: ios.yml run 61 green (988438f), TestFlight run 52 uploaded 17:16Z (build 52.1 expected). Untested on a device.

@@ -15,6 +15,8 @@ struct TrackRecord: Codable {
     var phrases: [Phrase]
     var gridManual: Bool, autoBpm: Double?, autoFirst: Double?
     var ver: Int
+    /// the stored grid is Apple's (AI mode's grid setting), not Cratebox's own: nil in older libraries
+    var appleGrid: Bool? = nil
 }
 
 final class LibTrack: Identifiable {
@@ -28,10 +30,12 @@ final class LibTrack: Identifiable {
         rec = r
         info = TrackInfo(id: r.id, title: r.title, artist: r.artist, bpm: r.bpm, firstBeat: r.firstBeat, key: r.key, duration: r.duration, phrases: r.phrases)
         info.gridManual = r.gridManual; info.autoBpm = r.autoBpm; info.autoFirst = r.autoFirst
+        info.appleGrid = r.appleGrid ?? false
     }
     func sync() {
         rec.bpm = info.bpm; rec.firstBeat = info.firstBeat; rec.key = info.key; rec.duration = info.duration; rec.phrases = info.phrases
         rec.gridManual = info.gridManual; rec.autoBpm = info.autoBpm; rec.autoFirst = info.autoFirst
+        rec.appleGrid = info.appleGrid ? true : nil
     }
     var analysed: Bool { rec.ver == Library.ANALYSIS_VER && (rec.bpm ?? 0) > 0 }
 }
@@ -244,6 +248,7 @@ final class Library: ObservableObject {
                 self.analysing = false; self.current = nil
                 if let (r, dur) = res {
                     t.info.bpm = r.bpm; t.info.firstBeat = r.firstBeat; t.info.phrases = r.phrases; t.info.duration = dur
+                    t.info.appleGrid = false
                     if !t.info.keyFromRekordbox { t.info.key = r.key }
                     t.rec.ver = Library.ANALYSIS_VER
                     if !t.info.gridManual { t.info.autoBpm = r.bpm; t.info.autoFirst = r.firstBeat }

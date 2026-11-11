@@ -22,7 +22,7 @@ Read the first four in order, then only the map of the app you touch.
 ## Reviews and handoffs
 
 - [.agent/REVIEW.md](.agent/REVIEW.md): review checklist.
-- [.handoffs/](.handoffs/): numbered memos `NNN_<agent>_<role>.md`, newest copied to LATEST.md.
+- [.handoffs/](.handoffs/): memos `<YYYYMMDD-HHMM>Z_<agent>_<TASK-ID>_<role>.md` (time-stamped so parallel branches don't collide), newest copied to LATEST.md.
 - [.github/pull_request_template.md](.github/pull_request_template.md): what every PR states.
 
 ## Optional

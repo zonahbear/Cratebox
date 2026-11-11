@@ -1,7 +1,7 @@
 import SwiftUI
 import CrateboxKit
 
-enum SortKey: String, CaseIterable { case none, title, artist, bpm, key, time }
+enum SortKey: String, CaseIterable { case none, title, artist, bpm, key, time, match }
 
 struct LibraryPane: View {
     @EnvironmentObject var app: AppModel
@@ -95,8 +95,14 @@ struct LibraryPane: View {
         }
         let (k, desc) = sort
         if k != .none {
+            // MATCH: what would follow the playing track best comes first (AI mode; no order without a playing track)
+            let ctx = k == .match && AIMode.on ? Suggest.context() : nil
             func v(_ r: Row) -> (Double, String) {
                 switch k {
+                case .match:
+                    guard let ctx else { return (0, "") }
+                    guard let t = r.t, t.id != ctx.now.id, let m = Suggest.score(t, ctx) else { return (1, "") }
+                    return (-m.score, "")
                 case .title: return (0, r.title.lowercased())
                 case .artist: return (0, r.artist.lowercased())
                 case .bpm: return (r.t?.info.bpm ?? 0, "")
@@ -210,6 +216,7 @@ struct LibraryPane: View {
             col("BPM", .bpm, 54)
             col("Key", .key, 40)
             col("Time", .time, 46)
+            if aiMode { col("Match", .match, 50) }
             Text("Load").frame(width: CGFloat(core.deckCount) * 31 + 8).font(.system(size: 10)).foregroundStyle(Theme.muted)
         }.padding(.horizontal, 6).frame(height: 22).background(Theme.raise)
     }
@@ -264,6 +271,7 @@ struct LibraryPane: View {
             Text(t.map { ($0.info.bpm ?? 0) > 0 ? String(format: "%.1f", $0.info.bpm!) : ($0.analysed ? "?" : "…") } ?? "").frame(width: 54, alignment: .leading).font(Theme.mono)
             keyCell(t, ref).frame(width: 40, alignment: .leading)
             Text(t.map { $0.info.duration > 0 ? clockShort($0.info.duration) : "" } ?? "").frame(width: 46, alignment: .leading).font(Theme.mono).foregroundStyle(Theme.muted)
+            if aiMode { Text(Suggest.label(t)).frame(width: 50, alignment: .leading).font(Theme.mono).foregroundStyle(Theme.ok) }
             HStack(spacing: 3) {
                 ForEach(core.activeDecks, id: \.self) { d in
                     Button { if let t { app.load(t, deck: d) } } label: {
