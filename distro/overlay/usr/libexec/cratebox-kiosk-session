@@ -1,0 +1,35 @@
+#!/bin/sh
+# Cratebox kiosk session: Cratebox full screen under a bare openbox (no panel, no compositor).
+# When Cratebox quits (Alt+F4, Ctrl+Alt+Q or its exit button), the session ends and the login screen
+# comes back (pick Lubuntu there for the desktop). On the live ISO, the live desktop given as arguments
+# starts instead, since there is no login screen to go back to.
+
+# 2x on the MacBook's panel comes from /etc/X11/Xsession.d/45cratebox-hidpi (every session gets it).
+
+# While Cratebox runs: the CPU's performance profile (fast reaction to load bursts, so the audio
+# callback isn't waiting on clock ramp-up; thermald still guards the fanless chip) and no blanking
+was=$(powerprofilesctl get 2>/dev/null)
+powerprofilesctl set performance 2>/dev/null
+xset s off -dpms
+# Wi-Fi and Bluetooth on (they stay off if a previous session or the airplane key left them off)
+rfkill unblock wifi bluetooth 2>/dev/null
+nmcli radio wifi on 2>/dev/null
+bluetoothctl power on >/dev/null 2>&1 &
+# playerctld: remembers the last media player, so the play/pause, previous and next keys (playerctl in
+# openbox-rc.xml) reach it (the Lubuntu desktop starts it from /etc/xdg/autostart)
+command -v playerctld >/dev/null && { pgrep -u "$(id -u)" -x playerctld >/dev/null || playerctld daemon; }
+# Nicotine+ (Soulseek) saves into ~/Music/Cratebox Downloads, which Cratebox adds to the collection
+# (the WEB button's Chromium saves there too); only once Nicotine+ has written its config
+dl="$HOME/Music/Cratebox Downloads"
+mkdir -p "$dl"
+nc="$HOME/.config/nicotine/config"
+[ -f "$nc" ] && grep -q '^downloaddir *=' "$nc" && sed -i "s|^downloaddir *=.*|downloaddir = $dl|" "$nc"
+openbox --config-file /usr/share/cratebox-os/openbox-rc.xml &
+ob=$!
+cratebox --kiosk
+kill "$ob" 2>/dev/null
+wait "$ob" 2>/dev/null
+xset s on +dpms
+[ -n "$was" ] && powerprofilesctl set "$was" 2>/dev/null
+[ $# -gt 0 ] && exec "$@"
+exit 0

@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=Cratebox
+Comment=Cratebox full screen; quitting it goes back to the login screen
+Exec=/usr/libexec/cratebox-kiosk-session
+Type=Application
+DesktopNames=LXQt
