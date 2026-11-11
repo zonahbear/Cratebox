@@ -22,7 +22,7 @@ Applies to Claude, ChatGPT/Codex, Gemini, Grok, Copilot and humans alike. Read i
 ## Starting a session
 
 1. Read `.handoffs/LATEST.md` → this file → `.agent/CONTEXT_MAP.md` → the map of the one app you touch
-   (`apps/<name>/CLAUDE.md`, for every agent despite the name). Don't re-scan the repo.
+   (`apps/<name>/AGENTS.md`). Don't re-scan the repo.
 2. `git fetch`; look at `.agent/GLOBAL_PLAN.json`. Pick a task whose `status` is `todo` and whose `depends_on` are
    `done`. If its `owner` is another agent, leave it.
 3. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `grok/`, `copilot/`) from `origin/main`.
