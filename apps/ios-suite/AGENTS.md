@@ -1,4 +1,19 @@
-# AGENTS.md (apps/ios-suite/)
+# AGENTS.md: Cratebox Suite (iOS)
 
-This app's map is [CLAUDE.md](CLAUDE.md): it applies to every agent, the name is historical.
-Repo-wide rules and handoff: [../../AGENTS.md](../../AGENTS.md), [../../.handoffs/LATEST.md](../../.handoffs/LATEST.md).
+> Monorepo (2026-11-11): this folder is `apps/ios-suite/` in zonahbear/Cratebox. Paths below are relative to it; workflows
+> live in the root `.github/workflows/`. Start at the root [AGENTS.md](../../AGENTS.md).
+
+Read this first. Keep it short.
+
+## Rules
+
+- **Device sizes:** [`docs/device-sizes.md`](docs/device-sizes.md) is the only source for screen sizes, scales, safe
+  areas and Display Zoom sizes, for the shipping app and for the personal HEAT build (`personal/heat`). Never estimate a
+  size. If a device is missing, measure it (ios.yml, `measure: true`) and add it there first.
+- HEAT never goes into the shipping app (`com.zonahbear.cratebox.suite`). It lives only on `personal/heat`
+  (`com.zonahbear.cratebox.heat`), which never merges back.
+- Installs only via TestFlight (sideloading retired). macOS CI is manual-only, on `macos-15-intel` (the arm64 pool stopped picking jobs up, Nov 2026).
+
+## Breadcrumbs
+
+Session notes and next steps: [`.claudes/breadcrumbs.md`](.claudes/breadcrumbs.md).

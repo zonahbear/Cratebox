@@ -13,17 +13,18 @@ apps/ios-suite/  native Swift iOS app (ios/), Deck Bridge, a copy of the web fil
 apps/truecurve/  NOT MERGED YET: Puffco heat curves (private repo; see GLOBAL_PLAN)
 .github/workflows/ every workflow (GitHub ignores nested ones)
 wrangler.toml      Cloudflare Worker for the website; paths point into apps/web/site/
-LLMS.txt           project index (llms.txt layout); agents.txt = paste-able plain-text brief
+LLMS.txt           project index (llms.txt layout); paste it into a chat that can't read the repo
 AGENTS.md CLAUDE.md GEMINI.md .github/copilot-instructions.md   per-tool entry files, all pointing here
 ```
 
-| App | Language | Map (for every agent) | Was repo |
+| App | Language | Map | Was repo |
 |---|---|---|---|
-| apps/web | HTML/JS, Python tests (Playwright) | apps/web/CLAUDE.md | zonahbear/Cratebox |
-| apps/linux | Rust (eframe/egui, cpal, midir, symphonia) | apps/linux/CLAUDE.md | zonahbear/Cratebox-Linux |
-| apps/ios-suite | Swift (SwiftUI, AVAudioEngine), XcodeGen | apps/ios-suite/CLAUDE.md | zonahbear/cratebox-iOS-suite (preview/truecurve-usb) |
+| apps/web | HTML/JS, Python tests (Playwright) | apps/web/AGENTS.md | zonahbear/Cratebox |
+| apps/linux | Rust (eframe/egui, cpal, midir, symphonia) | apps/linux/AGENTS.md | zonahbear/Cratebox-Linux |
+| apps/ios-suite | Swift (SwiftUI, AVAudioEngine), XcodeGen | apps/ios-suite/AGENTS.md | zonahbear/cratebox-iOS-suite (preview/truecurve-usb) |
 
-App maps describe the app from inside: paths relative to it, "this repo" = the app folder.
+Each app also has a CLAUDE.md that only imports its AGENTS.md. App maps describe the app from inside: paths
+relative to it, "this repo" = the app folder.
 
 ## Branches
 

@@ -15,9 +15,9 @@ Read the first four in order, then only the map of the app you touch.
 
 ## Apps
 
-- [apps/web/CLAUDE.md](apps/web/CLAUDE.md): web player `apps/web/cratebox.html` (source of truth) and the website.
-- [apps/linux/CLAUDE.md](apps/linux/CLAUDE.md): Rust app, Cratebox OS ISO, Windows build.
-- [apps/ios-suite/CLAUDE.md](apps/ios-suite/CLAUDE.md): Swift iOS app, Deck Bridge.
+- [apps/web/AGENTS.md](apps/web/AGENTS.md): web player `apps/web/cratebox.html` (source of truth) and the website.
+- [apps/linux/AGENTS.md](apps/linux/AGENTS.md): Rust app, Cratebox OS ISO, Windows build.
+- [apps/ios-suite/AGENTS.md](apps/ios-suite/AGENTS.md): Swift iOS app, Deck Bridge.
 
 ## Reviews and handoffs
 
@@ -27,5 +27,4 @@ Read the first four in order, then only the map of the app you touch.
 
 ## Optional
 
-- [agents.txt](agents.txt): plain-text brief to paste into a chat that can't read the repo.
 - Per-app history: `apps/<app>/.claudes/breadcrumbs.md`; user-facing changes: `apps/<app>/CHANGELOG.md`.
