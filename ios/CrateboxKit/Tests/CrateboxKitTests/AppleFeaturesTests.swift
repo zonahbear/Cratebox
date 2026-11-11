@@ -37,10 +37,33 @@ final class AppleFeaturesTests: XCTestCase {
         XCTAssertEqual(r.barShift, 0)
         XCTAssertTrue(r.agrees)
     }
-    func testDoubleTimeIsReportedNotCompared() {
+    func testDoubleTimeIsCompared() {
         let r = GridCompare.compare(.init(bpm: 87, firstBeat: 0), apple: apple(bpm: 174, first: 0))
         XCTAssertEqual(r.tempoRatio!, 2, accuracy: 1e-9)
-        XCTAssertNil(r.beatOffset); XCTAssertNil(r.barShift)
+        XCTAssertEqual(r.tempoMult, 2); XCTAssertFalse(r.sameTempo)
+        XCTAssertEqual(r.beatOffsetMs!, 0, accuracy: 1e-6)
+        XCTAssertEqual(r.beatsOnGrid!, 1, accuracy: 1e-9)
+        XCTAssertEqual(r.barShift, 0)
+        XCTAssertTrue(r.agrees)
+    }
+    func testHalfTimeIsCompared() {
+        // the usual case for 140 bass music: Apple counts 70. Its beats are every second one of ours, its bars two of ours
+        let r = GridCompare.compare(.init(bpm: 140, firstBeat: 0.3), apple: apple(bpm: 70, first: 0.3))
+        XCTAssertEqual(r.tempoMult, 0.5)
+        XCTAssertEqual(r.beatOffsetMs!, 0, accuracy: 1e-6)
+        XCTAssertEqual(r.barShift, 0); XCTAssertEqual(r.barShare!, 1, accuracy: 1e-9)
+        XCTAssertTrue(r.agrees)
+        // Apple's half-time beats on our off-beats (2 and 4): on the grid, but its bars start on our beat 2
+        let p = 60 / 140.0
+        let s = GridCompare.compare(.init(bpm: 140, firstBeat: 0.3), apple: apple(bpm: 70, first: 0.3 + p))
+        XCTAssertEqual(s.beatOffsetMs!, 0, accuracy: 1e-6)
+        XCTAssertEqual(s.barShift, 1)
+        XCTAssertFalse(s.agrees)
+    }
+    func testOtherTempoRatiosAreReportedNotCompared() {
+        let r = GridCompare.compare(.init(bpm: 180, firstBeat: 0), apple: apple(bpm: 60, first: 0))
+        XCTAssertEqual(r.tempoRatio!, 1 / 3.0, accuracy: 1e-9)
+        XCTAssertNil(r.tempoMult); XCTAssertNil(r.beatOffset); XCTAssertNil(r.barShift)
         XCTAssertFalse(r.agrees)
     }
     func testTempoFromBeatsWhenAppleGivesNone() {

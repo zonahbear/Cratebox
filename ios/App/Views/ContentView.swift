@@ -306,9 +306,10 @@ struct AppleCompareView: View {
         List {
             Section {
                 let tempo = rows.filter { $0.cmp.sameTempo }.count
-                let beats = rows.filter { $0.cmp.sameTempo && abs($0.cmp.beatOffset ?? 1) < 0.125 }.count
+                let half = rows.filter { $0.cmp.comparable && !$0.cmp.sameTempo }.count
+                let beats = rows.filter { $0.cmp.comparable && abs($0.cmp.beatOffset ?? 1) < 0.125 }.count
                 let bars = rows.filter { $0.cmp.agrees }.count
-                Text("\(rows.count) tracks · same tempo \(tempo) · beats within ⅛ beat \(beats) · same bar 1 \(bars)")
+                Text("\(rows.count) tracks · same tempo \(tempo) · half or double \(half) · beats within ⅛ beat \(beats) · same bar 1 \(bars)")
                 Button("Save as CSV (Files → Cratebox Suite)") {
                     saved = apple.exportCSV().map { "Saved \($0.lastPathComponent)" } ?? "Couldn't save"
                 }
