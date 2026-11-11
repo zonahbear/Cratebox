@@ -44,6 +44,7 @@ jobs:
       - name: Core tests (swift test, optimised)
         id: tests
         continue-on-error: true
+        timeout-minutes: 25      # a hung test (Xcode 27 once looped forever in Core.status) mustn't burn hours of Mac minutes
         run: |
           set -o pipefail
           cd ios/CrateboxKit && CRATEBOX_MUSIC="$RUNNER_TEMP/music" swift test -c release -Xswiftc -enable-testing 2>&1 | tee -a ../../ci.log
