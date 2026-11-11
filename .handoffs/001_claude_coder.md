@@ -4,7 +4,7 @@ Memo 001 · 2026-11-11 08:30Z · agent: claude (coder) · branch: claude/project
 
 ## 📍 Where We Stopped
 - **Active Task:** MONO-1, rebuild the monorepo after the first merge attempt on main (0b52c0a).
-- **Current State:** Done and pushed; PR open into `main`, waiting on Jonah's review. Branch `personal/heat` pushed.
+- **Current State:** Done and pushed; PR #16 open into `main`, waiting on Jonah's review. Branch `personal/heat` built (commit 1aaccbb) but not pushed yet: needs Jonah's OK.
 - **Blockers/Bugs:** `main` (until this PR merges) has `<<<<<<<` markers in 7 files and a failing Cloudflare build;
   the live site is still the 0701f9f deploy. truecurve not merged (private repo, this one is public): MONO-2.
 
