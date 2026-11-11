@@ -36,7 +36,7 @@ change the repo.
    `depends_on` are `done`. If its `owner` is another agent, leave it.
 3. **Open pull requests are the claim board** (a claim on an unpushed branch is invisible to everyone else). Before
    claiming, look for an open PR whose title starts with the task id; if there is one, the task is taken.
-4. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `grok/`, `copilot/`) from `origin/main`. In
+4. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `antigravity/`, `grok/`, `copilot/`) from `origin/main`. In
    GLOBAL_PLAN.json set the task's `status: "in_progress"`, `owner`, `branch`; commit, push, and open a draft PR
    titled `<TASK-ID>: <what>` right away. That draft PR is the claim. Two drafts for one id: the older one keeps it.
 

@@ -1,6 +1,6 @@
 {
   "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
-  "updated": "2026-11-11T20:45:00Z",
+  "updated": "2026-11-11T21:40:00Z",
   "tasks": [
     {
       "id": "MONO-1",
@@ -243,15 +243,15 @@
     },
     {
       "id": "ALL-4",
-      "title": "Adapter for Google Antigravity (if that's the 'antimatter' tool) + fresh-session smoke check of every agent's entry file",
+      "title": "Fresh-session smoke check of every agent's entry files (Codex, Claude Code, Gemini CLI, Antigravity, Copilot)",
       "app": "repo",
       "status": "todo",
       "owner": null,
       "branch": null,
       "pr": null,
       "depends_on": [],
-      "needs_go": true,
-      "notes": "Codex review 2026-11-11. Unverified which product Jonah means. Smoke check: from the root and from an app folder, ask each tool for the active task, hard rules, app map and verification command."
+      "needs_go": false,
+      "notes": "Jonah 2026-11-11: 'antimatter' = Google Antigravity. Adapter added: .agents/rules/cratebox.md (reported by third-party guides + search summary of antigravity.google/docs/rules: Antigravity reads AGENTS.md, GEMINI.md and .agents/rules/*.md; official page not reachable from the cloud session, so unverified). Still to do, on Jonah's machine: from the root and from an app folder, ask each tool for the active task, hard rules, app map and verification command."
     },
     {
       "id": "ALL-5",

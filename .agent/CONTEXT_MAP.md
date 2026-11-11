@@ -14,7 +14,7 @@ apps/truecurve/  NOT MERGED YET: Puffco heat curves (private repo; see GLOBAL_PL
 .github/workflows/ every workflow (GitHub ignores nested ones)
 wrangler.toml      Cloudflare Worker for the website; paths point into apps/web/site/
 LLMS.txt           project index (llms.txt layout); paste it into a chat that can't read the repo
-AGENTS.md CLAUDE.md GEMINI.md .github/copilot-instructions.md   per-tool entry files, all pointing here
+AGENTS.md CLAUDE.md GEMINI.md .github/copilot-instructions.md .agents/rules/cratebox.md (Antigravity)   per-tool entry files, all pointing here
 ```
 
 | App | Language | Map | Was repo |
