@@ -228,3 +228,11 @@ unstarted four times; that also means #28 itself has never been compiled). First
   testflight.yml pushes stay on macos-15-intel (no Music Understanding in those builds) unless run by hand with xcode-27.
 - Tests: CrateboxKitTests/AppleFeaturesTests (GridCompare, key, bin, Codable). The framework call itself can only be
   tried on an iOS 27 device.
+- 03:30Z: first xcode-27 run hung in the core tests: Xcode 27's Swift resolved `status(s, secs)` inside
+  `Core.status(_:_:)` to the method itself (endless loop; "function call causes an infinite recursion" warning). Fixed by
+  renaming the closure to `Core.onStatus` (0e7eab4). personal/heat has the same Core.swift: it needs this fix before any
+  Xcode 27 build of it. ios.yml's test step now has a 25-minute timeout.
+- Second run (42952836934, Xcode 27.2): 99 tests pass, app builds. TestFlight run 42953441241 on xcode-27 uploaded
+  build 49.1 from 0e7eab4 (includes #30's Ask the library + AI mode + Apple analysis). Not tried on a device.
+- Jonah (03:16Z): drop the Beat This! Core ML model; Music Understanding covers it. coreml.yml / convert.py from #30 are
+  still in the tree, unused.
