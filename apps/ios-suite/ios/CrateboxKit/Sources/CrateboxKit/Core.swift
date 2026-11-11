@@ -654,7 +654,7 @@ public final class Core: ObservableObject {
     /// how far what you hear is behind `clock` (the output's latency); the app sets it, tests can
     public var lag: () -> Double = { 0 }
     public var wallMs: () -> Double = { hostSeconds() * 1000 }
-    public var status: (String, Double) -> Void = { _, _ in }
+    public var onStatus: (String, Double) -> Void = { _, _ in }   // set by the app; `status(_:_:)` calls it
     public var trackChanged: (TrackInfo) -> Void = { _ in }
     public var reanalyse: (TrackInfo) -> Void = { _ in }
     public var playStarted: () -> Void = {}
@@ -681,7 +681,7 @@ public final class Core: ObservableObject {
         engine.post(.mixer(mixer))
         for d in decks { engine.post(.deck(d.i, .mt(d.mt))) }
     }
-    public func status(_ s: String, _ secs: Double = 4) { status(s, secs) }
+    public func status(_ s: String, _ secs: Double = 4) { onStatus(s, secs) }   // was `status(s, secs)`: Swift 6.3 (Xcode 27) resolves that to this method, an endless loop
     /// 2, 3 or 4
     public var deckCount: Int { four ? (three ? 3 : 4) : 2 }
     /// the decks in play, in order (0, 1, then 2 and 3)
