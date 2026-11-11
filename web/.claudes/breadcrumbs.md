@@ -1,0 +1,55 @@
+# Breadcrumbs: Cratebox (web)
+
+## 2026-11-02: web catch-up with the iOS app (branch claude/project-thread-0pjrfq)
+
+Done (one commit each): iOS SYNC rules; 3 decks; Booth top waveforms + HIDE WAVES, WAVE mode + pop-up library,
+library grip; phone SCRATCH tab; Settings window (⚙); phone Touch mode; KEY SHIFT pads (new, not on iOS yet);
+EJECT; 1440p 4-deck overflow fix.
+
+Tests: run with `CRATEBOX_CHROME=/opt/pw-browsers/chromium-1243/chrome-linux64/chrome` in cloud sessions. Run suites
+one at a time: in parallel, the timing tests (cratebox, sync, layers, fourdeck, audio_first) fail at random.
+New: test_wave.py, test_keyshift.py, test_eject.py.
+Failing on main before this branch too: test_phrases (`select_option #lockSel` after Esc closes Settings),
+test_playlists (`.rbwarn` also matches #heatSheet).
+
+Next:
+- FLX4 KEY SHIFT notes (0x70+p, SHIFT 0x70+p = reset) are inferred; check on hardware (MIDI monitor in Settings).
+- Mixxx-derived maps have no key controls: add pitch_up/pitch_down/reset_key rules to tools/mixxx2cratebox.py, or rely on MIDI learn.
+- The iOS suite's copy of cratebox.html needs a sync after merge; KEY SHIFT should go to iOS (Swift) too.
+- Fix the two old test failures above.
+
+## 2026-11-02 (later): self-review of PR #13
+- Keylock grain search with KEY SHIFT read the track through idx() per sample (~20k calls a grain); now copies the
+  window once (buf sized for steps up to 4x) and reads the array.
+- Library grip: resize + layout checks once per frame (rAF), not per pointer event.
+- WAVE pop-up: trackpad wheel deltas add up (one row per 40 px) instead of a row per event.
+- WAVE strips: key colour only written when the key changes.
+- EJECT: re-checks the decks after waiting for a save (a stick track loaded meanwhile now refuses).
+- 4 decks fit at 1280x800 (library min 86 px there) and 1440x900; under ~800 px tall it still scrolls (tallapp).
+
+## 2026-11-09 review thread (code review, bugs, perf)
+- Fixed: applyView(keepSel) matched `t.id` on `{ t, i }` pairs, so the selection jumped to row 0 on every refresh
+  (analysis every 3 tracks, MATCH re-sort, playlist edits). Bug since the first commit; confirmed in Chromium before/after.
+- Tests: test_phrases opens Settings before #lockSel; test_playlists uses `.rbwarn[open]`, waits for the dialog's close,
+  and runs at 1440x1200. Both pass (17/17, 49/49).
+- Perf: CDP profile, 4 decks playing at 1440x900 headless: frame() JS ~0.5 ms/frame, no hotspot. Not changed.
+- Not done: iOS suite copy of cratebox.html/tests not re-synced (suite main is behind anyway).
+
+## 2026-11-10 second review pass (branch claude/project-thread-t5561g, stacked on PR #14)
+- Bar 1: old vote (kick/snare + bar novelty + "first loud beat") agreed with rekordbox on 23 of 51 real stick tracks;
+  "first loud beat" alone was at chance. New vote in beatGrid: per beat-of-bar, sum of |spectrum of the 2 beats after -
+  2 beats before|, all 16 bands + bass bands (BAR_LOW = 6), each as a share. Tuned on 51 tracks, then checked on 46
+  fresh ones: 19 -> 30 of 43. ANALYSIS_VER 4 (libraries re-analyse once; manual and rekordbox grids are kept).
+  Same code in Cratebox-Linux analysis.rs (results match to 0.1 ms). iOS Swift port NOT updated (its oracle fixtures will drift).
+- Measured, not fixed: 8 of 113 tracks are half a beat off rekordbox (rekordbox's beats sit where our onset energy is
+  weaker; needs ears to say who is right); 2 of 113 tempos wrong at 4/3 and 2/3 (dotted rhythms; a triplet/straight
+  subdivision test did not separate them from correct swing tracks, so no change).
+- Fixed: worklet seek clears `ended` (PLAY after a track ran out could show stopped while sounding); hold-SYNC release
+  after >2.5 s no longer toggles SYNC (heldAt is cleared on the next pointerdown instead of timing out);
+  HEAT panel was caught by the Settings-window CSS (`header .setpanel.setpanel`) and opened half off-screen;
+  HEAT run stops after 3 s without a temperature reading and refuses to start without a slot 4 backup (from truecurve).
+- Tests run: cratebox 64, sync 22, phrases 17, barcounter 9, truecurve 25, puff 21, header 9, layout 20, all pass
+  (truecurve and puff failed before the panel fix: `#tcSim` outside the viewport).
+- Jonah's rule: test with real tracks from his D: stick (rekordbox USB), headless Chromium. Scripts used lived in the
+  session scratchpad; the Linux repo has `examples/grid_compare.rs` for the rekordbox comparison.
+- Next: sync the iOS suite's copy of cratebox.html; port the bar-1 vote to Swift; look at the off-beat cases by ear.
