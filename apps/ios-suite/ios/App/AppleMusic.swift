@@ -284,11 +284,19 @@ final class AppleMusic: ObservableObject {
         guard let app else { return [] }
         return app.library.tracks.compactMap { t in
             guard let f = features(t) else { return nil }
+            // a stick's track has rekordbox's BPM from the start but its grid only once the analysis file is read
+            // (normally at load): read it now, or there's no first beat to compare with
+            if t.info.firstBeat == nil, t.device != nil { Devices.shared.readAnalysis(t) }
             let i = t.info
-            let src = i.gridManual ? "hand-fixed" : i.rbGrid ? "rekordbox" : "Cratebox"
+            var src = i.gridManual ? "hand-fixed" : i.rbGrid ? "rekordbox" : "Cratebox"
             var cmp = GridCompare.Result()
             if let b = i.bpm, b > 0, let fb = i.firstBeat {
                 cmp = GridCompare.compare(.init(bpm: b, firstBeat: fb, beats: i.gridManual ? nil : i.rbBeats, beat0: i.rbBeat0), apple: f)
+            } else if let b = i.bpm, b > 0, let tempo = f.tempo {
+                // a BPM but no grid (a stick that isn't plugged in, or a tag's BPM): only the tempos can be compared
+                src = "BPM only"
+                cmp.tempoRatio = tempo / b
+                cmp.tempoMult = [1.0, 0.5, 2.0].first { abs(tempo / b / $0 - 1) < 0.02 }
             }
             return Row(id: t.id, title: i.title, artist: i.artist, source: src, bpm: i.bpm, appleBpm: f.tempo, key: i.key, appleKey: f.key, cmp: cmp,
                        vocals: f.share("vocal", duration: i.duration), lufs: f.lufs, seconds: f.seconds)
@@ -298,9 +306,9 @@ final class AppleMusic: ObservableObject {
     func exportCSV() -> URL? {
         func q(_ s: String) -> String { "\"" + s.replacingOccurrences(of: "\"", with: "\"\"") + "\"" }
         func n(_ x: Double?, _ d: Int = 2) -> String { x.map { String(format: "%.\(d)f", $0) } ?? "" }
-        var out = "title,artist,grid,bpm,apple_bpm,tempo_ratio,beat_offset_beats,beat_offset_ms,beats_on_grid,bar1_shift_beats,bar1_share,key,apple_key,vocals_share,lufs,apple_seconds\n"
+        var out = "title,artist,grid,bpm,apple_bpm,tempo_ratio,tempo_mult,beat_offset_beats,beat_offset_ms,beats_on_grid,bar1_shift_beats,bar1_share,key,apple_key,vocals_share,lufs,apple_seconds\n"
         for r in rows() {
-            out += [q(r.title), q(r.artist), r.source, n(r.bpm), n(r.appleBpm), n(r.cmp.tempoRatio, 3), n(r.cmp.beatOffset, 3), n(r.cmp.beatOffsetMs, 0),
+            out += [q(r.title), q(r.artist), r.source, n(r.bpm), n(r.appleBpm), n(r.cmp.tempoRatio, 3), n(r.cmp.tempoMult, 1), n(r.cmp.beatOffset, 3), n(r.cmp.beatOffsetMs, 0),
                     n(r.cmp.beatsOnGrid, 2), r.cmp.barShift.map(String.init) ?? "", n(r.cmp.barShare, 2),
                     Keys.camelot(r.key)?.label ?? "", Keys.camelot(r.appleKey)?.label ?? "", n(r.vocals, 2), n(r.lufs, 1), n(r.seconds, 1)].joined(separator: ",") + "\n"
         }

@@ -95,15 +95,20 @@ public enum GridCompare {
     public struct Result: Equatable {
         /// Apple's tempo over ours (1 = same; 2 or 0.5 = it counted double or half time)
         public var tempoRatio: Double?
-        /// median offset of Apple's beats from ours, in beats (−0.5..<0.5) and in ms; nil if the tempos differ
+        /// 1, 0.5 or 2 when Apple's tempo is ours, half or double (within 2%): the cases whose beats can be compared.
+        /// Half time is the usual one for 140-ish bass music: Apple counts 70
+        public var tempoMult: Double?
+        /// median offset of Apple's beats from ours, in our beats and in ms; nil if the tempos can't be compared
         public var beatOffset: Double?, beatOffsetMs: Double?
         /// share of Apple's beats within 1/8 beat of ours
         public var beatsOnGrid: Double?
-        /// which of our beats (0-3, 0 = our bar 1) Apple's bars start on most often, and how often (0...1)
+        /// which of our beats (0-3, 0 = our bar 1) Apple's bars start on most often, and how often (0...1).
+        /// At double time Apple's bar is two of our beats, so only 0 or 1
         public var barShift: Int?, barShare: Double?
         public var sameTempo: Bool { tempoRatio.map { abs($0 - 1) < 0.02 } ?? false }
-        /// same tempo, beats within 1/8 beat, bars on our bar 1
-        public var agrees: Bool { sameTempo && abs(beatOffset ?? 1) < 0.125 && barShift == 0 }
+        public var comparable: Bool { tempoMult != nil }
+        /// same tempo (or half / double), beats within 1/8 beat, bars on our bar 1
+        public var agrees: Bool { comparable && abs(beatOffset ?? 1) < 0.125 && barShift == 0 }
         public init() {}
     }
 
@@ -111,19 +116,23 @@ public enum GridCompare {
         var r = Result()
         guard ref.bpm > 0, let tempo = a.tempo else { return r }
         r.tempoRatio = tempo / ref.bpm
-        guard r.sameTempo, !a.beats.isEmpty else { return r }
-        // beat phase: wrapped to the nearest beat of ours
-        let ph = a.beats.map { p -> Double in let x = ref.position(p); return x - x.rounded() }
+        r.tempoMult = [1.0, 0.5, 2.0].first { abs(r.tempoRatio! / $0 - 1) < 0.02 }
+        guard let mult = r.tempoMult, !a.beats.isEmpty else { return r }
+        // beat phase: wrapped to the nearest beat of ours (half time: Apple's beats are every second one of ours, which
+        // still land on our beats; double time: every second one of Apple's falls between ours, so wrap to half beats)
+        let k = mult == 2 ? 2.0 : 1.0
+        let ph = a.beats.map { p -> Double in let x = ref.position(p) * k; return (x - x.rounded()) / k }
         let off = median(ph)
         r.beatOffset = off
         r.beatOffsetMs = off * 60 / ref.bpm * 1000
         r.beatsOnGrid = Double(ph.filter { abs($0) < 0.125 }.count) / Double(ph.count)
         // bar phase, after taking the beat offset out, so a grid that's a little early doesn't split the vote
         guard !a.bars.isEmpty else { return r }
-        var votes = [0, 0, 0, 0]
+        let n = mult == 2 ? 2 : 4
+        var votes = [Int](repeating: 0, count: n)
         for b in a.bars {
-            let k = Int((ref.position(b) - off).rounded())
-            votes[((k % 4) + 4) % 4] += 1
+            let i = Int((ref.position(b) - off).rounded())
+            votes[((i % n) + n) % n] += 1
         }
         let best = votes.indices.max { votes[$0] != votes[$1] ? votes[$0] < votes[$1] : $0 > $1 }!
         r.barShift = best
