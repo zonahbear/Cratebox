@@ -210,3 +210,21 @@ unstarted four times; that also means #28 itself has never been compiled). First
 - Next: merge PR #29 into preview/truecurve-usb (triggers one more TestFlight build from the merge commit). Nothing tried
   on a device: VINYL, range change + FLX4 soft takeover, master EQ sound, walkthrough layout on SE all need Jonah's hands.
   personal/heat does not have these features.
+
+## 2026-11-11: AI mode + Apple Music Understanding (branch claude/project-thread-oq8tnx, on top of PR #30 + #29)
+
+- Apple's `MusicUnderstanding` (iOS 27+, Xcode 27 SDK) is real: beats, bars, BPM, key ranges, sections/segments/phrases,
+  pace, vocal/drum/bass/other activity, LUFS. The 2026-11-10 Apple Intelligence research missed it.
+- Settings → AI mode (`cb.ai`, OFF by default) gates every AI feature: Ask the library (PR #30, SmartSearch) and
+  Apple music analysis (App/AppleMusic.swift). Nothing is uploaded.
+- AppleMusic: background, one track at a time, only while no deck plays (cancels the session when one starts).
+  Results go to Application Support/Cratebox/apple/<sha>.json + index.json, stamped with the file's size + date (a
+  replaced file is redone). They never touch grids/keys/cues. Settings → AI mode → Compare with the grids shows
+  GridCompare (CrateboxKit/AppleFeatures.swift: tempo ratio, beat offset, bar-1 shift vs Cratebox / rekordbox /
+  hand-fixed grid) and saves "Apple analysis vs grids.csv" to Files. That CSV on Jonah's real tracks decides whether
+  Apple's beats/bars are ever used for anything.
+- Build: `#if canImport(MusicUnderstanding)`; project.yml weak-links it only for `sdk=iphoneos27*`/`iphonesimulator27*`.
+  Only the GitHub `xcode-27` runner (Apple Silicon) has the SDK. ios.yml now defaults to it (input `runner`);
+  testflight.yml pushes stay on macos-15-intel (no Music Understanding in those builds) unless run by hand with xcode-27.
+- Tests: CrateboxKitTests/AppleFeaturesTests (GridCompare, key, bin, Codable). The framework call itself can only be
+  tried on an iOS 27 device.

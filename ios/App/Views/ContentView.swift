@@ -126,6 +126,8 @@ struct SettingsView: View {
     @AppStorage("cb.phrases") var phrases = true
     @AppStorage("cb.wave") var waveStyle = "rgb"
     @AppStorage("cb.compact") var compact = false
+    @AppStorage(AIMode.key) var aiMode = false
+    @ObservedObject var apple = AppleMusic.shared
     @State private var warn = false
     @State private var learning = false
     @State private var hint = ""
@@ -177,6 +179,23 @@ struct SettingsView: View {
                         Text(always ? "This screen always uses Touch mode: it's too small for the full layout, or has no Dynamic Island beside the strips." : "Each deck shows PLAY or PADS, the mixer is a big HI / MID / LOW per channel (tap to cut, tap again to centre), and WAVE, DECKS, FX, REC, TRIM and CFX move into the ⋯ menu.")
                             .font(.caption).foregroundStyle(Theme.muted)
                     }
+                }
+                Section {
+                    Toggle("AI mode", isOn: $aiMode).onChange(of: aiMode) { _, _ in apple.kick() }
+                    if aiMode {
+                        LabeledContent("Ask the library ✨", value: SmartSearch.available ? "On (search box)" : "Needs Apple Intelligence")
+                        if let why = AppleMusic.unavailableReason {
+                            LabeledContent("Apple music analysis", value: "Off")
+                            Text(why).font(.caption).foregroundStyle(Theme.muted)
+                        } else {
+                            LabeledContent("Apple music analysis", value: "\(apple.analysed) track\(apple.analysed == 1 ? "" : "s")" + (apple.failedCount > 0 ? ", \(apple.failedCount) failed" : ""))
+                            if !apple.progress.isEmpty { Text(apple.progress).font(.caption).foregroundStyle(Theme.muted) }
+                            NavigationLink("Compare with the grids…") { AppleCompareView() }
+                            Button("Analyse everything again", role: .destructive) { apple.clear() }
+                        }
+                    }
+                } header: { Text("AI mode") } footer: {
+                    Text("One switch for every AI feature, all on this device (nothing is uploaded). Ask the library turns a sentence into a search (Apple Intelligence, iOS 26+). Apple music analysis (iOS 27+) finds beats, bars, key, phrases, vocals and loudness in the background, only while nothing plays. It doesn't change your grids, keys or cues: it's kept beside them so you can compare.")
                 }
                 Section("Recording") {
                     Picker("Format", selection: $recFmt) { Text("WAV (lossless, ~650 MB per hour)").tag("wav"); Text("AAC 256 kbps (~115 MB per hour)").tag("aac") }
@@ -272,5 +291,46 @@ struct RecInner: View {
                 Text(rec.recording ? String(format: "%d:%02d", Int(rec.seconds) / 60, Int(rec.seconds) % 60) : "REC").font(.system(size: 11, weight: .bold, design: .monospaced))
             }.padding(.horizontal, 8).frame(height: 26).background(Capsule().fill(Theme.raise))
         }.buttonStyle(.plain)
+    }
+}
+
+/// Settings → AI mode → Compare: Apple's beats and bars against the grid each track already has (Cratebox's own,
+/// rekordbox's, or one fixed by hand), so the two can be judged on real tracks. Nothing here changes a grid.
+struct AppleCompareView: View {
+    @ObservedObject var apple = AppleMusic.shared
+    @State private var rows: [AppleMusic.Row] = []
+    @State private var saved = ""
+    var body: some View {
+        List {
+            Section {
+                let tempo = rows.filter { $0.cmp.sameTempo }.count
+                let beats = rows.filter { $0.cmp.sameTempo && abs($0.cmp.beatOffset ?? 1) < 0.125 }.count
+                let bars = rows.filter { $0.cmp.agrees }.count
+                Text("\(rows.count) tracks · same tempo \(tempo) · beats within ⅛ beat \(beats) · same bar 1 \(bars)")
+                Button("Save as CSV (Files → Cratebox Suite)") {
+                    saved = apple.exportCSV().map { "Saved \($0.lastPathComponent)" } ?? "Couldn't save"
+                }
+                if !saved.isEmpty { Text(saved).font(.caption).foregroundStyle(Theme.muted) }
+            } footer: { Text("Bar 1 shift: which beat of our bar Apple's bars start on (0 = the same). Tempo ×2 or ×½ means one of the two counted double or half time.") }
+            ForEach(rows) { r in
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(r.title).font(.system(size: 13, weight: .semibold)).lineLimit(1)
+                    Text(line(r)).font(.system(size: 11, design: .monospaced)).foregroundStyle(r.cmp.agrees ? Theme.ok : Theme.muted)
+                }
+            }
+        }
+        .navigationTitle("Apple vs grids")
+        .onAppear { rows = apple.rows() }
+    }
+    func line(_ r: AppleMusic.Row) -> String {
+        var s = "\(r.source) \(r.bpm.map { String(format: "%.1f", $0) } ?? "–") · Apple \(r.appleBpm.map { String(format: "%.1f", $0) } ?? "–")"
+        if let t = r.cmp.tempoRatio, !r.cmp.sameTempo { s += String(format: " (×%.2f)", t) }
+        if let ms = r.cmp.beatOffsetMs { s += String(format: " · beats %+.0f ms", ms) }
+        if let b = r.cmp.barShift { s += " · bar 1 \(b == 0 ? "same" : "+\(b)")" }
+        let k = Keys.camelot(r.key)?.label ?? "–", ak = Keys.camelot(r.appleKey)?.label ?? "–"
+        s += " · key \(k)/\(ak)"
+        if let v = r.vocals { s += String(format: " · vocals %.0f%%", v * 100) }
+        if let l = r.lufs { s += String(format: " · %.1f LUFS", l) }
+        return s
     }
 }

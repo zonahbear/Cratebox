@@ -14,6 +14,7 @@ struct LibraryPane: View {
     @State private var smart: SmartFilter?
     @State private var asking = false
     @State private var canAsk = false
+    @AppStorage(AIMode.key) private var aiMode = false     // Settings → AI mode: every AI feature is off without it
     @State private var sorts: [String: [String]] = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
     @State private var showSidebar = true
     // what the Files picker was opened for: 0 a music folder, 1 a rekordbox USB, 2 rekordbox XML. Kept apart
@@ -173,7 +174,8 @@ struct LibraryPane: View {
             if !library.progress.isEmpty { Text(library.progress).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1) }
             if editable { EditButton().font(.system(size: 12)) }
         }.padding(6).environment(\.editMode, $editMode)
-        .onAppear { canAsk = SmartSearch.available }
+        .onAppear { canAsk = aiMode && SmartSearch.available }
+        .onChange(of: aiMode) { _, on in canAsk = on && SmartSearch.available; if !on { smart = nil } }
     }
     /// The search box's words → a filter, by Apple's on-device model. "What's playing" is the newest playing deck,
     /// at the tempo it plays at now.
