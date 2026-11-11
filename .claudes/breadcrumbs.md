@@ -236,3 +236,19 @@ unstarted four times; that also means #28 itself has never been compiled). First
   build 49.1 from 0e7eab4 (includes #30's Ask the library + AI mode + Apple analysis). Not tried on a device.
 - Jonah (03:16Z): drop the Beat This! Core ML model; Music Understanding covers it. coreml.yml / convert.py from #30 are
   still in the tree, unused.
+
+## 2026-11-11 (later): Xcode 27 redraw bug, TestFlight run 50
+
+- TestFlight 49.1 (first Xcode 27 build): LIBRARY / WAVE / DECKS tapped (state saved) but the phone screen never changed.
+  Cause: on the iOS 27 SDK, app state read inside `PhoneScreen`'s `GeometryReader` closure no longer redraws it
+  (child views with their own `@EnvironmentObject`, like the top bar, still do).
+- Fix 28ec954: the screen's contents are `PhoneFrame` (PhoneLayout.swift), which reads state in its own body; the iPad
+  `pad` (ContentView.swift) captures `waveMode` in the body. Verified by ios.yml run 42983849649 on `xcode-27`
+  (shots: iPhone 17 Pro wave + browse, iPad wave). TestFlight run 50 uploaded from 28ec954 (build 50.1 expected).
+- Not checked: Deck Bridge and USB screens also read state inside GeometryReader closures (BridgeScreen.swift:16,
+  CrateboxUSBView.swift:69). If they stop updating on Xcode 27 builds, apply the same pattern.
+- Rule of thumb for Xcode 27: don't read observed state inside a GeometryReader closure; pass the size to a child view.
+- Monorepo: this branch at 28ec954 is merged in zonahbear/Cratebox main under apps/ios-suite (PR #18). TestFlight still
+  builds from this repo until the signing secrets are added to the monorepo; new iOS code changes go to the monorepo.
+- Next: Jonah to confirm 50.1 on his phone; personal/heat still needs the Core.onStatus fix (0e7eab4) and this one
+  before any Xcode 27 build.
