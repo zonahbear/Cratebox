@@ -264,3 +264,25 @@ unstarted four times; that also means #28 itself has never been compiled). First
   ios.yml run 43049854031 green; TestFlight run 51 uploaded (51.1 expected). Monorepo port: zonahbear/Cratebox PR #19.
 - Next: Jonah re-exports the CSV (no re-analysis needed); read bar-1 agreement from it. Proposal for track / transition
   suggestions + similarity: https://claude.ai/artifact/R1RpoHyn11ENTGFFfA6Z4s (4 decisions pending, nothing built).
+
+## 2026-11-11 (later): track suggestions, mix points, Apple grid setting (PR #31, commit 988438f)
+
+Jonah: "Go ahead with track suggestions and mix in points. On supported devices, allow to use strictly/prefer Apple
+Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All behind AI mode.
+
+- **Beat grids** (Settings → AI mode, `cb.ai.grid`, `AppleGridMode` in AppleMusic.swift): 0 off, 1 prefer (Apple's grid
+  instead of Cratebox's own; rekordbox's stay), 2 only (Apple's over rekordbox's too). Applied in `AppModel.load()`, so
+  at the next load of a track. Hand-fixed grids (`gridManual`, incl. rekordbox XML imports) always stay. The grid is
+  `AppleFeatures.grid(near:range:)` (Kit): least-squares line through Apple's beats, nil when under 16 beats or the
+  tempo wanders (then the track keeps its grid), octave folded to rekordbox's / the track's BPM, else Settings BPM range.
+  `TrackInfo.appleGrid` (saved as `TrackRecord.appleGrid`) marks it; the pre-Apple grid stays in autoBpm/autoFirst and
+  comes back when the setting is turned off. Deck label says APPLE GRID. Keys and cues are not touched.
+- **MATCH** sort (`SortKey.match`; LibraryView column, BrowserView chip): `Suggest` (AppleMusic.swift) scores every
+  track against the playing deck with Kit `NextTrack` (tempo fit on the free deck's range, key, plus energy from LUFS
+  and vocal/drum/bass shares when Apple analysed both). Stamps in AppleMusic's index now keep lufs + shares (`backfill`
+  reads old results once). Untuned: `NextTrack.energy(lufs:)` is a guess; played-this-session isn't tracked; pace unused.
+- **MIX IN / MIX OUT** markers (`MixPoints.suggest`, Kit; drawn in WaveformView + OverviewView, green): 8-bar phrase
+  lines on the deck's grid; in = first phrase in the first half with drums and no vocals, out = start of the last
+  vocal-free stretch. Suggestions only, nothing is cued.
+- Test tracks: Jonah's USB backup is at `C:\Users\zonah\Desktop\usb backup` on his PC (out of date, fine for reference).
+- Next: device check by Jonah; then maybe markers → hot cues, "More like this" similarity list, transition warnings.
