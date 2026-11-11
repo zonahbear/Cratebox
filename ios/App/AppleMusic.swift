@@ -58,6 +58,8 @@ final class AppleMusic: ObservableObject {
     private var watch: Timer?
     private var retry: DispatchWorkItem?
     private var subs = Set<AnyCancellable>()
+    private var deadFolder = [String: Double]()   // music folders found unreachable, and when
+    private var saveWork: DispatchWorkItem?
     private let dir: URL
 
     private init() {
@@ -105,7 +107,21 @@ final class AppleMusic: ObservableObject {
             later(5); return
         }
         let todo = app.library.tracks.filter { t in index[t.id].map { !current($0, t) } ?? true }
-        guard let t = todo.first(where: { url(of: $0) != nil }), let u = url(of: t) else { progress = todo.isEmpty ? "" : "\(todo.count) to do when their drives are connected"; return }
+        // a folder whose drive isn't there is asked once a minute, not once per track (resolving a bookmark to a
+        // missing drive can take seconds, and this runs on the main thread)
+        let now = Date().timeIntervalSince1970
+        var found: (LibTrack, URL)?
+        for t in todo {
+            if t.device == nil, let since = deadFolder[t.rec.folder], now - since < 60 { continue }
+            if let u = url(of: t) { found = (t, u); break }
+            if t.device == nil { deadFolder[t.rec.folder] = now }
+        }
+        guard let next = found else {
+            progress = todo.isEmpty ? "" : "\(todo.count) to do when their drives are connected"
+            if !todo.isEmpty { later(60) }
+            return
+        }
+        let (t, u) = next
         progress = "Analysing \(todo.count) track\(todo.count == 1 ? "" : "s") (Apple)…"
         let id = t.id, size = t.rec.size, mtime = t.rec.mtime
         jobId = id
@@ -144,15 +160,21 @@ final class AppleMusic: ObservableObject {
             if e is CancellationError || cancelled { progress = AIMode.on ? "Paused while a deck plays" : ""; later(5); return }
             index[id] = Stamp(size: size, mtime: mtime, ver: AppleFeatures.VER, failed: e.localizedDescription)
         }
-        saveIndex()
+        // the index is written a couple of seconds after the last change, not after every track
+        saveWork?.cancel()
+        let w = DispatchWorkItem { [weak self] in self?.saveIndex() }
+        saveWork = w
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: w)
         objectWillChange.send()
-        DispatchQueue.main.async { [weak self] in self?.kick() }
+        // a short breather between tracks (longer after a failure), so a run of quick failures can't keep the
+        // main thread busy
+        if case .failure = r { later(1) } else { later(0.3) }
     }
     private func url(of t: LibTrack) -> URL? { Devices.shared.url(for: t) ?? app?.library.fileURL(t) }
     /// forget everything (Settings), so it's all analysed again
     func clear() {
         job?.cancel()
-        index = [:]; cache = [:]; analysed = 0
+        index = [:]; cache = [:]; analysed = 0; deadFolder = [:]
         try? FileManager.default.removeItem(at: dir)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         objectWillChange.send()
