@@ -1,6 +1,6 @@
 {
   "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
-  "updated": "2026-11-11T21:50:00Z",
+  "updated": "2026-11-11T23:10:00Z",
   "tasks": [
     {
       "id": "MONO-1",
@@ -73,15 +73,15 @@
       "id": "MONO-6",
       "title": "Port iOS PR #31 (Music Understanding, old repo, into preview/truecurve-usb) onto a branch here",
       "app": "ios-suite",
-      "status": "done",
+      "status": "review",
       "owner": "claude",
       "branch": "claude/project-thread-b7gf7r",
-      "pr": 19,
+      "pr": 20,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "#31 merged as #18 (4181a99). Follow-ups through suite 99d4b73 merged as #19 (24d8b21). Further suite heads get ported until MONO-10."
+      "notes": "#31 merged as #18 (4181a99); follow-ups through 99d4b73 merged as #19 (24d8b21). PR #20 ports 263608d (Touch mode fix, background analysis waits for idle/cool/not Low Power, MATCH keys computed once); suite ios.yml run 62 green, TestFlight 53.1 (reported). Further suite heads get ported until MONO-10."
     },
     {
       "id": "MONO-7",
