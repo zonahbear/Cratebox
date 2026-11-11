@@ -286,3 +286,4 @@ Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All b
   vocal-free stretch. Suggestions only, nothing is cued.
 - Test tracks: Jonah's USB backup is at `C:\Users\zonah\Desktop\usb backup` on his PC (out of date, fine for reference).
 - Next: device check by Jonah; then maybe markers → hot cues, "More like this" similarity list, transition warnings.
+- Shipped: ios.yml run 61 green (988438f), TestFlight run 52 uploaded 17:16Z (build 52.1 expected). Untested on a device.
