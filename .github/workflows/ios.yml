@@ -60,7 +60,7 @@ jobs:
       - name: Launch in the simulators (screenshots)
         id: app
         continue-on-error: true
-        timeout-minutes: 45
+        timeout-minutes: 60      # three devices took 45+ minutes (run 43308247504)
         env: { DEVICES: "${{ inputs.devices || 'iPhone 16 Pro Max,iPad Pro 13-inch (M4)' }}" }
         run: |
           cd ios
@@ -77,7 +77,14 @@ jobs:
           for dev in "${DEVS[@]}"; do
             dev=$(echo "$dev" | sed 's/^ *//; s/ *$//')
             UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next((x['udid'] for r in d.values() for x in r if x['name']=='$dev'), ''))")
-            [ -z "$UDID" ] && UDID=$(xcrun simctl list devices available -j | python3 -c "import json,sys; d=json.load(sys.stdin)['devices']; print(next((x['udid'] for r in d.values() for x in r if x['name'].startswith('${dev%% *}')), ''))")
+            # not on this runner: make it from its device type on the newest iOS runtime (never stand in another
+            # model: run 43308247504 shot an iPhone 17 Pro three times as "16 Pro Max" and "SE")
+            if [ -z "$UDID" ]; then
+              TYPE=$(xcrun simctl list devicetypes -j | python3 -c "import json,sys; print(next((t['identifier'] for t in json.load(sys.stdin)['devicetypes'] if t['name']=='$dev'), ''))")
+              RT=$(xcrun simctl list runtimes available -j | python3 -c "import json,sys; r=[x for x in json.load(sys.stdin)['runtimes'] if x.get('platform')=='iOS']; print(r[-1]['identifier'] if r else '')")
+              [ -n "$TYPE" ] && [ -n "$RT" ] && UDID=$(xcrun simctl create "$dev" "$TYPE" "$RT" 2>/dev/null || true)
+            fi
+            if [ -z "$UDID" ]; then echo "SIM MISSING $dev (no simulator for it on this runner's iOS runtime): skipped" | tee -a ../ci.log; continue; fi
             echo "SIM $dev $UDID" | tee -a ../ci.log
             xcrun simctl boot "$UDID" || true
             [ "${dev%% *}" = iPhone ] && xcrun simctl ui "$UDID" appearance dark || true
