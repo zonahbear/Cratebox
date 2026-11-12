@@ -1,27 +1,26 @@
-Task UI-0 (+ USB-2) · branch claude/ios-ai-dj-album-art-settings · base main 24d8b21 · head 2001708 (+ this memo) · PR https://github.com/zonahbear/Cratebox/pull/24 · tree clean after push
+Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base main 24d8b21 · head 519eec8 (+ this memo) · PR https://github.com/zonahbear/Cratebox/pull/24 · tree clean after push
 
 ## 📍 Where We Stopped
-- **Active Task:** UI-0 = redesign phase 0 (squashed MASTER box → "FLX4" pill, CUE/MST + MASTER labels fixedSize, remaining time one line, album art slot = lane height on the left, Settings tabs as a full-height left rail) and USB-2 (USB → device copy: all / playlist / selected, Sync in Settings → USB, twin rule = file name + size). Done and on TestFlight 55.1; waiting on Jonah's device check.
-- **Current State:** Jonah approved a 6-tab Settings (Audio, Decks, Controller, Look, Library & USB, AI) and a grid order (user edit > Apple > rekordbox > Cratebox) for the next phase. A new multi-phase plan (phases 1-5 + release prep) is out for his approval as a Claude Doc ("Cratebox iOS phase plan"). Rule: one CI + one TestFlight per phase.
-- **Blockers/Bugs:** album art fix and the SE Settings rail are not visible in this CI's screenshots (demo tracks have no art; default devices only). Real-track CI needs Jonah's private test-tracks repo + TEST_TRACKS_TOKEN.
+- **Active Task:** P1-2 = redesign phases 1+2 in one build: grid order (your edit > Apple > rekordbox > Cratebox), 6-tab Settings with a toggle per AI DJ move, real-track CI (skips without TEST_TRACKS_TOKEN), squircle restyle + touch-only haptics, AI DJ v2 (bass swap / EQ handoff / COLOR sweep / cut, 4-32 bars, mix-in at CUE or Apple point, beat-matched 4-beat lead-in, MIX NOW within 2 bars, 3rd deck preload, loop bridge), plus USB ↔ local twins sharing Apple's analysis. Done and on TestFlight 56.1; waiting on Jonah's device check.
+- **Current State:** plan doc "Cratebox iOS phase plan" (https://claude.ai/artifact/QR3rr5AKx69shwXZ6A7McS, rev 12) has phase 3 starting with SYNC-3 (beat drift) and phase 4 with LIB-4 (long-press menu, remove/hide).
+- **Blockers/Bugs:** real-track tests skip until Jonah makes zonahbear/cratebox-test-tracks + TEST_TRACKS_TOKEN. The xcode-27 runner has no "iPhone 16 Pro Max" or "iPhone SE (3rd generation)" simulator: every earlier "16 Pro Max"/"SE" shot was really a 2622×1206 iPhone; 519eec8 creates the device or logs SIM MISSING (unverified, next ios.yml run).
 
 ## 🛠️ Environmental Verification
-- Verified: ios.yml run 43288201356 (xcode-27) at 2001708: 129 tests, 0 failures; `** BUILD SUCCEEDED **`; iPhone 16 Pro Max screenshots on ci-logs-preview 3cfb3d7 show the FLX4 pill, full CUE/MST label, one-line times. https://github.com/zonahbear/Cratebox/actions/runs/43288201356
-- Verified: cratebox-iOS-suite testflight.yml run 43295586211 (xcode-27) at 5b736b9: "UPLOAD SUCCEEDED", build 55.1 (ci-logs-testflight testflight.txt).
-- Earlier run 43277729733 hung in screenshots (lost runner, logs 404); cancelled. Jonah: no Intel fallback, retry on xcode-27 only.
-- Re-run: Actions → ios.yml → this branch, runner xcode-27 (add an iPhone SE to `devices` for the Settings rail shot).
+- Verified: ios.yml run 43308247504 (xcode-27) at a5e0f64: 139 tests, 0 failures, 4 skipped; `** BUILD SUCCEEDED **`; run red only because the screenshot step hit its 45-min timeout (raised to 60 in 519eec8). Evidence: ci-logs-preview 4e6c1ff ios-latest.txt. https://github.com/zonahbear/Cratebox/actions/runs/43308247504
+- Verified: cratebox-iOS-suite testflight.yml run 43316996585 (xcode-27) at ab6b6c4: build 56.1, "UPLOAD SUCCEEDED with no errors" after three Apple 500s (ci-logs-testflight testflight.txt). Not yet seen in TestFlight by Jonah.
+- Re-run: Actions → ios.yml → this branch, runner xcode-27, devices "iPhone 16 Pro Max,iPad Pro 13-inch (M4),iPhone SE (3rd generation)".
 
 ## 📦 Changes Introduced in This Session
-- ios/App/UsbCopy.swift (new): USB → Documents/From USB copy, .part then move, free-space check, keeps rekordbox grid/key.
-- ios/App/Library.swift: twins(), twinKey, addCopied, url(of:) for the From USB folder.
-- ios/App/Devices.swift: eject refuses while copying from that stick.
-- ios/App/Views/SettingsView.swift: left tab rail, title bar, USB → Copy to this device section.
-- ios/App/Views/LibraryView.swift: Copy toolbar button, row/playlist/device copy menus, progress + Stop.
-- ios/App/Views/MixerView.swift, DeckView.swift: phase 0 layout fixes.
-- apps/ios-suite/AGENTS.md: Intel fallback line removed. .agent/GLOBAL_PLAN.json: UI-0, USB-2.
+- CrateboxKit AutoMix.swift (+Tests): 4 transition kinds, PlanOptions, cue/mix-point aware planning, `within` for MIX NOW. RealTrackTests.swift (new). Core.swift: setLoop/exitLoop.
+- App/AIDJ/AIDJ.swift, AIDJView.swift: AI DJ v2 controller (lead-in, 3rd deck preload, loop bridge, AIDJMoves toggles).
+- App/AppleMusic.swift: grid order key cb.grid.order; twin sharing (source(), twinKey) so a copied track isn't analysed again.
+- App/Views/SettingsView.swift (6 tabs + AI moves), Theme.swift (squircles, FaderCap, Haptics), all views: continuous corners.
+- .github/workflows/ios.yml: real-track step, no make_tracks, SE settings shots, simulator create/skip, 60-min screenshots.
+- apps/ios-suite/AGENTS.md, .agent/GLOBAL_PLAN.json (P1-2, SYNC-3, LIB-4).
 
 ## ⏭️ Precise Next Steps for Incoming Model
-1. [ ] Jonah checks 55.1 on his phone (album art gap, Settings rail on a small phone, USB copy/Sync).
-2. [ ] Wait for Jonah's OK on the "Cratebox iOS phase plan" doc, then start phase 1 (grid order, 6-tab Settings + AI tab, real-track CI, restyle, analysis memory).
-3. [ ] When Jonah has made the private test-tracks repo + TEST_TRACKS_TOKEN: copy the 22 picks (/mnt/project-files/test-tracks/picks.md) from "C:\Users\zonah\Desktop\usb backup", drop make_tracks.py from ios.yml.
-4. [ ] Port phase 0 to personal/heat when Jonah wants it there.
+1. [ ] Jonah checks 56.1 on his phone (MIX NOW, transitions, Settings tabs, haptics, copied-track analysis). If 56.1 never appears, re-run suite testflight.yml (runner xcode-27).
+2. [ ] Next ios.yml run: confirm SIM lines show a real 16 Pro Max / SE (or SIM MISSING), check SE Settings rail shots.
+3. [ ] Phase 3 on Jonah's go, starting with SYNC-3: a synced real-track test through a tempo glide that logs drift (SAVEME, master tempo on), then fix.
+4. [ ] When Jonah has made the private test-tracks repo + TEST_TRACKS_TOKEN: copy the 22 picks (/mnt/project-files/test-tracks/picks.md) with their ANLZ files, write manifest.json.
+5. [ ] Port phases 0-2 to personal/heat when Jonah wants it.

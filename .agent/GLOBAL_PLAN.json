@@ -339,6 +339,42 @@
       "depends_on": [],
       "needs_go": false,
       "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs. ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
+    },
+    {
+      "app": "ios-suite",
+      "owner": "claude",
+      "branch": "claude/ios-ai-dj-album-art-settings",
+      "pr": 24,
+      "depends_on": [],
+      "needs_go": false,
+      "id": "P1-2",
+      "title": "iOS phases 1+2: grid order, 6-tab Settings with AI DJ move toggles, real-track CI, restyle + touch-only haptics, AI DJ v2 (4 transition kinds, variable length, mix-in at CUE/Apple point, beat-matched lead-in, MIX NOW fix, 3rd deck preload, loop bridge), USB/local twins share Apple analysis",
+      "status": "review",
+      "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 from suite ab6b6c4 (run 43316996585, UPLOAD SUCCEEDED after Apple 500s). Untested on a device."
+    },
+    {
+      "app": "ios-suite",
+      "owner": "claude",
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "id": "SYNC-3",
+      "title": "iOS: beat drift in AI mode / sync during tempo changes (Jonah 2026-11-12, track SAVEME, master tempo on)",
+      "status": "todo",
+      "notes": "Phase 3, first item. Measure first: synced real-track test through a tempo glide logging drift. Suspects (code read, unverified): constant-BPM Apple grid fit vs wandering track, lockPhase 0.6%/2% cap while AI DJ glides every frame, keylock playhead at rate!=1, AIDJ.finish snapping B to its own tempo."
+    },
+    {
+      "app": "ios-suite",
+      "owner": "claude",
+      "branch": null,
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "id": "LIB-4",
+      "title": "iOS library long-press menu: remove from device, hide, edit metadata, add to playlist, load to deck 1-4, queue for AI DJ",
+      "status": "todo",
+      "notes": "Jonah 2026-11-12, phase 4. Never deletes from a stick or the user's folders."
     }
   ]
 }
