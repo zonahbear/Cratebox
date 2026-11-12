@@ -15,6 +15,7 @@ struct LibraryPane: View {
     @State private var asking = false
     @State private var canAsk = false
     @AppStorage(AIMode.key) private var aiMode = false     // Settings → AI mode: every AI feature is off without it
+    @AppStorage("cb.art") private var showArt = true       // Settings → Look → Album art
     @State private var sorts: [String: [String]] = (UserDefaults.standard.dictionary(forKey: "cb.sorts") as? [String: [String]]) ?? [:]
     @State private var showSidebar = true
     // what the Files picker was opened for: 0 a music folder, 1 a rekordbox USB, 2 rekordbox XML. Kept apart
@@ -213,6 +214,7 @@ struct LibraryPane: View {
     var header: some View {
         HStack(spacing: 0) {
             col("#", .none, 26)
+            if showArt { Color.clear.frame(width: 28) }
             col("Title", .title, nil)
             col("Artist", .artist, nil)
             col("BPM", .bpm, 54)
@@ -268,6 +270,8 @@ struct LibraryPane: View {
         let ref = refKey
         return HStack(spacing: 0) {
             Text("\(r.pos + 1)").frame(width: 26, alignment: .leading).foregroundStyle(Theme.dim)
+            // the cover: rekordbox's small artwork for stick tracks, the file's own picture for the rest
+            if showArt { ArtworkView(track: t).frame(width: 22, height: 22).frame(width: 28, alignment: .leading) }
             Text(r.title).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(t == nil ? Theme.dim : Theme.fg)
             Text(r.artist).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(Theme.muted)
             Text(t.map { ($0.info.bpm ?? 0) > 0 ? String(format: "%.1f", $0.info.bpm!) : ($0.analysed ? "?" : "…") } ?? "").frame(width: 54, alignment: .leading).font(Theme.mono)

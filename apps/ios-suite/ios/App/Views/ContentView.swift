@@ -138,6 +138,7 @@ struct SettingsView: View {
     @AppStorage("cb.phrases") var phrases = true
     @AppStorage("cb.wave") var waveStyle = "rgb"
     @AppStorage("cb.compact") var compact = false
+    @AppStorage("cb.art") var showArt = true
     @AppStorage(AIMode.key) var aiMode = false
     @AppStorage(AutoTrim.key) var autoTrim = false
     @AppStorage(AutoTrim.targetKey) var autoTrimTarget = -9.0
@@ -200,6 +201,7 @@ struct SettingsView: View {
                 Section("Look") {
                     Toggle("Phrases (Intro / Build / Drop… on the waveforms)", isOn: $phrases)
                     Picker("Waveform", selection: $waveStyle) { Text("RGB (red lows, green mids, blue highs)").tag("rgb"); Text("3-band").tag("3band") }
+                    Toggle("Album art (in the library, and beside the waveforms)", isOn: $showArt)
                     if UIDevice.current.userInterfaceIdiom == .phone {
                         let always = PhoneScreen.autoCompactNow()
                         Toggle("Touch mode (big EQ and platters, for playing without a controller)", isOn: always ? .constant(true) : $compact).disabled(always)

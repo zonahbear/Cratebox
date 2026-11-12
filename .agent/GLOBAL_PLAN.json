@@ -291,6 +291,18 @@
       "depends_on": [],
       "needs_go": false,
       "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20 (suite 263608d). Behind AI mode. Also: UI check for Xcode 27 redraw traps."
+    },
+    {
+      "id": "ART-1",
+      "title": "iOS album art: rekordbox's small artwork in library rows, the big one (shrunk) left of each deck's waveform; embedded file art for other tracks",
+      "app": "ios-suite",
+      "status": "in_progress",
+      "owner": "claude",
+      "branch": "claude/project-thread-087u0n",
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "notes": "Jonah asked 2026-11-12 08:12Z (may take width from the waveforms). Stacked on AIDJ-1's branch (PR #21) because both touch DeckView. Web and Linux have no album art yet: separate task if wanted."
     }
   ]
 }
