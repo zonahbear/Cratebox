@@ -299,3 +299,34 @@ Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All b
   for thermalState below serious, and for Low Power Mode off; a track load cancels the running one (`yield()`); 5 s rest
   between tracks when the phone isn't thermally nominal. MATCH sort computes each row's score once per sort, not per
   comparison. Not done: features JSON is still decoded on the main thread at load (a few hundred kB).
+
+## 2026-11-12: AI DJ (AIDJ-1, PR #21) and an Xcode 27 redraw sweep
+
+Jonah: "An AI DJ feature in its own place where deck bridge and usb manager live … mixes tracks on its own, either
+deciding its own tracks from my library, out of a playlist, or selected tracks. Ensure loudness matching/auto trimming,
+and for now, bass EQ handoffs with 32 bar transitions (further transition implementations in the future). Avoid vocal
+clashing, ensure beat matching, not just always picking 2 tracks of same bpm." Then: "Just 2 channels." and "do a ui
+bug check, since Xcode has been breaking things."
+
+- **AI DJ** = `AppMode.aiDJ` (launch arg `-aidj`), `App/AIDJ/AIDJ.swift` (controller, runs from AppModel.tick) and
+  `AIDJView.swift`. Decisions in Kit `AutoMix.swift` (tests: `AutoMixTests`):
+  - picks: key 0.35, tempo 0.15 (flat within ±4 %, gate ±10 %, ½×/2× allowed), energy 0.2 (Apple LUFS + drum share,
+    untuned), sound 0.1 (Apple shares), mix 0.2 (planned vocal overlap). Top 12 get a full plan (Apple vocals read
+    from disk only for those).
+  - plan: transition starts on an 8-bar phrase line of A, B comes in on one of its first 8 phrases; cost = vocal
+    overlap seconds × 4 + 0.05 per bar of A left unplayed + 0.6 per B phrase skipped. Falls back to 16/8/4 bars.
+  - bass swap (32 bars): B fader up over bars 0-8 with LOW cut, basses swap over one beat at bar 16, A fader down
+    over bars 24-32. Tempo: A (master) glides eased from its rate to B's own tempo; B follows by SYNC; at the end B is
+    unsynced at pitch 0 on WIDE (= its own tempo). MIX NOW = plan on the next bar instead of the next phrase.
+  - loudness: BS.1770 integrated on the deck's 11 025 Hz mono analysis audio (+3.01 dB to read as stereo), target
+    -9 LUFS, boost ≤ +6 dB and only to a +1 dBFS peak. Checked against a Python port: 997 Hz full-scale sine reads
+    -2.97 LUFS at 11 025 Hz, -3.01 at 44.1 kHz (spec -3.01).
+  - Apple Intelligence: the "vibe" sentence goes through SmartSearch (on-device model, iOS 26+) to a SmartFilter
+    on the pool. Music Understanding (iOS 27) gives the vocals; without it AI DJ mixes without vocal checks.
+- **Redraw sweep** (Xcode 27: state read only inside a GeometryReader closure doesn't redraw): crossfaders (new
+  `XFaderBar`), TempoFader, JogView, WaveformView (`loaded`), iPad layout (`PadFrame`), Deck Bridge (`BridgeFrame`,
+  `BridgeDeckBody`, `BridgeMixerBody`, BridgeTempo, BridgeJog), Cratebox USB phone tabs (`USBPanes`). Found by reading
+  every GeometryReader; the controller or AI DJ moving the crossfader / tempo / deck count is what would show it.
+  New `-redraw` demo arg + ios.yml `_redraw` screenshot.
+- Not tested on real tracks or a device yet: the device bridge was offline this session, and the plan/vocal logic
+  needs Apple's analysis, which only runs on an iOS 27 device.
