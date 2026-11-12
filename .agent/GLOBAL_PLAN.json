@@ -350,7 +350,7 @@
       "id": "P1-2",
       "title": "iOS phases 1+2: grid order, 6-tab Settings with AI DJ move toggles, real-track CI, restyle + touch-only haptics, AI DJ v2 (4 transition kinds, variable length, mix-in at CUE/Apple point, beat-matched lead-in, MIX NOW fix, 3rd deck preload, loop bridge), USB/local twins share Apple analysis",
       "status": "review",
-      "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 (run 43316996585, Apple 500s, never appeared) re-uploaded as 57.1 (run 43323997842, clean UPLOAD SUCCEEDED) from suite ab6b6c4. Untested on a device."
+      "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 (run 43316996585, Apple 500s, never appeared) re-uploaded as 57.1 (run 43323997842, clean UPLOAD SUCCEEDED) from suite ab6b6c4. Untested on a device. 23:21Z TestFlight 58.1 (run 43327772421, suite f3ff54d = Cratebox 372ed67): twin analysis also matches while the stick is unplugged (Jonah saw local files re-analysed in 57.1)."
     },
     {
       "app": "ios-suite",
