@@ -26,8 +26,8 @@ defaults:
     working-directory: apps/ios-suite
 jobs:
   build:
-    # xcode-27 (Apple Silicon, iOS 27 SDK) compiles AI mode's Music Understanding; macos-15-intel (x86_64 simulators,
-    # Xcode ≤ 26.3) is the fallback for when the arm64 pool doesn't pick jobs up, as on 2026-11-10
+    # xcode-27 (Apple Silicon, iOS 27 SDK) compiles AI mode's Music Understanding. Jonah (2026-11-12): no Intel
+    # fallback any more; a stalled run is retried on xcode-27
     runs-on: ${{ inputs.runner || 'xcode-27' }}
     steps:
       - uses: actions/checkout@v4
@@ -36,13 +36,18 @@ jobs:
           brew install coreutils >/dev/null 2>&1 || true
           sudo xcode-select -s "$(ls -d /Applications/Xcode_*.app | sort -V | tail -1)"
           xcodebuild -version | tee ci.log
-      - name: Test tracks (tests/make_tracks.py, checked against the ones the fixtures came from)
+      # real tracks only (Jonah, 2026-11-12: no synthetic test tracks): a set of his tough tracks with rekordbox's
+      # analysis, from a PRIVATE repo (this one is public: never commit music here). Without the TEST_TRACKS_TOKEN
+      # secret (read-only, that repo only) the real-track tests skip and say so; a skip is not a pass
+      - name: Real test tracks (private zonahbear/cratebox-test-tracks)
+        env: { TOKEN: "${{ secrets.TEST_TRACKS_TOKEN }}" }
         run: |
-          python3 -m venv "$RUNNER_TEMP/venv" && "$RUNNER_TEMP/venv/bin/pip" install --quiet numpy 2>&1 | tail -3 | tee -a ci.log
-          mkdir -p "$RUNNER_TEMP/music"
-          "$RUNNER_TEMP/venv/bin/python" tests/make_tracks.py "$RUNNER_TEMP/music" 2>&1 | tail -5 | tee -a ci.log
-          (cd "$RUNNER_TEMP/music" && md5 -r *.wav | sed 's/ /  /') | tee md5.txt
-          diff <(sort md5.txt) <(sort ios/CrateboxKit/Tests/CrateboxKitTests/Fixtures/music.md5) | tee -a ci.log || echo "TRACKS DIFFER from the fixtures' (numpy?)" | tee -a ci.log
+          if [ -z "$TOKEN" ]; then echo "REAL TRACKS: not fetched (no TEST_TRACKS_TOKEN secret): real-track tests SKIP" | tee -a ci.log; exit 0; fi
+          if git clone -q --depth 1 "https://x-access-token:${TOKEN}@github.com/zonahbear/cratebox-test-tracks.git" "$RUNNER_TEMP/real" 2>/dev/null; then
+            echo "REAL TRACKS: $(ls "$RUNNER_TEMP/real/tracks" 2>/dev/null | wc -l | tr -d ' ') files, manifest $(test -f "$RUNNER_TEMP/real/manifest.json" && echo yes || echo MISSING)" | tee -a ci.log
+          else
+            echo "REAL TRACKS: clone FAILED (repo missing or token without access): real-track tests SKIP" | tee -a ci.log
+          fi
       # the test and build steps carry on past a failure (so the screenshots and the log still happen) but the last
       # step fails the run if either of them failed: a green run means the tests passed and the app built
       - name: Core tests (swift test, optimised)
@@ -51,7 +56,7 @@ jobs:
         timeout-minutes: 25      # a hung test (Xcode 27 once looped forever in Core.status) mustn't burn hours of Mac minutes
         run: |
           set -o pipefail
-          cd ios/CrateboxKit && CRATEBOX_MUSIC="$RUNNER_TEMP/music" swift test -c release -Xswiftc -enable-testing 2>&1 | tee -a ../../ci.log
+          cd ios/CrateboxKit && CRATEBOX_REAL="$RUNNER_TEMP/real" swift test -c release -Xswiftc -enable-testing 2>&1 | tee -a ../../ci.log
       - name: Launch in the simulators (screenshots)
         id: app
         continue-on-error: true
@@ -87,7 +92,7 @@ jobs:
             # left deck on PLAY and right on PADS; on other phones, the Settings switch forcing it
             if [ "${dev#iPhone SE}" != "$dev" ]; then
               # plus Settings (tabs) at that size: the Sound tab and AI mode's tab with AI mode on
-              for v in "568x320:" "568x320:-four" "568x320:-pads" "568x320:-eject" "568x320:-settings -cb.settingsTab sound" "568x320:-settings -cb.settingsTab ai -cb.ai YES"; do
+              for v in "568x320:" "568x320:-four" "568x320:-pads" "568x320:-eject" "568x320:-settings -cb.settingsTab audio" "568x320:-settings -cb.settingsTab library" "568x320:-settings -cb.settingsTab ai -cb.ai YES"; do
                 xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
                 xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -screen "${v%%:*}" ${v#*:} > /dev/null || true
                 sleep 15
@@ -187,7 +192,7 @@ jobs:
         working-directory: .
         env: { LOGS: "${{ github.ref == 'refs/heads/main' && 'ci-logs' || 'ci-logs-preview' }}" }
         run: |
-          { echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; cd apps/ios-suite; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |REDRAW |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ../..; } > summary.txt || true
+          { echo "run ${{ github.run_id }} sha ${{ github.sha }} at $(date -u)"; cd apps/ios-suite; grep -E "error:|warning: unre|FAIL|failed|Executed|BUILD|passed|DSP |ANALYSIS |TRACKS |ENGINE |SYNC |REDRAW |REAL |PUBLISHED|CrateboxSuite.ipa|SIM |DEMO MIDI|METRIC |REF |\*\* " ci.log | head -600; echo "---- tail"; tail -80 ci.log; cd ../..; } > summary.txt || true
           git config user.name ci; git config user.email ci@users.noreply.github.com
           git fetch origin "$LOGS" || true
           git checkout --orphan ci-tmp && git rm -rfq --cached . >/dev/null

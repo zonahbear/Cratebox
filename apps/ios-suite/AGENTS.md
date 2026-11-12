@@ -18,8 +18,14 @@ Read this first. Keep it short.
 - Xcode 27: observed state read only inside a `GeometryReader` closure doesn't redraw. Let the reader measure and hand
   the size to a child view that reads the state in its own body (PhoneFrame, PadFrame, BridgeFrame, USBPanes), or
   read the values in `body` before the reader. ios.yml's `_redraw` screenshot checks it (`-demo -redraw`).
-- AI DJ (`App/AIDJ/`, decisions in CrateboxKit `AutoMix.swift`): a fourth suite mode, decks 1 and 2 only, behind AI
-  mode. New transition kinds go in `AutoMix.Transition`.
+- AI DJ (`App/AIDJ/`, decisions in CrateboxKit `AutoMix.swift`): a fourth suite mode behind AI mode, decks 1 and 2
+  (deck 3 only with Settings → AI → Third deck, for preloading; never three heard). Kinds in `AutoMix.Transition`
+  (levels + lengths); each move has a toggle (`AIDJMoves`, keys `cb.aidj.*`). One bass line at a time is tested.
+- Grid order (Jonah, 2026-11-12): a grid set in Cratebox (`gridManual`) > Apple's (AI mode) > rekordbox's > Cratebox's
+  analysis; `AppleGridMode` (`cb.grid.order`). A CUE you set is AI DJ's mix-in point, ahead of Apple's.
+- Haptics only from touch handlers (`Haptics` in Theme.swift), never from model/MIDI changes.
+- Real-track tests: `RealTrackTests` read `CRATEBOX_REAL` (private repo zonahbear/cratebox-test-tracks via the
+  TEST_TRACKS_TOKEN secret). No synthetic test tracks in CI (Jonah).
 
 ## Breadcrumbs
 
