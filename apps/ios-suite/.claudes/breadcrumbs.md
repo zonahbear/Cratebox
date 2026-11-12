@@ -287,3 +287,15 @@ Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All b
 - Test tracks: Jonah's USB backup is at `C:\Users\zonah\Desktop\usb backup` on his PC (out of date, fine for reference).
 - Next: device check by Jonah; then maybe markers → hot cues, "More like this" similarity list, transition warnings.
 - Shipped: ios.yml run 61 green (988438f), TestFlight run 52 uploaded 17:16Z (build 52.1 expected). Untested on a device.
+
+## 2026-11-11 22:10Z: AI mode performance + Touch mode toggle (Jonah: AI mode slows app and phone; Touch mode doesn't swap layout)
+
+- Touch mode: Settings → Look → Touch mode did nothing on Xcode 27 builds: `compactPref` (@AppStorage in PhoneScreen) was
+  read inside the GeometryReader closure (same redraw bug as 49.1's buttons). Now PhoneFrame owns the @AppStorage;
+  islandLeft is read in PhoneScreen's body. (Tap-to-cut EQ is in the full layout too whenever no controller is
+  connected, which is why it looked like "only adds tap to the EQs".) iPad `pad` still calls mix() inside its reader.
+- AI mode speed (nothing measured on a device, reasoning from the code): Apple's analysis ran back to back whenever no
+  deck played. Now it also waits for 20 s without a touch (`TouchWatch`, a look-only recogniser on the window),
+  for thermalState below serious, and for Low Power Mode off; a track load cancels the running one (`yield()`); 5 s rest
+  between tracks when the phone isn't thermally nominal. MATCH sort computes each row's score once per sort, not per
+  comparison. Not done: features JSON is still decoded on the main thread at load (a few hundred kB).

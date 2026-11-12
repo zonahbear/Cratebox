@@ -1,6 +1,6 @@
 {
   "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
-  "updated": "2026-11-11T21:40:00Z",
+  "updated": "2026-11-11T23:10:00Z",
   "tasks": [
     {
       "id": "MONO-1",
@@ -59,15 +59,15 @@
       "id": "MONO-5",
       "title": "Check the first Cloudflare Workers Build on main after the merge",
       "app": "web",
-      "status": "done",
-      "owner": null,
+      "status": "blocked",
+      "owner": "jonah",
       "branch": null,
       "pr": null,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "Verified 2026-11-11 (GitHub check runs): production 'Workers Builds: cratebox' FAILED on db99c7f, 8992a27 and d9acf81, then PASSED on main 4181a99 (08:28Z). Live-site behaviour not re-tested. PR/branch preview builds still fail instantly (known dashboard setting since before the monorepo, see apps/web/AGENTS.md); ignore them on PRs."
+      "notes": "Verified (GitHub check runs): production 'Workers Builds: cratebox' FAILED on main db99c7f, 8992a27, PASSED on main 4181a99 (08:28Z), FAILED again on main 24d8b21 (2026-11-11 ~21:35Z, merge of #19, which changed no site files). `bash apps/web/site/build.sh` and `npx wrangler@4 deploy --dry-run` pass locally at 24d8b21. So the failure is on Cloudflare's side or intermittent; needs the build log (Cloudflare sign-in). PR preview builds fail every time (old dashboard setting). Rechecked 2026-11-12 08:58Z: main is still 24d8b21 and its only production check (build 5bd481d9, started and failed in the same second, like the PR preview failures) is red. The 4181a99 pass (build 1dc8ba76) is the only green production build since the monorepo. Don't call main green from apps/web/AGENTS.md or memory; read the check run on the current main SHA."
     },
     {
       "id": "MONO-6",
@@ -76,12 +76,12 @@
       "status": "review",
       "owner": "claude",
       "branch": "claude/project-thread-b7gf7r",
-      "pr": 19,
+      "pr": 20,
       "depends_on": [
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "#31 merged as #18 (4181a99, suite 28ec954). PR #19 ports the follow-ups a4bc095 (half/double-time Apple comparison) and 988438f..99d4b73 (MATCH sort, MIX IN/OUT, Beat grids); suite ios.yml green at both (reported by the Music Understanding thread). Done when #19 merges."
+      "notes": "#31 merged as #18 (4181a99); follow-ups through 99d4b73 merged as #19 (24d8b21). PR #20 ports 263608d (Touch mode fix, background analysis waits for idle/cool/not Low Power, MATCH keys computed once); suite ios.yml run 62 green, TestFlight 53.1 (reported). Further suite heads get ported until MONO-10."
     },
     {
       "id": "MONO-7",
@@ -116,7 +116,7 @@
       "id": "MONO-12",
       "title": "Act on the Codex handoff review: rules, claims, memo names, app maps, TestFlight NOT BUILT summary, stick-write rule removed, sideloading text removed",
       "app": "repo",
-      "status": "review",
+      "status": "done",
       "owner": "claude",
       "branch": "claude/project-thread-b7gf7r",
       "pr": 19,
@@ -124,7 +124,7 @@
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "Jonah 2026-11-11: remove the no-stick-writes hard rule (keep the protections documented) and every SideStore/sideloading mention. Follow-ups: ALL-2..ALL-5, HEAT-2."
+      "notes": "Merged as #19 (24d8b21). Verified: TestFlight run 43103643432 on 24d8b21 is green with every build step skipped and the warning 'NOT BUILT / NOT UPLOADED: secrets not set: all six'."
     },
     {
       "id": "MONO-8",
@@ -136,6 +136,7 @@
       "pr": null,
       "depends_on": [
         "MONO-3",
+        "MONO-5",
         "MONO-6",
         "MONO-7",
         "MONO-11"

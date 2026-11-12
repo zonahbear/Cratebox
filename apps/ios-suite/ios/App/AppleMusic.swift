@@ -17,6 +17,8 @@ import AVFoundation
 import Combine
 import CryptoKit
 import Foundation
+import UIKit
+import UIKit.UIGestureRecognizerSubclass
 import CrateboxKit
 #if canImport(MusicUnderstanding)
 import MusicUnderstanding
@@ -70,6 +72,28 @@ enum Suggest {
     static func label(_ t: LibTrack?) -> String {
         guard AIMode.on, let t, let c = context(), let r = score(t, c) else { return "" }
         return String(Int(r.score.rounded()))
+    }
+}
+
+/// When the screen was last touched, so the background analysis stays out of the way while the app is in use.
+/// A recogniser on the window that only looks: it fails at once, so no touch is delayed or taken.
+final class TouchWatch: UIGestureRecognizer {
+    static var last = ProcessInfo.processInfo.systemUptime
+    private static var installed = false
+    static func install() {
+        guard !installed else { return }
+        let windows = UIApplication.shared.connectedScenes.compactMap { $0 as? UIWindowScene }.flatMap { $0.windows }
+        guard !windows.isEmpty else { return }
+        for w in windows {
+            let g = TouchWatch(target: nil, action: nil)
+            g.cancelsTouchesInView = false; g.delaysTouchesBegan = false; g.delaysTouchesEnded = false
+            w.addGestureRecognizer(g)
+        }
+        installed = true
+    }
+    override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent) {
+        TouchWatch.last = ProcessInfo.processInfo.systemUptime
+        state = .failed
     }
 }
 
@@ -197,6 +221,16 @@ final class AppleMusic: ObservableObject {
             progress = "Waits while a deck plays"
             later(5); return
         }
+        // Apple's analysis keeps the phone's processors busy for the whole track: it only starts when the app has
+        // been left alone for a while, the phone isn't hot, and Low Power Mode is off
+        TouchWatch.install()
+        if ProcessInfo.processInfo.systemUptime - TouchWatch.last < AppleMusic.idleSecs {
+            if index.count < app.library.tracks.count { progress = "Waits until the app is left alone for \(Int(AppleMusic.idleSecs)) seconds" }
+            later(5); return
+        }
+        let heat = ProcessInfo.processInfo.thermalState
+        if heat == .serious || heat == .critical { progress = "Waits for the phone to cool down"; later(30); return }
+        if ProcessInfo.processInfo.isLowPowerModeEnabled { progress = "Waits while Low Power Mode is on"; later(30); return }
         let todo = app.library.tracks.filter { t in index[t.id].map { !current($0, t) } ?? true }
         // a folder whose drive isn't there is asked once a minute, not once per track (resolving a bookmark to a
         // missing drive can take seconds, and this runs on the main thread)
@@ -224,6 +258,13 @@ final class AppleMusic: ObservableObject {
         watch = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
             if let self, self.playing { self.job?.cancel() }
         }
+    }
+    /// how long the screen must go untouched before a track is analysed
+    static let idleSecs = 20.0
+    /// a track is being loaded (or something else needs the phone now): the track being analysed is put back
+    func yield() {
+        TouchWatch.last = ProcessInfo.processInfo.systemUptime
+        job?.cancel()
     }
     private func later(_ s: Double) {
         let w = DispatchWorkItem { [weak self] in self?.kick() }
@@ -258,9 +299,9 @@ final class AppleMusic: ObservableObject {
         saveWork = w
         DispatchQueue.main.asyncAfter(deadline: .now() + 2, execute: w)
         objectWillChange.send()
-        // a short breather between tracks (longer after a failure), so a run of quick failures can't keep the
-        // main thread busy
-        if case .failure = r { later(1) } else { later(0.3) }
+        // a short breather between tracks (longer after a failure, or when the phone is getting warm), so a run of
+        // quick failures can't keep the main thread busy and a long run doesn't heat the phone up
+        if case .failure = r { later(1) } else { later(ProcessInfo.processInfo.thermalState == .nominal ? 0.3 : 5) }
     }
     private func url(of t: LibTrack) -> URL? { Devices.shared.url(for: t) ?? app?.library.fileURL(t) }
     /// forget everything (Settings), so it's all analysed again
