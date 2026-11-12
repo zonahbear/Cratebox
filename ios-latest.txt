@@ -1,0 +1,302 @@
+run 43308247504 sha a5e0f6492f719ee1bdfea09d5258243b043790e2 at Thu Nov 12 22:06:00 UTC 2026
+REAL TRACKS: not fetched (no TEST_TRACKS_TOKEN secret): real-track tests SKIP
+Test Case '-[CrateboxKitTests.ANLZTests testDemoTrack1]' passed (0.008 seconds).
+Test Case '-[CrateboxKitTests.ANLZTests testKeyNames]' passed (0.003 seconds).
+Test Suite 'ANLZTests' passed at 2026-11-12 21:20:20.868.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.010 (0.012) seconds
+Test Case '-[CrateboxKitTests.AnalysisSpeedTests testAccelerateFFTMatchesTheLoop]' passed (0.007 seconds).
+Test Case '-[CrateboxKitTests.AnalysisSpeedTests testMonoAccumulatorMatchesMonoFor]' passed (0.013 seconds).
+Test Suite 'AnalysisSpeedTests' passed at 2026-11-12 21:20:20.891.
+	 Executed 3 tests, with 1 test skipped and 0 failures (0 unexpected) in 0.022 (0.023) seconds
+Test Suite 'AnalysisTests' passed at 2026-11-12 21:20:20.892.
+	 Executed 1 test, with 1 test skipped and 0 failures (0 unexpected) in 0.001 (0.002) seconds
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testBarOneTwoBeatsLate]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testBinAveragesAndHolds]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testDoubleTimeIsCompared]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testGridBarOneFollowsApplesBars]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testGridFoldsHalfTimeToTheTempoWeHave]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testGridFromEvenBeats]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testGridSurvivesJitterAndAMissedBeat]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testHalfTimeIsCompared]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testKeyHeardLongestAndShares]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testMixPoints]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testMixPointsNeedAppleToSaySomething]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testNoGridWhenTheTempoWanders]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testOtherTempoRatiosAreReportedNotCompared]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testRekordboxBeatByBeatGrid]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testSameGridAgrees]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testSmallBeatOffsetIsMeasuredNotABarShift]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testStoredFormRoundTrips]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AppleFeaturesTests testTempoFromBeatsWhenAppleGivesNone]' passed (0.000 seconds).
+Test Suite 'AppleFeaturesTests' passed at 2026-11-12 21:20:20.899.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 0.004 (0.007) seconds
+Test Case '-[CrateboxKitTests.AutoMixTests testBassSwapLevels]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testColorSweepFiltersBothSides]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testEnergyFlow]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testEveryKindKeepsOneBassLineAndEndsClean]' passed (0.002 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testFullScaleSineIsMinus3LUFS]' passed (0.020 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testGainToTarget]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testHighsAndLowsHandOffSeparately]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testKindAndLengthChosenPerPair]' passed (0.002 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testLevelsAndGating]' passed (0.007 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testMixNowStartsWithinTwoBars]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testOutroAwareStart]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testPicksAreNotOnlyTheSameTempo]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testPlanAvoidsVocals]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testPlanWithoutVocalsKnownStillPlans]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testShortTransitionWhenNoRoom]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testSkipsALongIntroAtTheMixInPoint]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testTempoGlide]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testTempoHasNoPullWithinFourPercent]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testTrimIsTheMixersCurveBackwards]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testVocalOverlapCountsInPicks]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.AutoMixTests testYourCueWinsOverApplesPoint]' passed (0.000 seconds).
+Test Suite 'AutoMixTests' passed at 2026-11-12 21:20:20.942.
+	 Executed 21 tests, with 0 failures (0 unexpected) in 0.039 (0.043) seconds
+Test Case '-[CrateboxKitTests.CoreTests testBarBeatCounter]' passed (0.016 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testFLX4Messages]' passed (0.009 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testHoldSyncMakesTheMaster]' passed (0.167 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testJumpsAndSyncStartFromThePlayheadWithOutputLag]' passed (0.063 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testLayersAndSoftTakeover]' passed (0.002 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testLoadingTheOtherDeckNeverRetimesAPlayingSyncedDeck]' passed (0.078 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testMasterEQSettings]' passed (0.005 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testPadFxLetsGoAfterThePadModeChanges]' passed (0.009 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testPlayCueHotcueLoop]' passed (0.038 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testProfilesAndKeys]' passed (0.005 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testRangeChangeKeepsTheTempo]' passed (0.009 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testShiftLoadGoesToDecks3And4]' passed (0.003 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testSyncedDeckWithNoMasterHoldsWhenATrackLoads]' passed (0.035 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testSyncFlipFlop140And92EndsOnTheBeat]' passed (0.714 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testSyncHalftimeAndBeatLock]' passed (0.129 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testSyncMultipliersStayInTheTempoRange]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testThreeDecks]' passed (0.018 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testTwoJumpsBeforeAReportWithOutputLag]' passed (0.049 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testUnloadForEject]' passed (0.021 seconds).
+Test Case '-[CrateboxKitTests.CoreTests testVinylMode]' passed (0.025 seconds).
+Test Suite 'CoreTests' passed at 2026-11-12 21:20:22.339.
+	 Executed 20 tests, with 0 failures (0 unexpected) in 1.393 (1.398) seconds
+Test Case '-[CrateboxKitTests.DSPTests testEqTapKillsAtTheCentreAndCentresOtherwise]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.DSPTests testMatchesTheWebApp]' passed (0.161 seconds).
+Test Suite 'DSPTests' passed at 2026-11-12 21:20:22.501.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.162 (0.162) seconds
+Test Case '-[CrateboxKitTests.EngineTests testCrossfaderAndHiddenDecks]' passed (0.034 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testEqKillsEachBand]' passed (0.045 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testHeadphonesOnThreeAndFour]' passed (0.019 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testLimiterHoldsTheMaster]' passed (0.022 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testMasterEQBoostsItsBand]' passed (0.052 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testOldTracksAreFreedFromTheSnapshot]' passed (0.003 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testPlaysThrough]' passed (0.008 seconds).
+Test Case '-[CrateboxKitTests.EngineTests testReportsPosition]' passed (0.009 seconds).
+Test Suite 'EngineTests' passed at 2026-11-12 21:20:22.696.
+	 Executed 8 tests, with 0 failures (0 unexpected) in 0.192 (0.194) seconds
+Test Case '-[CrateboxKitTests.NextTrackTests testCamelotTable]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testEnergyAndSound]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testKeyMoves]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testPitchMovesTheKeyWithoutMasterTempo]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testSharesFromApplesAnalysisReplaceTheBandSplit]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testTempoFitFollowsTheDeckRange]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.NextTrackTests testWeightsRenormaliseAndRanking]' passed (0.001 seconds).
+Test Suite 'NextTrackTests' passed at 2026-11-12 21:20:22.700.
+	 Executed 7 tests, with 0 failures (0 unexpected) in 0.003 (0.004) seconds
+Test Case '-[CrateboxKitTests.PDBTests testReadsArtwork]' passed (0.003 seconds).
+Test Case '-[CrateboxKitTests.PDBTests testReadsLikeTheWebApp]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.PDBTests testRefusesBadInput]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.PDBTests testStrings]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.PDBTests testWritesByteForByteLikeTheWebApp]' passed (0.016 seconds).
+Test Suite 'PDBTests' passed at 2026-11-12 21:20:22.721.
+	 Executed 5 tests, with 0 failures (0 unexpected) in 0.021 (0.022) seconds
+Test Suite 'RealTrackTests' passed at 2026-11-12 21:20:22.725.
+	 Executed 2 tests, with 2 tests skipped and 0 failures (0 unexpected) in 0.002 (0.003) seconds
+Test Case '-[CrateboxKitTests.RecordRingTests testAFullRingDropsAndCountsInsteadOfOverwriting]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.RecordRingTests testTheLastBlockReachesTheReaderAfterAFailedTryLock]' passed (0.001 seconds).
+Test Suite 'RecordRingTests' passed at 2026-11-12 21:20:22.727.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Case '-[CrateboxKitTests.RequestTokensTests testNewerRequestsAndNewSessionsMakeOldResultsStale]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.RequestTokensTests testOutOfOrderCompletionKeepsTheNewest]' passed (0.061 seconds).
+Test Suite 'RequestTokensTests' passed at 2026-11-12 21:20:22.789.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.062 (0.062) seconds
+Test Case '-[CrateboxKitTests.SmartFilterTests testCheckedCleansTheAnswer]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.SmartFilterTests testFitsWhatsPlaying]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.SmartFilterTests testMatches]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.SmartFilterTests testNonsenseIsDroppedNotGuessed]' passed (0.000 seconds).
+Test Suite 'SmartFilterTests' passed at 2026-11-12 21:20:22.792.
+	 Executed 4 tests, with 0 failures (0 unexpected) in 0.002 (0.002) seconds
+Test Case '-[CrateboxKitTests.SyncSoakTests testHeardMatchesPosition]' passed (0.917 seconds).
+Test Case '-[CrateboxKitTests.SyncSoakTests testSyncHoldsOverMinutes]' passed (12.827 seconds).
+Test Case '-[CrateboxKitTests.SyncSoakTests testVariableTempoFollowsTheBeats]' passed (5.494 seconds).
+Test Suite 'SyncSoakTests' passed at 2026-11-12 21:20:42.031.
+	 Executed 3 tests, with 0 failures (0 unexpected) in 19.238 (19.239) seconds
+Test Case '-[CrateboxKitTests.USBTests testAGroupCutOffPartWayIsPutBackAsAWhole]' passed (0.064 seconds).
+Test Case '-[CrateboxKitTests.USBTests testBackupOrderIgnoresTheClockAndKeepsJournalledOnes]' passed (0.052 seconds).
+Test Case '-[CrateboxKitTests.USBTests testBackupsOfSameNamedFilesStayApart]' passed (0.030 seconds).
+Test Case '-[CrateboxKitTests.USBTests testBothLibrariesInSync]' passed (0.116 seconds).
+Test Case '-[CrateboxKitTests.USBTests testDamagedPDBIsReported]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.USBTests testDeckBridgeMappingFile]' passed (0.002 seconds).
+Test Case '-[CrateboxKitTests.USBTests testDeckBridgeMessages]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.USBTests testDecryptsARealRekordboxDatabase]' passed (0.229 seconds).
+Test Case '-[CrateboxKitTests.USBTests testFindsWhereTheLibrariesDisagree]' passed (0.115 seconds).
+Test Case '-[CrateboxKitTests.USBTests testPlayerRequirements]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBTests testPreflightFlagsOutOfSyncLibraries]' passed (0.169 seconds).
+Test Case '-[CrateboxKitTests.USBTests testPreflightOnARealStick]' passed (0.157 seconds).
+Test Case '-[CrateboxKitTests.USBTests testReadsOneLibraryMadeBySQLCipher]' passed (0.124 seconds).
+Test Case '-[CrateboxKitTests.USBTests testRekordboxColourWaveform]' passed (0.067 seconds).
+Test Case '-[CrateboxKitTests.USBTests testSafeWriteAndRecovery]' passed (0.058 seconds).
+Test Case '-[CrateboxKitTests.USBTests testSniffsHeaders]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBTests testWriteGate]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBTests testWritesOneLibraryPlaylistsAndReadsThemBack]' passed (0.823 seconds).
+Test Suite 'USBTests' passed at 2026-11-12 21:20:44.042.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 2.007 (2.011) seconds
+Test Case '-[CrateboxKitTests.USBWriterTests testApplyPutsBackWhatItWroteWhenALaterFileFails]' passed (0.471 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testATrackWithoutAnalysisCantTakeCues]' passed (0.306 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testBigEditsStayOnTheirPageOrAreRefused]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testConstantGrid]' passed (0.015 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testLockedUntilProven]' passed (0.190 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testNoCuesRewritesTheFileByteForByte]' passed (0.017 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testNoTrackEditsGiveTheSameFile]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testPlanAndApplyOnAStick]' passed (0.993 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testRatingAndBPMArePatchedInPlace]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testRefusesCuesItCantWrite]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testRefusesTrackEditsItCantWrite]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testRekordboxsOwnCueEntriesRoundTrip]' passed (0.000 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testRewritingTheSameGridGivesTheSameFile]' passed (0.001 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testWritesAGridAndReadsItBack]' passed (0.065 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testWritesCuesAndReadsThemBack]' passed (0.005 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testWritesOneLibraryCues]' passed (0.787 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testWritesOneLibraryTrackInfo]' passed (0.569 seconds).
+Test Case '-[CrateboxKitTests.USBWriterTests testWritesTrackInfoAndReadsItBack]' passed (0.011 seconds).
+Test Suite 'USBWriterTests' passed at 2026-11-12 21:20:47.478.
+	 Executed 18 tests, with 0 failures (0 unexpected) in 3.432 (3.436) seconds
+Test Case '-[CrateboxKitTests.VersionTests testVersion]' passed (0.000 seconds).
+Test Suite 'VersionTests' passed at 2026-11-12 21:20:47.478.
+	 Executed 1 test, with 0 failures (0 unexpected) in 0.000 (0.000) seconds
+Test Case '-[CrateboxKitTests.XMLTests testExportReadsBack]' passed (0.004 seconds).
+Test Case '-[CrateboxKitTests.XMLTests testImport]' passed (0.001 seconds).
+Test Suite 'XMLTests' passed at 2026-11-12 21:20:47.483.
+	 Executed 2 tests, with 0 failures (0 unexpected) in 0.005 (0.005) seconds
+Test Suite 'CrateboxKitTests.xctest' passed at 2026-11-12 21:20:47.483.
+	 Executed 139 tests, with 4 tests skipped and 0 failures (0 unexpected) in 26.596 (26.627) seconds
+Test Suite 'All tests' passed at 2026-11-12 21:20:47.483.
+	 Executed 139 tests, with 4 tests skipped and 0 failures (0 unexpected) in 26.596 (26.634) seconds
+DSP fft 512: largest difference loop vs vDSP 1.7763568394002505e-14
+DSP fft 8192: largest difference loop vs vDSP 9.947598300641403e-14
+SYNC flip-flop catch-up, phase error per s (ms): 155.1 134.8 114.4 102.9 96.9 90.9 84.8 78.8 72.8 66.7 60.7 54.7 48.6 42.6 36.6 30.5 24.5 18.5 12.4 6.7 3.4 1.7 1.5 1.5 1.5 1.5 1.5 1.5 1.5 1.5
+DSP deck_loop_seek: max error 0.0 (first > 1e-4 at sample -1) over 64000 samples
+DSP deck_mt: max error 0.0 (first > 1e-4 at sample -1) over 51200 samples
+DSP deck_plain: max error 0.0 (first > 1e-4 at sample -1) over 51200 samples
+DSP deck_scratch: max error 0.0 (first > 1e-4 at sample -1) over 51200 samples
+DSP fx_DELAY: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_ECHO: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_FILTER: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_FLANGER: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_HPF: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_LPF: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_PING_PONG: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_REVERB: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_ROLL: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_TRANS: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_pad_and_beat: max error 0.0 (first > 1e-4 at sample -1) over 64000 samples
+ENGINE eq low kill at 80.0 Hz: -39.67126892359863 dB
+ENGINE eq mid kill at 900.0 Hz: -35.46490219713524 dB
+ENGINE eq hi kill at 8000.0 Hz: -44.162885805313365 dB
+ENGINE quad: master 1.6931766583771462e-18 1.6931766583771462e-18, headphones 0.5472930842432212 0.5472930842432212
+ENGINE limiter peak 0.9742512
+ENGINE master EQ +12 at 1 kHz: 11.999999995662998 dB there, 0.032125299309380635 dB at 62 Hz, 0.0 dB when off
+REAL tracks: none here (CRATEBOX_REAL unset or no manifest.json): SKIPPED
+REAL tracks: none here (CRATEBOX_REAL unset or no manifest.json): SKIPPED
+SYNC heard vs position, MT on: 325 clicks, offset at start 0.48 ms, after 150 s 0.39 ms, spread 1.90 ms
+SYNC heard vs position, MT off: 325 clicks, offset at start 0.13 ms, after 150 s 0.04 ms, spread 1.83 ms
+SYNC MT on, 1024 buffers, app clock: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr -0.0000
+SYNC MT off, 1024 buffers, app clock: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr -0.0000
+SYNC halftime, MT on: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr 0.0000
+SYNC deck 2's grid 0.05 BPM off: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr 0.0000
+SYNC wandering tempo, beat-by-beat grid: worst offset 1.5 ms over 150 s
+SYNC wandering tempo, one BPM: worst offset 71.8 ms over 150 s
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+** BUILD SUCCEEDED **
+SIM iPhone 16 Pro Max 0A1B5EC5-2485-4F8E-B06B-1185D8E186C0
+SIM RUNNING iPhone 16 Pro Max
+SIM iPad Pro 13-inch (M4) E247944A-EF3A-4ACA-99BF-97F59D694F71
+SIM RUNNING iPad Pro 13-inch (M4)
+SIM iPhone SE (3rd generation) 0A1B5EC5-2485-4F8E-B06B-1185D8E186C0
+SIM RUNNING iPhone SE (3rd generation)
+---- tail
+DSP fx_ROLL: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_TRANS: max error 0.0 (first > 1e-4 at sample -1) over 89600 samples
+DSP fx_pad_and_beat: max error 0.0 (first > 1e-4 at sample -1) over 64000 samples
+ENGINE eq low kill at 80.0 Hz: -39.67126892359863 dB
+ENGINE eq mid kill at 900.0 Hz: -35.46490219713524 dB
+ENGINE eq hi kill at 8000.0 Hz: -44.162885805313365 dB
+ENGINE quad: master 1.6931766583771462e-18 1.6931766583771462e-18, headphones 0.5472930842432212 0.5472930842432212
+ENGINE limiter peak 0.9742512
+ENGINE master EQ +12 at 1 kHz: 11.999999995662998 dB there, 0.032125299309380635 dB at 62 Hz, 0.0 dB when off
+REAL tracks: none here (CRATEBOX_REAL unset or no manifest.json): SKIPPED
+REAL tracks: none here (CRATEBOX_REAL unset or no manifest.json): SKIPPED
+SYNC heard vs position, MT on: 325 clicks, offset at start 0.48 ms, after 150 s 0.39 ms, spread 1.90 ms
+SYNC heard vs position, MT off: 325 clicks, offset at start 0.13 ms, after 150 s 0.04 ms, spread 1.83 ms
+SYNC MT on, 1024 buffers, app clock: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr -0.0000
+SYNC MT off, 1024 buffers, app clock: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr -0.0000
+SYNC halftime, MT on: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr 0.0000
+SYNC deck 2's grid 0.05 BPM off: worst offset per 30 s (ms) 0.0 0.0 0.0 0.0 0.0 0.0 · trim 0.00000 phaseErr 0.0000
+SYNC wandering tempo, beat-by-beat grid: worst offset 1.5 ms over 150 s
+SYNC wandering tempo, one BPM: worst offset 71.8 ms over 150 s
+◇ Test run started.
+↳ Testing Library Version: 2403
+↳ Target Platform: arm64e-apple-macos14.0
+✔ Test run with 0 tests in 0 suites passed after 0.001 seconds.
+⚙️  Generating project...
+⚙️  Writing project...
+Created project at /Users/runner/work/Cratebox/Cratebox/apps/ios-suite/ios/Cratebox.xcodeproj
+** BUILD SUCCEEDED **
+SIM iPhone 16 Pro Max 0A1B5EC5-2485-4F8E-B06B-1185D8E186C0
+com.zonahbear.cratebox.suite: 15202
+SIM RUNNING iPhone 16 Pro Max
+2026-11-12 21:34:52.061 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.061 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.162 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.162 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.264 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.265 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.365 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.365 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.516 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.516 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.619 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.619 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.769 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.769 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.872 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.872 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:52.975 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:53.076 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:53.339 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:34:53.339 Df Cratebox[24846:11bf2] [com.apple.renderbox:error] <compose failure [shared UUID]>
+SIM iPad Pro 13-inch (M4) E247944A-EF3A-4ACA-99BF-97F59D694F71
+com.zonahbear.cratebox.suite: 28126
+SIM RUNNING iPad Pro 13-inch (M4)
+2026-11-12 21:50:37.263 Df Cratebox[33252:18c1e] [com.apple.dt.xctest:Default] <compose failure [shared UUID]>
+2026-11-12 21:50:37.264 Df Cratebox[33252:18c1e] [com.apple.dt.xctest:Default] <compose failure [shared UUID]>
+2026-11-12 21:50:37.265 Df Cratebox[33252:18c1e] [com.apple.dt.xctest:Default] <compose failure [shared UUID]>
+2026-11-12 21:50:37.266 Df Cratebox[33252:18c1e] [com.apple.dt.xctest:Default] <compose failure [shared UUID]>
+2026-11-12 21:50:39.989 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:39.989 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.091 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.092 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.194 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.194 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.295 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.295 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.412 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.513 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.615 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.715 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.830 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:40.932 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.036 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.138 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.260 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.367 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.470 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+2026-11-12 21:50:41.571 Df Cratebox[33252:18c1e] [com.apple.renderbox:error] <compose failure [shared UUID]>
+SIM iPhone SE (3rd generation) 0A1B5EC5-2485-4F8E-B06B-1185D8E186C0
+com.zonahbear.cratebox.suite: 36438
+SIM RUNNING iPhone SE (3rd generation)
