@@ -317,6 +317,7 @@ final class AppModel: ObservableObject, ControlTarget {
                     if !manual { info.appleGrid = usedApple }
                     t.rec.ver = Library.ANALYSIS_VER
                     d.finishLoad(info, pcm: pcm, analysis: found, mono: m)
+                    if AutoTrim.on && !(self.aidjMade?.running ?? false) { self.autoTrim(d) }
                     self.library.changed(t)
                     self.library.objectWillChange.send()
                 }
@@ -325,6 +326,39 @@ final class AppModel: ObservableObject, ControlTarget {
             }
         }
     }
+    // ---- auto trim (Settings → Sound → Auto trim, and AI DJ) ----
+    private var loudness = [String: (lufs: Double, peak: Double?)]()       // per track id, measured once per launch
+    /// TRIM so a loaded track plays at the target loudness: BS.1770 integrated loudness of the deck's analysis
+    /// audio, measured off the main thread. A deck that's heard glides there over two seconds instead of jumping.
+    /// `done` gets the gain in dB.
+    func autoTrim(_ d: DeckModel, target: Double = AutoTrim.target, done: ((Double) -> Void)? = nil) {
+        guard let mono = d.mono, let id = d.track?.id else { return }
+        let i = d.i
+        let apply = { [weak self] (l: (lufs: Double, peak: Double?)) in
+            guard let self, self.core.decks[i].track?.id == id else { return }
+            let g = Loudness.gainDb(lufs: l.lufs, peakDb: l.peak, target: target)
+            let to = Loudness.trimValue(db: g), from = self.core.mixer.trim[i]
+            done?(g)
+            guard self.core.decks[i].playing, self.core.mixer.fader[i] > 0, abs(to - from) > 0.005 else { self.core.setMixer("trim", i, to); return }
+            for k in 1...20 {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1 * Double(k)) { [weak self] in
+                    guard let self, self.core.decks[i].track?.id == id else { return }
+                    self.core.setMixer("trim", i, from + (to - from) * Double(k) / 20)
+                }
+            }
+        }
+        if let l = loudness[id] { apply(l); return }
+        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+            guard let l = Loudness.integrated(mono.x, fs: mono.fs) else { return }
+            // one channel measured: + 3 dB reads like the stereo track
+            let m = (lufs: l + Loudness.stereoOffset, peak: Loudness.peakDb(mono.x))
+            DispatchQueue.main.async {
+                self?.loudness[id] = m
+                apply(m)
+            }
+        }
+    }
+
     func loadSelected(_ deck: Int) {
         guard let id = selection, let t = library.track(id) else { showBrowser(); status("Turn the browse knob to pick a track (press it for playlists)"); return }
         load(t, deck: deck)

@@ -192,28 +192,11 @@ final class AIDJ: ObservableObject {
         if start && !d.playing { d.setPlaying(true) }
     }
 
-    /// TRIM so the track plays at the target loudness: measured here (BS.1770 on the deck's analysis audio), the
-    /// same way for every track so the two decks compare
+    /// TRIM so the track plays at the target loudness (Settings → Sound → Auto trim's target), measured the same
+    /// way for every track so the two decks compare
     private func matchLoudness(_ d: DeckModel) {
-        guard let mono = d.mono, let id = d.track?.id else { return }
         let i = d.i
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            guard let l = Loudness.integrated(mono.x, fs: mono.fs) else { return }
-            let g = Loudness.gainDb(lufs: l + Loudness.stereoOffset, peakDb: Loudness.peakDb(mono.x))
-            DispatchQueue.main.async {
-                guard let self, self.running, self.deck(i).track?.id == id else { return }
-                self.trims[i] = g
-                let to = Loudness.trimValue(db: g), from = self.core.mixer.trim[i]
-                // a deck that's heard (AI DJ took over from it) moves over two seconds, not in one jump
-                guard self.deck(i).playing, self.core.mixer.fader[i] > 0, abs(to - from) > 0.005 else { self.core.setMixer("trim", i, to); return }
-                for k in 1...20 {
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1 * Double(k)) { [weak self] in
-                        guard let self, self.deck(i).track?.id == id else { return }
-                        self.core.setMixer("trim", i, from + (to - from) * Double(k) / 20)
-                    }
-                }
-            }
-        }
+        app.autoTrim(d) { [weak self] g in self?.trims[i] = g }
     }
 
     // ---- the next track ----

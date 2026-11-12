@@ -139,12 +139,16 @@ struct SettingsView: View {
     @AppStorage("cb.wave") var waveStyle = "rgb"
     @AppStorage("cb.compact") var compact = false
     @AppStorage(AIMode.key) var aiMode = false
+    @AppStorage(AutoTrim.key) var autoTrim = false
+    @AppStorage(AutoTrim.targetKey) var autoTrimTarget = -9.0
     @AppStorage(AppleGridMode.key) var appleGrid = 0
     @ObservedObject var apple = AppleMusic.shared
     @State private var warn = false
     @State private var learning = false
     @State private var hint = ""
 
+    /// auto trim turned on or its loudness changed: the loaded decks too (a playing one glides)
+    func retrim() { for i in core.activeDecks where core.decks[i].loaded { app.autoTrim(core.decks[i]) } }
     var body: some View {
         NavigationStack {
             Form {
@@ -177,6 +181,16 @@ struct SettingsView: View {
                     Text(app.audio.diagnostics).font(.caption2).foregroundStyle(Theme.muted).textSelection(.enabled)
                     if app.audio.outputChannels < 4 {
                         Toggle("Split (mono master left, mono cue right, with a splitter cable)", isOn: $split).onChange(of: split) { _, v in app.audio.setSplit(v) }
+                    }
+                    Toggle("Auto trim (every track at the same loudness)", isOn: $autoTrim)
+                        .onChange(of: autoTrim) { _, v in if v { retrim() } }
+                    if autoTrim {
+                        Picker("Loudness", selection: $autoTrimTarget) {
+                            ForEach(AutoTrim.targets, id: \.self) { t in Text("\(Int(t)) LUFS\(t == -9 ? " (club masters, default)" : t == -14 ? " (streaming level)" : "")").tag(t) }
+                        }
+                        .onChange(of: autoTrimTarget) { _, _ in retrim() }
+                        Text("Sets each deck's TRIM when a track loads, measured from the track itself (ITU-R BS.1770 loudness). Turn TRIM by hand afterwards as usual. Boosts stop at +6 dB, and before the track's peaks would hit the limiter.")
+                            .font(.caption).foregroundStyle(Theme.muted)
                     }
                 }
                 Section {
