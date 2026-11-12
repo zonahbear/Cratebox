@@ -67,7 +67,7 @@
         "MONO-1"
       ],
       "needs_go": false,
-      "notes": "Verified (GitHub check runs): production 'Workers Builds: cratebox' FAILED on main db99c7f, 8992a27, PASSED on main 4181a99 (08:28Z), FAILED again on main 24d8b21 (2026-11-11 ~21:35Z, merge of #19, which changed no site files). `bash apps/web/site/build.sh` and `npx wrangler@4 deploy --dry-run` pass locally at 24d8b21. So the failure is on Cloudflare's side or intermittent; needs the build log (Cloudflare sign-in). PR preview builds fail every time (old dashboard setting)."
+      "notes": "Verified (GitHub check runs): production 'Workers Builds: cratebox' FAILED on main db99c7f, 8992a27, PASSED on main 4181a99 (08:28Z), FAILED again on main 24d8b21 (2026-11-11 ~21:35Z, merge of #19, which changed no site files). `bash apps/web/site/build.sh` and `npx wrangler@4 deploy --dry-run` pass locally at 24d8b21. So the failure is on Cloudflare's side or intermittent; needs the build log (Cloudflare sign-in). PR preview builds fail every time (old dashboard setting). Rechecked 2026-11-12 08:58Z: main is still 24d8b21 and its only production check (build 5bd481d9, started and failed in the same second, like the PR preview failures) is red. The 4181a99 pass (build 1dc8ba76) is the only green production build since the monorepo. Don't call main green from apps/web/AGENTS.md or memory; read the check run on the current main SHA."
     },
     {
       "id": "MONO-6",
