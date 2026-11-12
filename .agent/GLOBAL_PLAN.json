@@ -284,13 +284,13 @@
       "id": "AIDJ-1",
       "title": "AI DJ: a fourth suite mode that mixes on its own on 2 decks (picks from library / playlist / selected tracks, LUFS auto trim, 32-bar bass swap, vocal clash avoidance, beat-matched tempo glide)",
       "app": "ios-suite",
-      "status": "in_progress",
+      "status": "review",
       "owner": "claude",
       "branch": "claude/project-thread-5yci11",
-      "pr": null,
+      "pr": 21,
       "depends_on": [],
       "needs_go": false,
-      "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20 (suite 263608d). Behind AI mode. Also: UI check for Xcode 27 redraw traps."
+      "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20. Behind AI mode. Also Xcode 27 redraw fixes and Settings → Sound → Auto trim. ios.yml green at dec0bc3 (128 tests, app builds). Untested on device/real tracks. TestFlight goes out with the Settings-tabs stack (#23), per Jonah 08:22Z. personal/heat not ported."
     }
   ]
 }
