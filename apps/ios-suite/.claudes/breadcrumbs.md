@@ -330,3 +330,21 @@ bug check, since Xcode has been breaking things."
   New `-redraw` demo arg + ios.yml `_redraw` screenshot.
 - Not tested on real tracks or a device yet: the device bridge was offline this session, and the plan/vocal logic
   needs Apple's analysis, which only runs on an iOS 27 device.
+
+## 2026-11-12: album art (ART-1, monorepo PR #22, stacked on #21)
+
+Jonah: "Implement album art across app! rekordbox icon in the library, full size album art (shrunk) for playing
+tracks to the left of the waveforms (stealing real estate from waveforms if needed)". Then: "All stick tracks should
+read the full sized artwork when available, rekordbox icons are JUST for library view", "if a track is unavailable,
+use a greyscale record", "No need for on and off setting".
+
+- Kit `PDB.parse`: artwork table (type 13: id u32 + DeviceSQL path) and track row bytes 28-31 → `PDBTrack.artwork`
+  (optional, nil for id 0). `PDBTrack.bigArtwork` = rekordbox's `_m` copy. Test `PDBTests.testReadsArtwork` (the
+  pyrekordbox fixture has no artwork, so the test packs some in).
+- App `Artwork.swift`: `.icon` (library rows + controller browser) = rekordbox a1.jpg, else the file's embedded cover;
+  `.deck` (PhoneLane in every layout incl. WAVE mode, iPad DeckView) = embedded cover first, then a1_m.jpg, then
+  a1.jpg. ImageIO thumbnails off the main thread, NSCache. `RecordGlyph` = grey record when there's no art.
+  PhoneLane: cover is `.aspectRatio(1).layoutPriority(1)`, as tall as the lane, max 160 pt, takes waveform width.
+- Not checked on Jonah's real stick (artwork table layout from crate-digger) or a device; embedded-cover load
+  speed in a big collection unmeasured.
+- One TestFlight build for AI DJ + album art + Settings tabs, uploaded from the Settings thread's PR #23 (Jonah).
