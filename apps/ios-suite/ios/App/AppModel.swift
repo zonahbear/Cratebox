@@ -30,6 +30,9 @@ final class AppModel: ObservableObject, ControlTarget {
     lazy var bridge = DeckBridge()
     lazy var usb: USBSession = { let s = USBSession(app: self); usbMade = s; return s }()
     private(set) var usbMade: USBSession?        // Cratebox USB, once it's been opened (DriveWatch looks without making it)
+    /// AI DJ (made on first use; AI mode only)
+    lazy var aidj: AIDJ = { let d = AIDJ(app: self); aidjMade = d; return d }()
+    private(set) var aidjMade: AIDJ?
     private var lastSec = 0.0
     @Published var statusText = ""
     @Published var controllerName = ""
@@ -148,6 +151,19 @@ final class AppModel: ObservableObject, ControlTarget {
                     self.selection = "demo-lib-3"
                     self.showBrowser(600)
                 }
+                // the Xcode 27 redraw check: change state from code (as the controller or AI DJ do) a few seconds
+                // after launch; the screenshot must show 4 decks, the crossfader left, deck 1's bass cut and its
+                // tempo fader down
+                if CommandLine.arguments.contains("-redraw") {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 6) {
+                        self.setDecks(4)
+                        var m = self.core.mixer
+                        m.xfader = 0.15; m.low[0] = 0
+                        self.core.mixer = m
+                        self.core.decks[0].setPitch(0.6)
+                        NSLog("REDRAW TEST: decks %d, xfader %.2f, deck 1 pitch %.2f", self.core.deckCount, self.core.mixer.xfader, self.core.decks[0].pitch)
+                    }
+                }
                 // a stand-in FLX4: connect, keep-alive, lights, then PLAY on deck 2 and its tempo fader
                 self.midiHost.makeVirtualFLX4()
                 DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -184,6 +200,7 @@ final class AppModel: ObservableObject, ControlTarget {
 
     @objc func tick() {
         core.tick()
+        if let dj = aidjMade, dj.running { dj.tick() }
         let now = hostSeconds()
         if now - lastLed > 0.05 { lastLed = now; midi.updateLeds(blink: Int(now * 2) % 2 == 0) }
         if now - lastKeep > 0.2 { lastKeep = now; midi.keepAliveTick() }
