@@ -7,7 +7,7 @@ Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base mai
 
 ## 🛠️ Environmental Verification
 - Verified: ios.yml run 43308247504 (xcode-27) at a5e0f64: 139 tests, 0 failures, 4 skipped; `** BUILD SUCCEEDED **`; run red only because the screenshot step hit its 45-min timeout (raised to 60 in 519eec8). Evidence: ci-logs-preview 4e6c1ff ios-latest.txt. https://github.com/zonahbear/Cratebox/actions/runs/43308247504
-- Verified: cratebox-iOS-suite testflight.yml run 43316996585 (xcode-27) at ab6b6c4: build 56.1, "UPLOAD SUCCEEDED with no errors" after three Apple 500s (ci-logs-testflight testflight.txt). Not yet seen in TestFlight by Jonah.
+- Verified: cratebox-iOS-suite testflight.yml run 43316996585 (xcode-27) at ab6b6c4: build 56.1, "UPLOAD SUCCEEDED with no errors" after three Apple 500s (ci-logs-testflight testflight.txt). Never appeared for Jonah; re-uploaded as 57.1 (run 43323997842, 22:56Z, clean "UPLOAD SUCCEEDED").
 - Re-run: Actions → ios.yml → this branch, runner xcode-27, devices "iPhone 16 Pro Max,iPad Pro 13-inch (M4),iPhone SE (3rd generation)".
 
 ## 📦 Changes Introduced in This Session
