@@ -86,11 +86,12 @@ jobs:
             # the compact layout: an SE at its Display Zoom size (568x320, which the simulator can't switch on),
             # left deck on PLAY and right on PADS; on other phones, the Settings switch forcing it
             if [ "${dev#iPhone SE}" != "$dev" ]; then
-              for v in "568x320:" "568x320:-four" "568x320:-pads" "568x320:-eject"; do
+              # plus Settings (tabs) at that size: the Sound tab and AI mode's tab with AI mode on
+              for v in "568x320:" "568x320:-four" "568x320:-pads" "568x320:-eject" "568x320:-settings -cb.settingsTab sound" "568x320:-settings -cb.settingsTab ai -cb.ai YES"; do
                 xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true
                 xcrun simctl launch "$UDID" com.zonahbear.cratebox.suite -demo -screen "${v%%:*}" ${v#*:} > /dev/null || true
                 sleep 15
-                xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_zoom${v#*:}.png" || true
+                xcrun simctl io "$UDID" screenshot "$RUNNER_TEMP/shots/${n}_zoom$(echo "${v#*:}" | tr ' .' '__').png" || true
               done
             elif [ "${dev%% *}" = iPhone ]; then
               xcrun simctl terminate "$UDID" com.zonahbear.cratebox.suite || true

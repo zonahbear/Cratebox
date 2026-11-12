@@ -303,6 +303,20 @@
       "depends_on": [],
       "needs_go": false,
       "notes": "Jonah asked 2026-11-12 08:12Z (may take width from the waveforms). Stacked on AIDJ-1's branch (PR #21) because both touch DeckView. Web and Linux have no album art yet: separate task if wanted."
+    },
+    {
+      "id": "SET-1",
+      "title": "iOS Settings in tabs with icons (Sound, Decks, Controller, Look, Recording, USB, AI mode) instead of one long page",
+      "app": "ios-suite",
+      "status": "in_progress",
+      "owner": "claude",
+      "branch": "claude/project-thread-kr3nt2",
+      "pr": null,
+      "depends_on": [
+        "ART-1"
+      ],
+      "needs_go": false,
+      "notes": "Jonah 2026-11-12. Stacked on ART-1 (#22) on AIDJ-1 (#21). Jonah wants AIDJ-1 + ART-1 + SET-1 in ONE TestFlight build, uploaded from this branch once the other two are final."
     }
   ]
 }
