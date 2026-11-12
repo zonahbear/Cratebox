@@ -330,3 +330,15 @@ bug check, since Xcode has been breaking things."
   New `-redraw` demo arg + ios.yml `_redraw` screenshot.
 - Not tested on real tracks or a device yet: the device bridge was offline this session, and the plan/vocal logic
   needs Apple's analysis, which only runs on an iOS 27 device.
+- **Auto trim** (Jonah: "Add auto trimming feature to performance mode, in sound settings"): Settings → Sound → Auto
+  trim (`cb.autoTrim`, off by default) + level (`cb.autoTrim.target`, -14…-8 LUFS, default -9). `App/AIDJ/AutoTrim.swift`;
+  `AppModel.autoTrim(_:)` measures each loaded track once (per-id cache, background), sets TRIM, glides it over 2 s if
+  the deck is audible. AI DJ uses the same call. Not tied to AI mode (it's plain BS.1770, no Apple model).
+- CI: ios.yml run 43177690971 (xcode-27, dec0bc3): 128 tests passed (13 AutoMix), app BUILD SUCCEEDED, `_redraw` shot
+  shows 4 decks after the code-driven switch, `_aidj` shot renders. 07df3b6 (auto trim) re-run triggered 08:27Z.
+- TestFlight: NOT uploaded from here. Jonah (08:22Z) wants AI DJ + album art + Settings tabs in ONE build, uploaded
+  from the top of that stack (Settings-tabs PR #23 on #22 on #21) through cratebox-iOS-suite's testflight.yml
+  (runner xcode-27). Suite branch with this PR's ios/ tree: `claude/project-thread-5yci11` (87f49ec, off 8083a76).
+- personal/heat: not ported (it lacks the Xcode 27 fixes; port those first).
+- Next: try AI DJ on an iOS 27 device with Jonah's tracks (vocal plans, energy weights untuned); more transition kinds
+  go in `AutoMix.Transition`.

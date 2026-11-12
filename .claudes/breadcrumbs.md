@@ -13,3 +13,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-11 · claude · .handoffs/20261111-2140Z_claude_ALL-4_coder.md · Antigravity adapter .agents/rules/cratebox.md; PR #19 merged on Jonah's OK.
 - 2026-11-11 · claude · .handoffs/20261111-2150Z_claude_MONO-5_debugger.md · #19 merged; Cloudflare production failed again on 24d8b21 (MONO-5 reopened); TestFlight NOT BUILT warning confirmed.
 - 2026-11-11 · claude · .handoffs/20261111-2310Z_claude_MONO-6_coder.md · suite 263608d (Touch mode, analysis waits for idle/cool) ported into PR #20.
+- 2026-11-12 · claude · .handoffs/20261112-0830Z_claude_AIDJ-1_coder.md · AI DJ (AIDJ-1, PR #21) + Auto trim + Xcode 27 redraw fixes; CI green at dec0bc3; TestFlight goes out with the Settings-tabs stack.

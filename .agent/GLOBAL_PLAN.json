@@ -284,13 +284,13 @@
       "id": "AIDJ-1",
       "title": "AI DJ: a fourth suite mode that mixes on its own on 2 decks (picks from library / playlist / selected tracks, LUFS auto trim, 32-bar bass swap, vocal clash avoidance, beat-matched tempo glide)",
       "app": "ios-suite",
-      "status": "in_progress",
+      "status": "review",
       "owner": "claude",
-      "branch": "claude/project-thread-5yci11",
-      "pr": null,
+      "branch": "claude/ios-ai-dj-album-art-settings",
+      "pr": 21,
       "depends_on": [],
       "needs_go": false,
-      "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20 (suite 263608d). Behind AI mode. Also: UI check for Xcode 27 redraw traps."
+      "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20. Behind AI mode. Also Xcode 27 redraw fixes and Settings → Sound → Auto trim. ios.yml green at dec0bc3 (128 tests, app builds). Untested on device/real tracks. TestFlight goes out with the Settings-tabs stack (#23), per Jonah 08:22Z. personal/heat not ported."
     },
     {
       "id": "ART-1",
@@ -298,7 +298,7 @@
       "app": "ios-suite",
       "status": "in_progress",
       "owner": "claude",
-      "branch": "claude/project-thread-087u0n",
+      "branch": "claude/ios-ai-dj-album-art-settings",
       "pr": null,
       "depends_on": [],
       "needs_go": false,
@@ -310,13 +310,11 @@
       "app": "ios-suite",
       "status": "in_progress",
       "owner": "claude",
-      "branch": "claude/project-thread-kr3nt2",
+      "branch": "claude/ios-ai-dj-album-art-settings",
       "pr": null,
-      "depends_on": [
-        "ART-1"
-      ],
+      "depends_on": [],
       "needs_go": false,
-      "notes": "Jonah 2026-11-12. Stacked on ART-1 (#22) on AIDJ-1 (#21). Jonah wants AIDJ-1 + ART-1 + SET-1 in ONE TestFlight build, uploaded from this branch once the other two are final."
+      "notes": "Jonah 2026-11-12. Jonah 08:52Z: one descriptively named branch, not one per small feature, so AIDJ-1, ART-1 and SET-1 share branch claude/ios-ai-dj-album-art-settings and one PR, and go out in ONE TestFlight build (via cratebox-iOS-suite, same branch name, until MONO-4)."
     }
   ]
 }
