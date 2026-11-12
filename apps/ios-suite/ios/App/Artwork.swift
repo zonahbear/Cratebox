@@ -4,7 +4,7 @@
 // rekordbox's a1_m.jpg, then its a1.jpg, are used only when the file has no cover (Jonah, 2026-11-12). With
 // no art anywhere, or when the track itself is missing, a greyscale record is drawn. Images are decoded off
 // the main thread at the size they're drawn and kept in a cache that iOS empties under memory pressure.
-// Settings → Look → Album art turns it off (`cb.art`).
+// Always on (no setting: Jonah, 2026-11-12).
 import SwiftUI
 import ImageIO
 import AVFoundation

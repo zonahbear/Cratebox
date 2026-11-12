@@ -40,8 +40,7 @@ struct DeckView: View {
     var phone = false
     var chips = true                    // phone layout: the DECK 1 / DECK 3 switch (4-deck mode)
     var color: Color { Theme.deck[deck.i] }
-    @AppStorage("cb.art") var showArt = true
-    var libTrack: LibTrack? { showArt ? deck.track.flatMap { app.library.track($0.id) } : nil }
+    var libTrack: LibTrack? { deck.track.flatMap { app.library.track($0.id) } }
 
     var body: some View {
         if phone { phoneBody } else { fullBody }
@@ -317,9 +316,8 @@ struct PhoneLane: View {
     var active = true
     var badge: String? = nil            // WAVE mode: "L" / "R" for the controller side driving this deck
     var color: Color { Theme.deck[deck.i] }
-    @AppStorage("cb.art") var showArt = true
     /// the loaded track's library entry, for its cover (none while the deck is empty)
-    var libTrack: LibTrack? { showArt ? deck.track.flatMap { app.library.track($0.id) } : nil }
+    var libTrack: LibTrack? { deck.track.flatMap { app.library.track($0.id) } }
     var body: some View {
         if active { full } else {
             // a deck the controller isn't on: its readouts, and the track overview under them
