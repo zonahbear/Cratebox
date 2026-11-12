@@ -17,24 +17,34 @@ struct ContentView: View {
         } else { pad }
     }
     var pad: some View {
-        // state is read here, in the body, not inside the reader's closure (see PhoneFrame: Xcode 27)
-        let wave = app.waveMode
-        return GeometryReader { g in
-            VStack(spacing: 6) {
-                topBar
-                // a short iPad (mini, ~724 pt): BEAT FX folds into a button and the library can get smaller
-                if wave { WaveStack().frame(maxHeight: .infinity) } else { mix(compact: g.size.height < 900, short: g.size.height < 800) }
-                LibraryPane().frame(minHeight: g.size.height < 800 ? 130 : 180)
-            }
-            .padding(6)
-            .background(Theme.bg)
-        }
+        // the reader only measures: PadFrame reads the app's state in its own body. Built with Xcode 27, state read
+        // only inside a reader's closure doesn't redraw (as PhoneFrame found): reading WAVE out here wasn't enough,
+        // 4 DECKS, the controller's name and the status line in the top bar were read in there too
+        GeometryReader { g in PadFrame(settings: $settings, size: g.size) }
         .sheet(isPresented: $settings) { SettingsView() }
         .sheet(isPresented: $app.eqShown) { MasterEQView() }
         .sheet(item: Binding(get: { app.gridDeck.map { GridTarget(id: $0) } }, set: { app.gridDeck = $0?.id })) { t in GridEditor(deck: core.decks[t.id]) }
     }
     struct GridTarget: Identifiable { let id: Int }
 
+}
+
+/// the iPad's screen, sized by ContentView's reader. Reads the app's state in its own body, so a change redraws it
+struct PadFrame: View {
+    @EnvironmentObject var app: AppModel
+    @EnvironmentObject var core: Core
+    @Binding var settings: Bool
+    let size: CGSize
+    var body: some View {
+        VStack(spacing: 6) {
+            topBar
+            // a short iPad (mini, ~724 pt): BEAT FX folds into a button and the library can get smaller
+            if app.waveMode { WaveStack().frame(maxHeight: .infinity) } else { mix(compact: size.height < 900, short: size.height < 800) }
+            LibraryPane().frame(minHeight: size.height < 800 ? 130 : 180)
+        }
+        .padding(6)
+        .background(Theme.bg)
+    }
     @ViewBuilder func mix(compact: Bool, short: Bool = false) -> some View {
         if core.four && short {
             // 4 decks on a short iPad (mini): two columns of decks don't fit, so like the iPhone it shows the two
