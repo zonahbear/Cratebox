@@ -324,7 +324,7 @@ struct PhoneLane: View {
         if active { full } else {
             // a deck the controller isn't on: its readouts, and the track overview under them
             HStack(spacing: 3) {
-                if let t = libTrack { ArtworkView(track: t, size: .icon).frame(width: 21, height: 21) }
+                if let t = libTrack { ArtworkView(track: t, size: .deck).frame(width: 21, height: 21) }
                 VStack(spacing: 1) { info.frame(height: 16); OverviewView(deck: deck, color: color).frame(height: 4) }
             }
             .opacity(0.75)
