@@ -1,6 +1,6 @@
 {
   "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
-  "updated": "2026-11-11T23:10:00Z",
+  "updated": "2026-11-12",
   "tasks": [
     {
       "id": "MONO-1",
@@ -279,6 +279,18 @@
       ],
       "needs_go": true,
       "notes": "personal/heat still has the old SideStore/sideloading wording and the old stick-write rule. Merge main into it, never the reverse (hard rule 1)."
+    },
+    {
+      "id": "AIDJ-1",
+      "title": "AI DJ: a fourth suite mode that mixes on its own on 2 decks (picks from library / playlist / selected tracks, LUFS auto trim, 32-bar bass swap, vocal clash avoidance, beat-matched tempo glide)",
+      "app": "ios-suite",
+      "status": "in_progress",
+      "owner": "claude",
+      "branch": "claude/project-thread-5yci11",
+      "pr": null,
+      "depends_on": [],
+      "needs_go": false,
+      "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20 (suite 263608d). Behind AI mode. Also: UI check for Xcode 27 redraw traps."
     }
   ]
 }
