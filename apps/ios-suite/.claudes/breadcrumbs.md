@@ -342,3 +342,7 @@ bug check, since Xcode has been breaking things."
 - personal/heat: not ported (it lacks the Xcode 27 fixes; port those first).
 - Next: try AI DJ on an iOS 27 device with Jonah's tracks (vocal plans, energy weights untuned); more transition kinds
   go in `AutoMix.Transition`.
+
+## 2026-11-12 20:15Z: redesign phase 0 + USB copy (UI-0, USB-2, PR #24)
+- Shipped in TestFlight 55.1 (suite 5b736b9 = Cratebox 2001708). ios.yml 43288201356 green, 129 tests. Memo: .handoffs/20261112-2015Z_claude_UI-0_coder.md.
+- No Intel runner fallback any more (Jonah). Next: phase plan doc awaiting Jonah's OK; one CI + one TestFlight per phase.

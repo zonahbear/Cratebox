@@ -326,7 +326,7 @@
       "pr": 24,
       "depends_on": [],
       "needs_go": false,
-      "notes": "Jonah 2026-11-12 (thread 'Review Apple-native UI redesign proposal'): phase 0 only; phases 1-3 (Theme/controls + touch-only haptics, browser/library, waveform/jog after profiling) wait for his go. Art stays left of the lanes, sized to lane height (his pick)."
+      "notes": "Jonah 2026-11-12 (thread 'Review Apple-native UI redesign proposal'): phase 0 only; phases 1-3 (Theme/controls + touch-only haptics, browser/library, waveform/jog after profiling) wait for his go. Art stays left of the lanes, sized to lane height (his pick). ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
     },
     {
       "id": "USB-2",
@@ -338,7 +338,7 @@
       "pr": 24,
       "depends_on": [],
       "needs_go": false,
-      "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs."
+      "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs. ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
     }
   ]
 }

@@ -13,7 +13,7 @@ Read this first. Keep it short.
 - HEAT never goes into the shipping app (`com.zonahbear.cratebox.suite`). It lives only on `personal/heat`
   (`com.zonahbear.cratebox.heat`), which never merges back.
 - Installs only via TestFlight (testflight.yml) and the App Store. macOS CI is manual-only. ios.yml defaults to the `xcode-27` runner
-  (Apple Silicon, iOS 27 SDK, needed for AI mode's Music Understanding); `macos-15-intel` is the fallback (input `runner`).
+  (Apple Silicon, iOS 27 SDK, needed for AI mode's Music Understanding). No Intel fallback (Jonah, 2026-11-12): if a run stalls, retry on xcode-27.
 - AI features stay behind Settings → AI mode (`cb.ai`, off by default) and on-device only. See breadcrumbs 2026-11-11.
 - Xcode 27: observed state read only inside a `GeometryReader` closure doesn't redraw. Let the reader measure and hand
   the size to a child view that reads the state in its own body (PhoneFrame, PadFrame, BridgeFrame, USBPanes), or
