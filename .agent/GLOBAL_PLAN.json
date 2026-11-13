@@ -284,73 +284,73 @@
    "id": "AIDJ-1",
    "title": "AI DJ: a fourth suite mode that mixes on its own on 2 decks (picks from library / playlist / selected tracks, LUFS auto trim, 32-bar bass swap, vocal clash avoidance, beat-matched tempo glide)",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20. Behind AI mode. Also Xcode 27 redraw fixes and Settings → Sound → Auto trim. ios.yml green at dec0bc3 (128 tests, app builds). Untested on device/real tracks. TestFlight goes out with the Settings-tabs stack (#23), per Jonah 08:22Z. personal/heat not ported."
+   "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20. Behind AI mode. Also Xcode 27 redraw fixes and Settings → Sound → Auto trim. ios.yml green at dec0bc3 (128 tests, app builds). Untested on device/real tracks. TestFlight goes out with the Settings-tabs stack (#23), per Jonah 08:22Z. personal/heat not ported. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "ART-1",
    "title": "iOS album art: rekordbox's small artwork in library rows, the big one (shrunk) left of each deck's waveform; embedded file art for other tracks",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah asked 2026-11-12 08:12Z (may take width from the waveforms). Stacked on AIDJ-1's branch (PR #21) because both touch DeckView. Web and Linux have no album art yet: separate task if wanted. 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge."
+   "notes": "Jonah asked 2026-11-12 08:12Z (may take width from the waveforms). Stacked on AIDJ-1's branch (PR #21) because both touch DeckView. Web and Linux have no album art yet: separate task if wanted. 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "SET-1",
    "title": "iOS Settings in tabs with icons (Sound, Decks, Controller, Look, Recording, USB, AI mode) instead of one long page",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-12. Jonah 08:52Z: one descriptively named branch, not one per small feature, so AIDJ-1, ART-1 and SET-1 share branch claude/ios-ai-dj-album-art-settings and one PR, and go out in ONE TestFlight build (via cratebox-iOS-suite, same branch name, until MONO-4). 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge."
+   "notes": "Jonah 2026-11-12. Jonah 08:52Z: one descriptively named branch, not one per small feature, so AIDJ-1, ART-1 and SET-1 share branch claude/ios-ai-dj-album-art-settings and one PR, and go out in ONE TestFlight build (via cratebox-iOS-suite, same branch name, until MONO-4). 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "UI-0",
    "title": "iOS phase 0 of the Apple-native UI review: squashed MASTER box and cut CUE/MST/MASTER labels, overprinted remaining time, album art gap, Settings tabs as a full-height left rail",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-12 (thread 'Review Apple-native UI redesign proposal'): phase 0 only; phases 1-3 (Theme/controls + touch-only haptics, browser/library, waveform/jog after profiling) wait for his go. Art stays left of the lanes, sized to lane height (his pick). ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
+   "notes": "Jonah 2026-11-12 (thread 'Review Apple-native UI redesign proposal'): phase 0 only; phases 1-3 (Theme/controls + touch-only haptics, browser/library, waveform/jog after profiling) wait for his go. Art stays left of the lanes, sized to lane height (his pick). ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "USB-2",
    "title": "iOS: copy rekordbox USB tracks to the device (all, a playlist, the listed/one track) + Sync (copy what's new); no duplicates by file name + size; keeps rekordbox title/artist/grid/key",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs. ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
+   "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs. ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "P1-2",
    "title": "iOS phases 1+2: grid order, 6-tab Settings with AI DJ move toggles, real-track CI, restyle + touch-only haptics, AI DJ v2 (4 transition kinds, variable length, mix-in at CUE/Apple point, beat-matched lead-in, MIX NOW fix, 3rd deck preload, loop bridge), USB/local twins share Apple analysis",
    "app": "ios-suite",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "claude/ios-ai-dj-album-art-settings",
    "pr": 24,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 (run 43316996585, Apple 500s, never appeared) re-uploaded as 57.1 (run 43323997842, clean UPLOAD SUCCEEDED) from suite ab6b6c4. Untested on a device. 23:21Z TestFlight 58.1 (run 43327772421, suite f3ff54d = Cratebox 372ed67): twin analysis also matches while the stick is unplugged (Jonah saw local files re-analysed in 57.1). 23:36Z TestFlight 59.1 (run 43329503708, suite f04a8cb = 0490d19): tracks Apple analysed (own or USB twin) take Apple's grid/key/length without Cratebox's analysis (AppleMusic.adoptGrids); AI DJ count says 'with a beat grid'. OPEN: Jonah (USB-copied 590 tracks, 58.1) still sees Apple analysis start and only 15 tracks with a grid; waiting on his Settings Apple count + stick size. Suspect: Library.bpmRangeChanged re-queues copied tracks with rekordbox grids (filter lacks a rekordbox check). | 2026-11-13: 61.1 = analysis failure reasons in Settings (Library & USB: Analysis problems; AI: Why N failed) + Try again, BPM-range change skips rekordbox-gridded copies, 'Analyse everything again' confirm. 63.1 = Apple analysis only on request (Settings → AI: whole library / playlist / selected; long-press Analyse; AppleMusic.wanted) + 'Analyse while tracks play' toggle (cb.apple.whilePlaying). 64.1 = ROOT CAUSE of re-analysis/15 gridded: library rescan of 'From USB' listed copied files without grids before addCopied ran, and addCopied kept them; fix: addCopied applies rekordbox grid to existing records + 'Re-sync grids from <stick>' (UsbCopy.regrid). Awaiting Jonah's device check. 2026-11-13 08:00Z: latest TestFlight 76.1 (suite 0c6f8f0 = monorepo ddc6678, verified UPLOAD SUCCEEDED). Remainder split out: CI-1, MEM-1, BUG-1..5."
+   "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 (run 43316996585, Apple 500s, never appeared) re-uploaded as 57.1 (run 43323997842, clean UPLOAD SUCCEEDED) from suite ab6b6c4. Untested on a device. 23:21Z TestFlight 58.1 (run 43327772421, suite f3ff54d = Cratebox 372ed67): twin analysis also matches while the stick is unplugged (Jonah saw local files re-analysed in 57.1). 23:36Z TestFlight 59.1 (run 43329503708, suite f04a8cb = 0490d19): tracks Apple analysed (own or USB twin) take Apple's grid/key/length without Cratebox's analysis (AppleMusic.adoptGrids); AI DJ count says 'with a beat grid'. OPEN: Jonah (USB-copied 590 tracks, 58.1) still sees Apple analysis start and only 15 tracks with a grid; waiting on his Settings Apple count + stick size. Suspect: Library.bpmRangeChanged re-queues copied tracks with rekordbox grids (filter lacks a rekordbox check). | 2026-11-13: 61.1 = analysis failure reasons in Settings (Library & USB: Analysis problems; AI: Why N failed) + Try again, BPM-range change skips rekordbox-gridded copies, 'Analyse everything again' confirm. 63.1 = Apple analysis only on request (Settings → AI: whole library / playlist / selected; long-press Analyse; AppleMusic.wanted) + 'Analyse while tracks play' toggle (cb.apple.whilePlaying). 64.1 = ROOT CAUSE of re-analysis/15 gridded: library rescan of 'From USB' listed copied files without grids before addCopied ran, and addCopied kept them; fix: addCopied applies rekordbox grid to existing records + 'Re-sync grids from <stick>' (UsbCopy.regrid). Awaiting Jonah's device check. 2026-11-13 08:00Z: latest TestFlight 76.1 (suite 0c6f8f0 = monorepo ddc6678, verified UPLOAD SUCCEEDED). Remainder split out: CI-1, MEM-1, BUG-1..5. Merged with PR #24 (d249ca3, 2026-11-13 08:25Z, Jonah's go). Device check still open (TODO.md §1)."
   },
   {
    "id": "SYNC-3",
@@ -648,13 +648,13 @@
    "id": "DOCS-1",
    "title": "Handoff docs current on main for any model: TODO.md, rules, entry files, LATEST memo",
    "app": "repo",
-   "status": "review",
+   "status": "done",
    "owner": "claude",
    "branch": "docs/handoff-todo",
    "pr": 26,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-13 08:18Z: make the handoff docs ready for Codex / Antigravity and write every open item into a TODO.md (phase 3/4 included, parked truecurve etc. left out). Brings PR #24's GLOBAL_PLAN and memos to main so a fresh clone of main sees the current state."
+   "notes": "Jonah 2026-11-13 08:18Z: make the handoff docs ready for Codex / Antigravity and write every open item into a TODO.md (phase 3/4 included, parked truecurve etc. left out). Brings PR #24's GLOBAL_PLAN and memos to main so a fresh clone of main sees the current state. Merged as #26 (5f21807); follow-up after #24 merged: docs say iOS is on main."
   }
  ]
 }

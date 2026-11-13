@@ -13,5 +13,5 @@ Read, in order:
 5. `TODO.md`: every open item in priority order, and what waits on Jonah.
 6. The map of the one app you touch: `apps/<app>/AGENTS.md`.
 
-iOS: the current code is on branch `claude/ios-ai-dj-album-art-settings` (PR #24), not `main`, until Jonah merges it.
+iOS: the code is on `main`; TestFlight is still built from zonahbear/cratebox-iOS-suite (see TODO.md).
 Branches are named `<area>/<short-feature>` (e.g. `ios/ai-dj`), not by agent; say "Antigravity" in the PR and commit trailer.

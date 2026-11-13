@@ -10,17 +10,13 @@ decisions). Everything else an agent can start.
 
 ## Where the code is right now (read this before touching iOS)
 
-- **iOS work is NOT on `main` yet.** It lives on branch `claude/ios-ai-dj-album-art-settings`, draft
-  [PR #24](https://github.com/zonahbear/Cratebox/pull/24) (AIDJ-1, ART-1, SET-1, UI-0, USB-2, P1-2: AI DJ v2, album art,
-  6-tab Settings, redesign phases 0-2, USB copy, Apple-analysis sharing/backup, Report a problem). `main` is at 24d8b21
-  plus a report commit. Keep adding iOS follow-ups to that branch until Jonah merges #24 (project branch rule).
-- **TestFlight is still built from the old repo** `zonahbear/cratebox-iOS-suite`, same branch name
-  `claude/ios-ai-dj-album-art-settings`, because the monorepo lacks the signing secrets (MONO-4). Every iOS change is
-  committed in the monorepo, then the `apps/ios-suite/ios/` tree is copied to the suite branch and its `testflight.yml`
-  is run (runner `xcode-27`). Latest: **TestFlight 76.1** = suite `0c6f8f0` = monorepo `ddc6678` (verified "UPLOAD
-  SUCCEEDED", 2026-11-13 08:00Z). Suite `main` is old (a99518c); don't build from it.
-- Claiming an iOS task while PR #24 is open: set its `owner`/`branch` in GLOBAL_PLAN.json on that branch and add the
-  task id to PR #24's title (that PR is the claim), instead of opening a new branch.
+- **iOS code is on `main`** since PR #24 merged (2026-11-13 08:25Z, d249ca3): AI DJ v2, album art, 6-tab Settings,
+  redesign phases 0-2, USB copy, Apple-analysis sharing/backup, Report a problem. New iOS work: a branch cut from `main`
+  named `ios/<feature>`, one per area, follow-ups on it.
+- **TestFlight is still built from the old repo** `zonahbear/cratebox-iOS-suite`, because the monorepo lacks the signing
+  secrets (MONO-4). Every iOS change is committed in the monorepo, then the `apps/ios-suite/ios/` tree is copied to a suite
+  branch with the same name and its `testflight.yml` is run (runner `xcode-27`). Latest: **TestFlight 76.1** = suite
+  `0c6f8f0` (branch `claude/ios-ai-dj-album-art-settings`) = monorepo `ddc6678`. Suite `main` is old (a99518c); don't build from it.
 - The phase plan doc is https://claude.ai/artifact/QR3rr5AKx69shwXZ6A7McS ("Cratebox iOS phase plan", rev 13).
   Its phase names are used below.
 
@@ -51,7 +47,8 @@ decisions). Everything else an agent can start.
 - [ ] [Jonah] Say which rekordbox grids he fixed by hand (hand-fixed grid = ground truth; the export doesn't mark them).
 - [ ] [Jonah] Analysis memory: OK to analyse at a lower sample rate? (MEM-1)
 - [ ] [Jonah] Touch mode redesign: phase 4 or drop it? (TOUCH-1)
-- [ ] [Jonah] Merge PR #24 (only Jonah merges), then PR #20 / close obsolete PR #3 (MONO-9).
+- [ ] PR #20 (MONO-6 port of suite 263608d): check whether #24 already carries it, then Jonah merges or closes it.
+      Jonah: close obsolete PR #3 and delete merged branches (MONO-9).
 - [ ] [Jonah] MONO-4: re-add secrets in this repo (TestFlight six, LEGACY_RELEASE_TOKEN). Then MONO-10 (stop pushing
       iOS to the suite repo), MONO-11, MONO-8 (archive old repos, never delete).
 - [ ] [Jonah] MONO-5: Cloudflare production build log for the failure on main 24d8b21.
