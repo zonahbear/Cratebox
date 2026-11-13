@@ -666,7 +666,7 @@
    "pr": null,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Jonah 2026-11-13: copies had only audio files. UsbCopy.copyPioneer + rehydrate (export.pdb title/artist/key, ANLZ grid/phrases/cues), TrackRecord.anlz/rbTags. Branch is ios-suite/ because a remote branch named \"ios\" blocks ios/*. Next: artwork for copies."
+   "notes": "Jonah 2026-11-13: copies had only audio files. UsbCopy.copyPioneer + rehydrate (export.pdb title/artist/key, ANLZ grid/phrases/cues), TrackRecord.anlz/rbTags. Branch is ios-suite/ because a remote branch named \"ios\" blocks ios/*. Next: artwork for copies. 09:30Z: Sync copies the entire stick (copyAll; playlist/track copies bring PIONEER only), copies read artwork (TrackRecord.art). Suite c4dac0c / monorepo 78a612e. TestFlight upload blocked by ASC \"Unable to find Apple ID for Bundle ID\" (runs 77 x2, compile+export OK)."
   }
  ]
 }

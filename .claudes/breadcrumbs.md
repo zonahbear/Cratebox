@@ -19,3 +19,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-13 08:06Z: TestFlight 76.1 (analysis queue dedupe, Apple analysis backup/restore on the stick).
 - 2026-11-13 08:30Z · claude · .handoffs/20261113-0830Z_claude_DOCS-1_planner.md · TODO.md + handoff docs on main (DOCS-1); iOS code still on PR #24's branch.
 - 2026-11-13 09:25Z · claude · .handoffs/20261113-0925Z_claude_USB-3_coder.md · copies broken after restart (/private path) + runaway tally fixed; Sync copies PIONEER; TestFlight 77.1.
+- 2026-11-13 09:30Z · claude · Sync copies the entire stick + artwork for copies (78a612e). TestFlight 77 compiled but upload refused by App Store Connect (bundle id lookup) twice; waiting on Jonah.
