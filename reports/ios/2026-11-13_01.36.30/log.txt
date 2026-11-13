@@ -1,0 +1,20 @@
+01:31:12  DDJ-FLX4 connected · Pioneer DDJ-FLX4
+01:31:13  MUZAK: 574 tracks, 10 playlists
+01:31:13  "File Provider Storage" doesn't look like a rekordbox USB/SD export (no PIONEER/rekordbox/export.pdb). Pick the drive itself.
+01:31:13  launch
+01:31:13  From USB: 0 tracks
+01:31:23  No tracks on this device match MUZAK
+01:31:55  Apple analysed Durin's Tower
+01:32:32  Apple analysed Ruined
+01:32:59  Apple analysed Entangled
+01:33:24  Apple analysed Web Works
+01:33:37  Apple analysed Strawberry Jam
+01:34:26  Apple analysed Rock It
+01:34:34  Apple analysed Scuba VIP
+01:34:59  Bluetooth: YEMESIS plays about 25 ms late. The waveforms are shifted to match what you hear, and SYNC still locks, but mixing by ear and scratching will feel late, and there's no separate headphone cue. For gigs, use the controller's outputs or a cable.
+01:35:15  Apple analysed REKT (Effin Remix)
+01:35:17  Copied 574 tracks from MUZAK to this device
+01:35:30  Apple analysed EXPAND THE UNIVERSE
+01:35:40  Apple analysed REKT
+01:35:59  Apple analysed ETERNAL NOW
+01:36:30  report: Test
