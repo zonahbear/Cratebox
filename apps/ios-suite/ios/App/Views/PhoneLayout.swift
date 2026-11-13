@@ -11,7 +11,6 @@ struct PhoneScreen: View {
     @EnvironmentObject var core: Core
     @Binding var settings: Bool
     @State private var islandLeft = PhoneScreen.islandOnLeft()
-    @AppStorage("cb.compact") private var compactPref = false
 
     /// Touch mode (CompactPhone.swift) is the only layout on a phone without an island (SE: the strips only cost width) or a
     /// screen too small for the full one (Display Zoom); Settings → Look can turn it on anywhere else
@@ -43,8 +42,11 @@ struct PhoneScreen: View {
         // the whole screen: a reader that itself ignores the safe area gets the full size.
         // What's shown lives in PhoneFrame, a view of its own: built with Xcode 27, state read inside this reader's
         // closure no longer redrew it (LIBRARY, WAVE and DECKS changed nothing on screen), a view's own body does
+        // (the same went for Settings → Look → Touch mode, which is why PhoneFrame reads that setting itself, and
+        // for the island's side, read here in the body)
+        let left = islandLeft
         return GeometryReader { g in
-            PhoneFrame(settings: $settings, size: g.size, ins: ins, band: band, islandLeft: islandLeft, compactPref: compactPref)
+            PhoneFrame(settings: $settings, size: g.size, ins: ins, band: band, islandLeft: left)
         }
         .background(Theme.bg)
         .ignoresSafeArea()
@@ -64,7 +66,8 @@ struct PhoneFrame: View {
     @EnvironmentObject var app: AppModel
     @EnvironmentObject var core: Core
     @Binding var settings: Bool
-    let size: CGSize, ins: UIEdgeInsets, band: CGFloat, islandLeft: Bool, compactPref: Bool
+    let size: CGSize, ins: UIEdgeInsets, band: CGFloat, islandLeft: Bool
+    @AppStorage("cb.compact") private var compactPref = false       // Settings → Look → Touch mode
 
     var body: some View {
         let l = core.four ? app.midi.side[0] : 0, r = core.four ? app.midi.side[1] : 1
@@ -77,9 +80,11 @@ struct PhoneFrame: View {
             EdgeStrip(deck: core.decks[l], side: 0, center: !islandLeft, top: 44, bottom: max(ins.bottom, 6) + 10).frame(width: band).zIndex(1)
             VStack(spacing: 4) {
                 PhoneTopBar(settings: $settings).frame(height: 30).zIndex(1)     // EJECT's 44 pt touch area overhangs it
-                if tab == 0 {
-                    Group { if wave { WaveStack() } else { mix(l, r, m) } }.overlay { if browser { BrowserOverlay().transition(.opacity) } }
-                } else { LibraryPane() }
+                Group {
+                    if tab == 0 {
+                        Group { if wave { WaveStack() } else { mix(l, r, m) } }.overlay { if browser { BrowserOverlay().transition(.opacity) } }
+                    } else { LibraryPane() }
+                }.overlay(alignment: .top) { StatusBubble() }
                 // the home-bar strip: text only, so a swipe home never lands on a control
                 HStack {
                     StripInfo(deck: core.decks[l])
@@ -128,7 +133,7 @@ struct PhoneTopBar: View {
                 Text(app.controllerName.isEmpty ? "No controller" : app.controllerName).font(.system(size: 11)).lineLimit(1)
             }.padding(.horizontal, 8).padding(.vertical, 4).background(Capsule().fill(Theme.raise)).frame(maxWidth: m.narrowBar ? 96 : 180)
             Picker("", selection: $app.tab) { Text("MIX").tag(0); Text("LIBRARY").tag(1) }.pickerStyle(.segmented).frame(width: m.narrowBar ? 132 : 150)
-            Text(app.statusText).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1).frame(maxWidth: .infinity, alignment: .leading).layoutPriority(-1)
+            Spacer(minLength: 0)          // messages float over the waveforms (StatusBubble): here they were cut to a word
             // a narrow phone: CUE/MST, MST and MASTER in a popover behind one button
             if m.narrowBar { MasterButton() } else { MixerView(masterBar: true) }
             LitButton(label: "WAVE", on: app.waveMode, color: Theme.accent) { withAnimation(.easeInOut(duration: 0.2)) { app.waveMode.toggle() } }
@@ -163,13 +168,13 @@ struct EdgeStrip: View {
                 VStack(spacing: 1) {
                     Text("±\(deck.range == 100 ? "W" : String(Int(deck.range)))").font(.system(size: 11, weight: .heavy))
                     Text("TAP · GRID").font(.system(size: 6.5, weight: .bold)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.6)
-                }.frame(maxWidth: .infinity, minHeight: 44).background(RoundedRectangle(cornerRadius: 7).fill(Theme.raise))
+                }.frame(maxWidth: .infinity, minHeight: 44).background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(Theme.raise))
             }.buttonStyle(.plain)
             .popover(isPresented: $tools, arrowEdge: side == 0 ? .leading : .trailing) {
                 HStack(spacing: 8) {
                     LitButton(label: "RANGE ±\(deck.range == 100 ? "W" : String(Int(deck.range)))") { deck.cycleRange() }
                     Button { deck.tap() } label: {
-                        Text("TAP").font(.system(size: 15, weight: .heavy)).frame(width: 84, height: 56).background(RoundedRectangle(cornerRadius: 8).fill(color.opacity(0.85))).foregroundStyle(Color.black)
+                        Text("TAP").font(.system(size: 15, weight: .heavy)).frame(width: 84, height: 56).background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color.opacity(0.85))).foregroundStyle(Color.black)
                     }.buttonStyle(.plain)
                     LitButton(label: "BEAT GRID…") { tools = false; app.gridDeck = deck.i }
                     LitButton(label: "TEMPO 0") { deck.setPitch(0) }
@@ -183,7 +188,7 @@ struct EdgeStrip: View {
                     VStack(spacing: 2) {
                         Text("FX").font(.system(size: 11, weight: .heavy)).foregroundStyle(fx.on ? Color.black : Theme.hot)
                         Text(fx.fx.rawValue.uppercased()).font(.system(size: 7, weight: .bold)).lineLimit(1).minimumScaleFactor(0.6).foregroundStyle(fx.on ? Color.black : Theme.muted)
-                    }.frame(maxWidth: .infinity, minHeight: 48).background(RoundedRectangle(cornerRadius: 7).fill(fx.on ? Theme.hot : Theme.raise))
+                    }.frame(maxWidth: .infinity, minHeight: 48).background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(fx.on ? Theme.hot : Theme.raise))
                 }.buttonStyle(.plain)
                 .sheet(isPresented: $fxSheet) { BeatFXView().padding().presentationDetents([.height(220)]) }
                 EdgeRec(rec: app.recorder)
@@ -202,7 +207,7 @@ struct EdgeStrip: View {
             Text(s).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7)
                 .foregroundStyle(on ? Color.black : Theme.fg)
                 .frame(maxWidth: .infinity, minHeight: 32)
-                .background(RoundedRectangle(cornerRadius: 7).fill(on ? c : Theme.raise))
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(on ? c : Theme.raise))
         }.buttonStyle(.plain)
     }
 }
@@ -214,7 +219,7 @@ struct EdgeRec: View {
             VStack(spacing: 2) {
                 Circle().fill(rec.recording ? Color.white : Theme.hot).frame(width: 12, height: 12)
                 Text(rec.recording ? String(format: "%d:%02d", Int(rec.seconds) / 60, Int(rec.seconds) % 60) : "REC").font(.system(size: 9, weight: .bold, design: .monospaced))
-            }.frame(maxWidth: .infinity, minHeight: 48).background(RoundedRectangle(cornerRadius: 7).fill(rec.recording ? Theme.hot : Theme.raise))
+            }.frame(maxWidth: .infinity, minHeight: 48).background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(rec.recording ? Theme.hot : Theme.raise))
         }.buttonStyle(.plain)
     }
 }
@@ -244,8 +249,8 @@ struct PhoneDeck: View {
             } else { player }
         }
         .padding(6)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.panel))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(app.core.four ? color.opacity(0.7) : Theme.line, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panel))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(app.core.four ? color.opacity(0.7) : Theme.line, lineWidth: 1))
     }
     var player: some View {
         VStack(spacing: 5) {
@@ -256,7 +261,7 @@ struct PhoneDeck: View {
                         Button { app.midi.setSide(d % 2, d); app.objectWillChange.send() } label: {
                             Text("DECK \(d + 1)").font(.system(size: 10, weight: .bold)).frame(maxWidth: .infinity, minHeight: 18)
                                 .foregroundStyle(on ? Color.black : Theme.deck[d])
-                                .background(RoundedRectangle(cornerRadius: 4).fill(on ? Theme.deck[d] : Theme.raise))
+                                .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(on ? Theme.deck[d] : Theme.raise))
                                 .padding(.vertical, 6).contentShape(Rectangle())     // an 18 pt chip, touched at 30 pt
                         }.buttonStyle(.plain).padding(.vertical, -6)
                     }
@@ -274,17 +279,17 @@ struct PhoneDeck: View {
                     Button { deck.padMode = mode } label: {
                         Text(s).font(.system(size: 11, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity, minHeight: m.tabH)
                             .foregroundStyle(deck.padMode == mode ? Theme.fg : Theme.muted)
-                            .background(RoundedRectangle(cornerRadius: 6).fill(deck.padMode == mode ? Theme.line2 : Theme.raise))
+                            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(deck.padMode == mode ? Theme.line2 : Theme.raise))
                     }.buttonStyle(.plain)
                 }
                 Button { _ = app.scratch.insert(deck.i) } label: {
                     Text("SCR").font(.system(size: 11, weight: .heavy)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity, minHeight: m.tabH)
-                        .foregroundStyle(color).background(RoundedRectangle(cornerRadius: 6).fill(Theme.raise))
+                        .foregroundStyle(color).background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.raise))
                 }.buttonStyle(.plain).accessibilityLabel("Scratch deck \(deck.i + 1)")
                 // VINYL, as one letter: the row has no room for the word
                 Button { deck.setVinyl(!deck.vinyl) } label: {
                     Text("V").font(.system(size: 11, weight: .heavy)).frame(maxWidth: .infinity, minHeight: m.tabH)
-                        .foregroundStyle(deck.vinyl ? Color.black : Theme.muted).background(RoundedRectangle(cornerRadius: 6).fill(deck.vinyl ? color : Theme.raise))
+                        .foregroundStyle(deck.vinyl ? Color.black : Theme.muted).background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(deck.vinyl ? color : Theme.raise))
                 }.buttonStyle(.plain).accessibilityLabel("Deck \(deck.i + 1) vinyl mode \(deck.vinyl ? "on" : "off")")
             }
             VStack(spacing: 4) {
@@ -316,7 +321,7 @@ struct PhoneDeck: View {
         Button(action: act) {
             Text(s).font(.system(size: 12, weight: .bold)).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity, minHeight: m.loopH)
                 .foregroundStyle(on ? Color.black : Theme.fg)
-                .background(RoundedRectangle(cornerRadius: 7).fill(on ? Theme.loop : Theme.raise))
+                .background(RoundedRectangle(cornerRadius: 7, style: .continuous).fill(on ? Theme.loop : Theme.raise))
         }.buttonStyle(.plain)
     }
 }
@@ -326,19 +331,20 @@ struct PhoneDeck: View {
 struct TempoFader: View {
     @ObservedObject var deck: DeckModel
     var body: some View {
-        VStack(spacing: 2) {
+        let v = (deck.pitch + 1) / 2   // 0 top (slower) ... 1 bottom (faster); read here, not in the reader (Xcode 27)
+        return VStack(spacing: 2) {
             Text(String(format: "%+.1f", (deck.rate() - 1) * 100)).font(.system(size: 9, weight: .bold, design: .monospaced)).foregroundStyle(Theme.muted).lineLimit(1).minimumScaleFactor(0.7)
             GeometryReader { g in
-                let h = g.size.height, w = g.size.width, v = (deck.pitch + 1) / 2   // 0 top (slower) ... 1 bottom (faster)
+                let h = g.size.height, w = g.size.width
                 ZStack(alignment: .top) {
                     ForEach(0...8, id: \.self) { k in
                         Rectangle().fill(k == 4 ? Theme.muted : Theme.line2).frame(width: k == 4 ? w - 4 : w - 12, height: 1)
                             .offset(y: 9 + (h - 18) * CGFloat(k) / 8)
                     }
-                    RoundedRectangle(cornerRadius: 2).fill(Theme.bg).frame(width: 4, height: h - 18).offset(y: 9)
-                    RoundedRectangle(cornerRadius: 4)
+                    RoundedRectangle(cornerRadius: 2, style: .continuous).fill(Theme.bg).frame(width: 4, height: h - 18).offset(y: 9)
+                    RoundedRectangle(cornerRadius: 4, style: .continuous)
                         .fill(LinearGradient(colors: [Theme.line2, Theme.raise], startPoint: .top, endPoint: .bottom))
-                        .overlay(RoundedRectangle(cornerRadius: 4).stroke(Theme.dim, lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(Theme.dim, lineWidth: 1))
                         .overlay(Rectangle().fill(Theme.deck[deck.i]).frame(height: 2).padding(.horizontal, 3))
                         .frame(width: w, height: 18)
                         .offset(y: CGFloat(v) * (h - 18))
@@ -439,7 +445,7 @@ struct ScratchView: View {
         Button { _ = app.scratch.remove(deck.i) } label: {
             Text(stacked ? "SCR" : "SCRATCH").font(.system(size: 11, weight: .heavy)).lineLimit(1).minimumScaleFactor(0.7)
                 .frame(maxWidth: stacked ? .infinity : colW, minHeight: 44, maxHeight: 44)
-                .foregroundStyle(Color.black).background(RoundedRectangle(cornerRadius: 8).fill(color))
+                .foregroundStyle(Color.black).background(RoundedRectangle(cornerRadius: 8, style: .continuous).fill(color))
         }.buttonStyle(.plain).accessibilityLabel("Scratch off, back to deck \(deck.i + 1)'s controls")
     }
     var cue: some View {

@@ -40,6 +40,7 @@ struct DeckView: View {
     var phone = false
     var chips = true                    // phone layout: the DECK 1 / DECK 3 switch (4-deck mode)
     var color: Color { Theme.deck[deck.i] }
+    var libTrack: LibTrack? { deck.track.flatMap { app.library.track($0.id) } }
 
     var body: some View {
         if phone { phoneBody } else { fullBody }
@@ -55,7 +56,7 @@ struct DeckView: View {
                         Button { app.midi.setSide(d % 2, d); app.objectWillChange.send() } label: {
                             Text("DECK \(d + 1)").font(.system(size: 11, weight: .bold)).frame(maxWidth: .infinity, minHeight: 20)
                                 .foregroundStyle(on ? Color.black : Theme.deck[d])
-                                .background(RoundedRectangle(cornerRadius: 5).fill(on ? Theme.deck[d] : Theme.raise))
+                                .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(on ? Theme.deck[d] : Theme.raise))
                         }.buttonStyle(.plain)
                     }
                 }
@@ -109,8 +110,8 @@ struct DeckView: View {
             }
         }
         .padding(6)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.panel))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(app.core.four ? color.opacity(0.7) : Theme.line, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panel))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(app.core.four ? color.opacity(0.7) : Theme.line, lineWidth: 1))
     }
     var phoneTempo: some View {
         VFader(value: (deck.pitch + 1) / 2, color: color, height: app.core.four ? 92 : 104, inverted: true) { deck.setPitch($0 * 2 - 1) }
@@ -119,8 +120,16 @@ struct DeckView: View {
     var fullBody: some View {
         VStack(spacing: 6) {
             header
-            WaveformView(deck: deck, color: color).frame(height: compact ? 70 : 96)
-            OverviewView(deck: deck, color: color).frame(height: 22)
+            HStack(spacing: 6) {
+                if let t = libTrack {
+                    let side: CGFloat = compact ? 98 : 124          // the waveform, the gap and the overview below it
+                    ArtworkView(track: t, size: .deck).frame(width: side, height: side)
+                }
+                VStack(spacing: 6) {
+                    WaveformView(deck: deck, color: color).frame(height: compact ? 70 : 96)
+                    OverviewView(deck: deck, color: color).frame(height: 22)
+                }
+            }
             HStack(alignment: .top, spacing: 8) {
                 if deck.i % 2 == 0 { tempo }
                 VStack(spacing: 6) {
@@ -135,8 +144,8 @@ struct DeckView: View {
             }
         }
         .padding(8)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.panel))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(app.core.four && app.midi.side.contains(deck.i) ? color : Theme.line, lineWidth: 1))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panel))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).stroke(app.core.four && app.midi.side.contains(deck.i) ? color : Theme.line, lineWidth: 1))
     }
 
     var header: some View {
@@ -208,7 +217,7 @@ struct DeckView: View {
     func chip(_ s: String, _ on: Bool) -> some View {
         Text(s).font(.system(size: 12, weight: .semibold)).frame(minHeight: 30).padding(.horizontal, 8)
             .foregroundStyle(on ? Color.black : Theme.fg)
-            .background(RoundedRectangle(cornerRadius: 6).fill(on ? Theme.loop : Theme.raise))
+            .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(on ? Theme.loop : Theme.raise))
     }
     var pads: some View {
         VStack(spacing: 4) {
@@ -255,7 +264,7 @@ struct PadCell: View {
             Text(padLabel(p)).font(.system(size: 11, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.5)
                 .frame(maxWidth: .infinity, minHeight: height)
                 .foregroundStyle(on ? Color.black : Theme.fg)
-                .background(RoundedRectangle(cornerRadius: 6).fill(on ? c : Theme.raise))
+                .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(on ? c : Theme.raise))
         }
         .contextMenu { if deck.padMode == .hotcue && deck.hot[p] != nil { Button("Clear hot cue \(String(UnicodeScalar(65 + p)!))", role: .destructive) { deck.clearHot(p) } } }
     }
@@ -270,13 +279,15 @@ struct JogView: View {
     /// playing deck isn't left held still under a finger that's gone
     @GestureState private var touching = false
     var body: some View {
-        GeometryReader { g in
+        // read here, not in the reader's closure (Xcode 27 doesn't redraw for state read only in there)
+        let angle = deck.now() / 1.8 * 360
+        return GeometryReader { g in
             let c = CGPoint(x: g.size.width / 2, y: g.size.height / 2)
             ZStack {
                 Circle().fill(Theme.raise).overlay(Circle().stroke(Theme.line2, lineWidth: 2))
                 Circle().fill(Theme.panel).padding(g.size.width * 0.18)
                 Rectangle().fill(color).frame(width: 3, height: g.size.width * 0.18).offset(y: -g.size.width * 0.38)
-                    .rotationEffect(.degrees(deck.now() / 1.8 * 360))
+                    .rotationEffect(.degrees(angle))
             }
             .contentShape(Circle())
             .gesture(DragGesture(minimumDistance: 0)
@@ -305,32 +316,49 @@ struct PhoneLane: View {
     var active = true
     var badge: String? = nil            // WAVE mode: "L" / "R" for the controller side driving this deck
     var color: Color { Theme.deck[deck.i] }
+    /// the loaded track's library entry, for its cover (none while the deck is empty)
+    var libTrack: LibTrack? { deck.track.flatMap { app.library.track($0.id) } }
     var body: some View {
         if active { full } else {
             // a deck the controller isn't on: its readouts, and the track overview under them
-            VStack(spacing: 1) { info.frame(height: 16); OverviewView(deck: deck, color: color).frame(height: 4) }
-                .opacity(0.75)
+            HStack(spacing: 3) {
+                if let t = libTrack { ArtworkView(track: t, size: .deck).frame(width: 21, height: 21) }
+                VStack(spacing: 1) { info.frame(height: 16); OverviewView(deck: deck, color: color).frame(height: 4) }
+            }
+            .opacity(0.75)
         }
     }
     var full: some View {
-        // the readouts get their own row above the waveform, so nothing covers it
-        VStack(spacing: 1) {
-            info.frame(height: 16)
-            WaveformView(deck: deck, color: color)
-            OverviewView(deck: deck, color: color).frame(height: 6)
+        // the cover (as tall as the lane, so square) left of the readouts and the waveform: it takes its width
+        // from the waveform. Higher priority so the stack sizes it first, from the lane's height. The square is
+        // worked out outside the 160 pt cap: capped outside, the frame took 160 pt and centred a smaller cover in
+        // it, leaving black on both sides (build 54.1).
+        HStack(spacing: 4) {
+            if let t = libTrack {
+                ArtworkView(track: t, size: .deck)
+                    .frame(maxWidth: 160).aspectRatio(1, contentMode: .fit).layoutPriority(1)
+            }
+            // the readouts get their own row above the waveform, so nothing covers it
+            VStack(spacing: 1) {
+                info.frame(height: 16)
+                WaveformView(deck: deck, color: color)
+                OverviewView(deck: deck, color: color).frame(height: 6)
+            }
         }
     }
     var info: some View {
                     HStack(spacing: 6) {
                         Button { if app.core.four { app.midi.setSide(deck.i % 2, deck.i); app.objectWillChange.send() } } label: {
                             Text("\(deck.i + 1)").font(.system(size: 12, weight: .heavy)).frame(width: 20, height: 16)
-                                .foregroundStyle(active ? Color.black : color).background(RoundedRectangle(cornerRadius: 3).fill(active ? color : Theme.raise))
+                                .foregroundStyle(active ? Color.black : color).background(RoundedRectangle(cornerRadius: 3, style: .continuous).fill(active ? color : Theme.raise))
                         }.buttonStyle(.plain)
                         if let badge {
                             Text(badge).font(.system(size: 9, weight: .heavy)).foregroundStyle(Color.black)
                                 .padding(.horizontal, 4).frame(height: 14).background(Capsule().fill(color))
                         }
+                        // the title gives way first (it truncates), so the readouts on the right never get squeezed
                         Text(deck.track.map { "\($0.title) · \($0.artist)" } ?? (deck.loading ? "Loading…" : "Empty")).font(.system(size: 11, weight: .semibold)).lineLimit(1)
+                            .layoutPriority(-1)
                         Spacer(minLength: 4)
                         if deck.loaded {
                             if let c = Keys.camelot(deck.keyNow()) { Text(c.label).font(.system(size: 11, weight: .bold, design: .monospaced)).foregroundStyle(Theme.keyColor(c.num, c.letter)) }
@@ -346,7 +374,8 @@ struct PhoneLane: View {
                             // the beat counter, bar.beat like the web app's: 1.1 1.2 1.3 1.4 2.1 …
                             Text(deck.barBeat()).font(.system(size: 12, weight: .heavy, design: .monospaced)).foregroundStyle(color).lineLimit(1).fixedSize()
                                 .accessibilityLabel("Bar and beat \(deck.barBeat())")
-                            Text("-" + clock(deck.duration - deck.now())).font(.system(size: 11, design: .monospaced))
+                            // one line, full width: squeezed, it wrapped inside the 16 pt row and the two lines drew over each other
+                            Text("-" + clock(deck.duration - deck.now())).font(.system(size: 11, design: .monospaced)).lineLimit(1).fixedSize()
                         }
                     }
                     .padding(.horizontal, 2)
@@ -366,12 +395,14 @@ struct WaveformView: View {
     @State private var dragX: CGFloat?
     @GestureState private var dragging = false          // reset on a cancelled drag (see JogView)
     var body: some View {
-        GeometryReader { g in
+        // read here, not in the reader's closure (Xcode 27): a canvas left paused after a load would stay blank
+        let loaded = deck.loaded
+        return GeometryReader { g in
             // capped at 60 a second (ProMotion would draw every lane 120 times), and still while nothing's loaded
-            TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !deck.loaded)) { _ in
+            TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !loaded)) { _ in
                 Canvas { ctx, size in draw(ctx, size) }
             }
-            .id(deck.loaded)                // a new canvas on load/eject, so a paused one can't keep the old track
+            .id(loaded)                // a new canvas on load/eject, so a paused one can't keep the old track
             .contentShape(Rectangle())
             .gesture(DragGesture(minimumDistance: 0)
                 .updating($dragging) { _, s, _ in s = true }
@@ -389,7 +420,7 @@ struct WaveformView: View {
             .onChange(of: dragging) { _, d in if !d && dragX != nil { dragX = nil; deck.jogTouch(false, noCoast: true) } }
         }
         .background(Theme.bg)
-        .clipShape(RoundedRectangle(cornerRadius: 6))
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
     }
     func draw(_ ctx: GraphicsContext, _ size: CGSize) {
         guard let a = deck.ana, let w = a.wave, !w.peak.isEmpty else { return }
@@ -507,6 +538,6 @@ struct OverviewView: View {
             .contentShape(Rectangle())
             .onTapGesture { p in if deck.loaded { deck.seekTo(Double(p.x / g.size.width) * deck.duration) } }
         }
-        .background(Theme.bg).clipShape(RoundedRectangle(cornerRadius: 4))
+        .background(Theme.bg).clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
     }
 }

@@ -508,6 +508,17 @@ public final class DeckModel: ObservableObject, Identifiable {
         core.rangeChanged(i)
         core.status("Deck \(i + 1) tempo range ±\(range == 100 ? "WIDE" : "\(Int(range))%")" + (abs(kept - was) > 1e-9 ? ": the tempo was outside it, now \(String(format: "%+.1f", kept * 100))%" : ""))
     }
+    /// a tempo range by index into RANGES (3 = WIDE), keeping the tempo where it is, without a status message
+    /// (AI DJ puts its decks on WIDE so a tempo glide or SYNC is never cut short by the range)
+    public func setRange(_ idx: Int) {
+        let k = max(0, min(RANGES.count - 1, idx))
+        guard k != rangeIdx else { return }
+        let was = pitch * range / 100
+        rangeIdx = k
+        pitch = clamp(was * 100 / range, -1, 1)
+        sendRate()
+        core.rangeChanged(i)
+    }
     /// the track's own tempo at the playhead (what the grid says, before the fader or SYNC)
     public func origBpm() -> Double { tempoNow() }
     /// "bar.beat" at the playhead, like the web app: beat 0 of the grid is 1.1; before bar 1 it runs 0.4, 0.3 … back
@@ -577,6 +588,13 @@ public final class DeckModel: ObservableObject, Identifiable {
         loop.b = a + len
         sendLoop()
     }
+    /// a loop of `beats` from beat `x` of the grid (AI DJ's loop bridge)
+    public func setLoop(fromBeat x: Double, beats: Double) {
+        guard loaded, ana != nil, beats > 0 else { return }
+        loop = Loop(on: true, a: timeOfBeat(x), b: timeOfBeat(x + beats))
+        sendLoop()
+    }
+    public func exitLoop() { if loop.on { loop.on = false; sendLoop() } }
     public func loopBeats() -> Double { if let a = loop.a, let b = loop.b { return (b - a) / spb }; return 0 }
     public func beatJump(_ beats: Double) {
         guard loaded else { return }
@@ -713,7 +731,10 @@ public final class Core: ObservableObject {
     public private(set) var lastSnapshot = EngineSnapshot()
 
     // ---- mixer controls (the controller and the screen both come here) ----
+    /// a mixer control moved by you (screen or controller), not by AI DJ: AI DJ hands that control over to you
+    public var onUserMixer: ((String, Int) -> Void)?
     public func setMixer(_ name: String, _ deck: Int, _ v: Double) {
+        onUserMixer?(name, deck)
         switch name {
         case "fader": mixer.fader[deck] = v
         case "trim": mixer.trim[deck] = v

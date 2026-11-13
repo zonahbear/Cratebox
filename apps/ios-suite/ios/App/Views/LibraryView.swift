@@ -27,6 +27,7 @@ struct LibraryPane: View {
     @State private var exported: URL?
     @State private var askBase = false
     @State private var basePath = ""
+    @ObservedObject private var usbCopy = UsbCopy.shared
 
     // ---- what the list shows ----
     var viewKey: String { LibraryPane.key(app.view) }
@@ -111,7 +112,9 @@ struct LibraryPane: View {
                 case .none: return (0, "")
                 }
             }
-            base = base.stableSort { a, b in let x = v(a), y = v(b); return desc ? (x.0 != y.0 ? x.0 > y.0 : x.1 > y.1) : (x.0 != y.0 ? x.0 < y.0 : x.1 < y.1) }
+            // each row's sort value is worked out once, not at every comparison (MATCH scores a track each time)
+            let keyed = base.map { (r: $0, k: v($0)) }.stableSort { a, b in let x = a.k, y = b.k; return desc ? (x.0 != y.0 ? x.0 > y.0 : x.1 > y.1) : (x.0 != y.0 ? x.0 < y.0 : x.1 < y.1) }
+            base = keyed.map { $0.r }
         }
         return base
     }
@@ -157,9 +160,10 @@ struct LibraryPane: View {
 
     var toolbar: some View {
         HStack(spacing: 6) {
-            Button { showSidebar.toggle() } label: { Image(systemName: "sidebar.left") }.buttonStyle(.plain)
+            Button { showSidebar.toggle() } label: { Image(systemName: "sidebar.left").frame(width: 32, height: 30).contentShape(Rectangle()) }.buttonStyle(.plain)
+                .accessibilityLabel(showSidebar ? "Hide playlists" : "Show playlists")
             Text(title).font(.system(size: 13, weight: .bold)).lineLimit(1)
-                .padding(.horizontal, 4).background(RoundedRectangle(cornerRadius: 4).stroke(app.browseFocusTree ? Theme.loop : .clear, lineWidth: 1.5))
+                .padding(.horizontal, 4).background(RoundedRectangle(cornerRadius: 4, style: .continuous).stroke(app.browseFocusTree ? Theme.loop : .clear, lineWidth: 1.5))
             TextField(canAsk ? "Search, or ask: 124–128 in 8A ✨" : "Search title, artist or key (8A)", text: $query)
                 .textFieldStyle(.roundedBorder).font(.system(size: 12)).frame(maxWidth: 260)
                 .onSubmit { if canAsk && query.split(separator: " ").count >= 3 { ask() } }
@@ -177,11 +181,33 @@ struct LibraryPane: View {
                 .accessibilityLabel("Clear: \(f.summary)")
             }
             Spacer()
+            if let d = shownDevice {
+                Button { UsbCopy.shared.copy(rows.compactMap { $0.t }, from: d, app: app, playlist: shownPlaylistName) } label: {
+                    Label("Copy", systemImage: "square.and.arrow.down").labelStyle(.titleAndIcon)
+                }.font(.system(size: 12)).buttonStyle(.bordered).disabled(usbCopy.busy != nil)
+                .accessibilityHint("Copies the tracks listed here from the USB to this device")
+            }
+            if !usbCopy.progress.isEmpty {
+                Text(usbCopy.progress).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1)
+                Button("Stop") { UsbCopy.shared.cancel() }.font(.system(size: 11))
+            }
             if !library.progress.isEmpty { Text(library.progress).font(.system(size: 11)).foregroundStyle(Theme.muted).lineLimit(1) }
             if editable { EditButton().font(.system(size: 12)) }
         }.padding(6).environment(\.editMode, $editMode)
         .onAppear { canAsk = aiMode && SmartSearch.available }
         .onChange(of: aiMode) { _, on in canAsk = on && SmartSearch.available; if !on { smart = nil } }
+    }
+    /// the stick the list shows (all of it, or one of its playlists): the toolbar's Copy to device copies what's listed
+    var shownDevice: Device? {
+        switch app.view {
+        case .device(let d), .devicePlaylist(let d, _): return devices.list.first { $0.id == d }
+        default: return nil
+        }
+    }
+    /// a whole stick playlist on screen (no search): its copy also becomes one of your playlists
+    var shownPlaylistName: String? {
+        guard case .devicePlaylist(let d, let id) = app.view, query.isEmpty, smart == nil else { return nil }
+        return devices.list.first { $0.id == d }?.tree.first { $0.id == id }?.name
     }
     /// The search box's words → a filter, by Apple's on-device model. "What's playing" is the newest playing deck,
     /// at the tempo it plays at now.
@@ -211,6 +237,7 @@ struct LibraryPane: View {
     var header: some View {
         HStack(spacing: 0) {
             col("#", .none, 26)
+            Color.clear.frame(width: 28)
             col("Title", .title, nil)
             col("Artist", .artist, nil)
             col("BPM", .bpm, 54)
@@ -266,6 +293,8 @@ struct LibraryPane: View {
         let ref = refKey
         return HStack(spacing: 0) {
             Text("\(r.pos + 1)").frame(width: 26, alignment: .leading).foregroundStyle(Theme.dim)
+            // the cover: rekordbox's small artwork for stick tracks, the file's own picture for the rest
+            ArtworkView(track: t).frame(width: 22, height: 22).frame(width: 28, alignment: .leading)
             Text(r.title).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(t == nil ? Theme.dim : Theme.fg)
             Text(r.artist).frame(maxWidth: .infinity, alignment: .leading).lineLimit(1).foregroundStyle(Theme.muted)
             Text(t.map { ($0.info.bpm ?? 0) > 0 ? String(format: "%.1f", $0.info.bpm!) : ($0.analysed ? "?" : "…") } ?? "").frame(width: 54, alignment: .leading).font(Theme.mono)
@@ -276,7 +305,7 @@ struct LibraryPane: View {
                 ForEach(core.activeDecks, id: \.self) { d in
                     Button { if let t { app.load(t, deck: d) } } label: {
                         Text("\(d + 1)").font(.system(size: 11, weight: .bold)).frame(width: 28, height: 22)
-                            .background(RoundedRectangle(cornerRadius: 4).fill(onDeck(t) == d ? Theme.deck[d] : Theme.raise)).foregroundStyle(onDeck(t) == d ? Color.black : Theme.deck[d])
+                            .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(onDeck(t) == d ? Theme.deck[d] : Theme.raise)).foregroundStyle(onDeck(t) == d ? Color.black : Theme.deck[d])
                     }.buttonStyle(.borderless)
                 }
             }.frame(width: CGFloat(core.deckCount) * 31 + 8)
@@ -285,7 +314,13 @@ struct LibraryPane: View {
         .contentShape(Rectangle())
         .onTapGesture(count: 2) { if let t { app.load(t, deck: core.decks.firstIndex { core.deckActive($0.i) && !$0.playing } ?? 0) } }
         .onTapGesture { app.selection = t?.id }
-        .contextMenu { if let t { addToMenu([t]) } }
+        .contextMenu {
+            if let t {
+                addToMenu([t])
+                if let d = devices.device(of: t) { Button("Copy to this device") { UsbCopy.shared.copy([t], from: d, app: app) } }
+                analyseButton([t])
+            }
+        }
     }
     var refKey: Int {
         let p = core.decks.filter { $0.playing && $0.loaded }.sorted { $0.startedAt > $1.startedAt }
@@ -295,11 +330,17 @@ struct LibraryPane: View {
         guard let t, let c = Keys.camelot(t.info.key) else { return AnyView(Text(t.map { $0.analysed ? "?" : "…" } ?? "").foregroundStyle(Theme.dim)) }
         let match = ref >= 0 && Keys.mixes(t.info.key, ref)
         return AnyView(Text(c.label).font(.system(size: 12, weight: match ? .heavy : .semibold, design: .monospaced)).foregroundStyle(Theme.keyColor(c.num, c.letter))
-            .padding(.horizontal, 3).background(RoundedRectangle(cornerRadius: 3).stroke(match ? Theme.ok : .clear)))
+            .padding(.horizontal, 3).background(RoundedRectangle(cornerRadius: 3, style: .continuous).stroke(match ? Theme.ok : .clear)))
     }
     func onDeck(_ t: LibTrack?) -> Int? { guard let t else { return nil }; return core.decks.firstIndex { $0.track === t.info } }
     func clockShort(_ s: Double) -> String { String(format: "%d:%02d", Int(s) / 60, Int(s) % 60) }
 
+    /// long-press → Analyse: Apple's analysis (AI mode), only for what's asked (Jonah, 2026-11-13)
+    @ViewBuilder func analyseButton(_ tracks: [LibTrack]) -> some View {
+        if aiMode && AppleMusic.usable && !tracks.isEmpty {
+            Button { AppleMusic.shared.request(tracks) } label: { Label(tracks.count == 1 ? "Analyse" : "Analyse \(tracks.count) tracks", systemImage: "waveform.badge.magnifyingglass") }
+        }
+    }
     @ViewBuilder func addToMenu(_ tracks: [LibTrack]) -> some View {
         Menu("Add to playlist") {
             ForEach(playlists.lists.filter { !$0.folder }) { p in Button(playlists.path(p)) { playlists.add(tracks, to: p.id); app.status("Added to \(p.name)") } }
@@ -380,6 +421,7 @@ struct LibraryPane: View {
                 Button("Top level") { playlists.moveList(p.id, into: nil) }
                 ForEach(playlists.lists.filter { $0.folder && $0.id != p.id }) { f in Button(playlists.path(f)) { playlists.moveList(p.id, into: f.id) } }
             }
+            if !p.folder { analyseButton(p.items.compactMap { library.track($0) }) }
             Button("Delete", role: .destructive) { if app.view == .playlist(p.id) { app.view = .collection }; playlists.delete(p.id) }
         }
     }
@@ -389,6 +431,8 @@ struct LibraryPane: View {
             Text(d.name + (d.saving ? " · saving…" : d.unsaved ? " · not saved" : "")).lineLimit(1)
             Spacer()
             Text("\(d.byRbId.count)").font(Theme.mono).foregroundStyle(Theme.dim)
+            Button { UsbCopy.shared.sync(d, app: app) } label: { Image(systemName: "arrow.triangle.2.circlepath").font(.system(size: 12)) }
+                .buttonStyle(.borderless).disabled(usbCopy.busy != nil).accessibilityLabel("Sync \(d.name) to this device")
             Button { devices.eject(d) } label: { Image(systemName: "eject.fill").font(.system(size: 12)) }.buttonStyle(.borderless)
         }
         .font(.system(size: 12)).contentShape(Rectangle()).onTapGesture { app.view = .device(d.id) }
@@ -399,6 +443,10 @@ struct LibraryPane: View {
                 Button("New folder on \(d.name)") { let id = devices.newNode("Folder", folder: true, in: d); renaming = "dev:\(d.id):\(id)"; renameText = "Folder" }
                 if d.unsaved && !d.saving { Button("Try saving again") { devices.write(d) } }
             }
+            Button("Sync to this device (copy what's new)") { UsbCopy.shared.sync(d, app: app) }
+            Button("Re-sync grids to this device") { UsbCopy.shared.regrid(d, app: app) }
+            Button("Copy all to this device (with its playlists)") { UsbCopy.shared.copy(Array(d.byRbId.values), from: d, app: app, mirror: true) }
+            analyseButton(Array(d.byRbId.values))
             Button("Name it in Cratebox…") { renaming = "devname:\(d.id)"; renameText = d.name }
             Button("Eject", role: .destructive) { devices.eject(d) }
         }
@@ -432,7 +480,8 @@ struct LibraryPane: View {
     }
     /// everything you can do to a rekordbox playlist or folder on a stick (editing: Settings, behind the disclaimer)
     @ViewBuilder func devNodeMenu(_ n: PDBPlaylist, _ d: Device) -> some View {
-        if !n.folder { Button("Copy to my playlists") { copy(n, d) } }
+        if !n.folder { Button("Copy to my playlists") { copy(n, d) }; analyseButton(devices.tracks(of: n, in: d)) }
+        Button(n.folder ? "Copy its tracks to this device" : "Copy to this device (with the playlist)") { UsbCopy.shared.copyPlaylist(n, from: d, app: app) }
         if devices.editable {
             Button("Rename") { renaming = "dev:\(d.id):\(n.id)"; renameText = n.name }
             if n.folder {

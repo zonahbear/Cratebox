@@ -51,7 +51,7 @@ struct MixerView: View {
         }
         .padding(4)
         .frame(width: m.mixW)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.panel))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panel))
     }
     func mixKnob(_ key: String, _ i: Int, _ k: CGFloat) -> some View {
         let v: Double = key == "trim" ? core.mixer.trim[i] : key == "hi" ? core.mixer.hi[i] : key == "mid" ? core.mixer.mid[i] : key == "low" ? core.mixer.low[i] : core.mixer.cfx[i]
@@ -64,7 +64,7 @@ struct MixerView: View {
     func cueBtn(_ i: Int) -> some View {
         Button { core.togglePfl(i) } label: {
             Text("CUE").font(.system(size: 10, weight: .heavy)).frame(width: 40, height: m.cueH).foregroundStyle(core.mixer.pfl[i] ? Color.black : Theme.deck[i])
-                .background(RoundedRectangle(cornerRadius: 4).fill(core.mixer.pfl[i] ? Theme.cue : Theme.raise))
+                .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(core.mixer.pfl[i] ? Theme.cue : Theme.raise))
         }.buttonStyle(.plain)
     }
     func faderCol(_ i: Int) -> some View {
@@ -78,22 +78,28 @@ struct MixerView: View {
         HStack(spacing: 6) {
             VStack(spacing: 0) {
                 Knob(label: "", value: core.mixer.headMix, size: 20, center: 0) { core.mixer.headMix = $0 }
-                Text("CUE/MST").font(.system(size: 6.5, weight: .bold)).foregroundStyle(Theme.muted)
+                Text("CUE/MST").font(.system(size: 6.5, weight: .bold)).foregroundStyle(Theme.muted).fixedSize()   // wider than the knob: never "CU…"
             }
             Button { core.toggleMasterCue() } label: {
                 Text("MST").font(.system(size: 10, weight: .bold)).fixedSize().padding(.horizontal, 6).frame(height: 24).foregroundStyle(core.mixer.masterCue ? Color.black : Theme.fg)
-                    .background(RoundedRectangle(cornerRadius: 4).fill(core.mixer.masterCue ? Theme.cue : Theme.raise))
+                    .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(core.mixer.masterCue ? Theme.cue : Theme.raise))
             }.buttonStyle(.plain)
             if app.midi.hasAction("master") || app.controllerName.isEmpty {
                 VStack(spacing: 0) {
                     Knob(label: "", value: core.mixer.master, size: 20, center: 0.8) { core.mixer.master = $0 }
-                    Text("MASTER").font(.system(size: 6.5, weight: .bold)).foregroundStyle(Theme.muted)
+                    Text("MASTER").font(.system(size: 6.5, weight: .bold)).foregroundStyle(Theme.muted).fixedSize()
                 }
             } else {
                 // the controller's MASTER LEVEL works in its own hardware (it sends nothing), so it's the master
                 Button { core.mixer.master = 0.8; app.status("Master volume: the MASTER LEVEL knob on the \(app.controllerName). Cratebox's own master stays at its default level.", 6) } label: {
-                    Text("MASTER\nON \(app.controllerName.contains("FLX4") ? "FLX4" : "CTRL")").font(.system(size: 7, weight: .bold)).multilineTextAlignment(.center).foregroundStyle(Theme.muted)
-                        .padding(.horizontal, 5).frame(height: 26).background(RoundedRectangle(cornerRadius: 4).stroke(Theme.line2))
+                    // one line at its own width: as two lines it got squeezed to a letter per line ("M A T E")
+                    HStack(spacing: 3) {
+                        Image(systemName: "speaker.wave.2.fill").font(.system(size: 8))
+                        Text(app.controllerName.contains("FLX4") ? "FLX4" : "CTRL").font(.system(size: 9, weight: .bold))
+                    }
+                    .foregroundStyle(Theme.muted).fixedSize()
+                    .padding(.horizontal, 6).frame(height: 24).background(Capsule().stroke(Theme.line2))
+                    .accessibilityLabel("Master volume is on the \(app.controllerName)")
                 }.buttonStyle(.plain)
             }
             eqButton
@@ -107,7 +113,7 @@ struct MixerView: View {
             if presented { dismiss(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) { app.eqShown = true } } else { app.eqShown = true }
         } label: {
             Text("EQ").font(.system(size: 10, weight: .bold)).fixedSize().padding(.horizontal, 6).frame(height: 24).foregroundStyle(core.mixer.eq.on ? Color.black : Theme.fg)
-                .background(RoundedRectangle(cornerRadius: 4).fill(core.mixer.eq.on ? Theme.accent : Theme.raise))
+                .background(RoundedRectangle(cornerRadius: 4, style: .continuous).fill(core.mixer.eq.on ? Theme.accent : Theme.raise))
         }.buttonStyle(.plain).accessibilityLabel("Master EQ, \(core.mixer.eq.on ? "on" : "off")")
     }
 
@@ -132,7 +138,7 @@ struct MixerView: View {
         }
         .padding(8)
         .frame(width: core.four ? 300 : 210)
-        .background(RoundedRectangle(cornerRadius: 10).fill(Theme.panel))
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.panel))
     }
 
     var layers: some View {
@@ -142,7 +148,7 @@ struct MixerView: View {
                 Button { app.midi.setSide(d % 2, d); app.objectWillChange.send() } label: {
                     Text("\(d + 1)").font(.system(size: 13, weight: .bold)).frame(maxWidth: .infinity, minHeight: 24)
                         .foregroundStyle(on ? Color.black : Theme.deck[d])
-                        .background(RoundedRectangle(cornerRadius: 5).fill(on ? Theme.deck[d] : Theme.raise))
+                        .background(RoundedRectangle(cornerRadius: 5, style: .continuous).fill(on ? Theme.deck[d] : Theme.raise))
                 }.buttonStyle(.plain)
             }
         }
@@ -166,17 +172,7 @@ struct MixerView: View {
     }
 
     var crossfader: some View {
-        GeometryReader { g in
-            ZStack(alignment: .leading) {
-                Capsule().fill(Theme.raise).frame(height: 6)
-                RoundedRectangle(cornerRadius: 3).fill(Theme.fg).frame(width: 16, height: 26)
-                    .offset(x: CGFloat(core.mixer.xfader) * (g.size.width - 16))
-            }
-            .frame(maxHeight: .infinity)
-            .contentShape(Rectangle())
-            .faderDrag(core.mixer.xfader, span: g.size.width - 16) { core.mixer.xfader = $0 }
-            .onTapGesture(count: 2) { core.mixer.xfader = 0.5 }
-        }.frame(height: 30)
+        XFaderBar(value: core.mixer.xfader, capW: 16, capH: 26) { core.mixer.xfader = $0 }.frame(height: 30)
     }
 }
 
@@ -208,7 +204,7 @@ struct BeatFXView: View {
                     ForEach(0..<FX_LIST.count, id: \.self) { k in Button(FX_LIST[k].0.rawValue) { fx.select(FX_LIST[k].0) } }
                 } label: {
                     Text(fx.fx.rawValue).font(.system(size: 12, weight: .bold)).frame(maxWidth: .infinity, minHeight: 28)
-                        .background(RoundedRectangle(cornerRadius: 6).fill(Theme.raise))
+                        .background(RoundedRectangle(cornerRadius: 6, style: .continuous).fill(Theme.raise))
                 }
                 if fx.spec.beats != nil {
                     LitButton(label: "◀") { fx.beatStep(-1) }

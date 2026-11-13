@@ -287,3 +287,68 @@ Intelligence for analysis" + "Toggle to switch between Apple and rb grid". All b
 - Test tracks: Jonah's USB backup is at `C:\Users\zonah\Desktop\usb backup` on his PC (out of date, fine for reference).
 - Next: device check by Jonah; then maybe markers → hot cues, "More like this" similarity list, transition warnings.
 - Shipped: ios.yml run 61 green (988438f), TestFlight run 52 uploaded 17:16Z (build 52.1 expected). Untested on a device.
+
+## 2026-11-11 22:10Z: AI mode performance + Touch mode toggle (Jonah: AI mode slows app and phone; Touch mode doesn't swap layout)
+
+- Touch mode: Settings → Look → Touch mode did nothing on Xcode 27 builds: `compactPref` (@AppStorage in PhoneScreen) was
+  read inside the GeometryReader closure (same redraw bug as 49.1's buttons). Now PhoneFrame owns the @AppStorage;
+  islandLeft is read in PhoneScreen's body. (Tap-to-cut EQ is in the full layout too whenever no controller is
+  connected, which is why it looked like "only adds tap to the EQs".) iPad `pad` still calls mix() inside its reader.
+- AI mode speed (nothing measured on a device, reasoning from the code): Apple's analysis ran back to back whenever no
+  deck played. Now it also waits for 20 s without a touch (`TouchWatch`, a look-only recogniser on the window),
+  for thermalState below serious, and for Low Power Mode off; a track load cancels the running one (`yield()`); 5 s rest
+  between tracks when the phone isn't thermally nominal. MATCH sort computes each row's score once per sort, not per
+  comparison. Not done: features JSON is still decoded on the main thread at load (a few hundred kB).
+
+## 2026-11-12: AI DJ (AIDJ-1, PR #21) and an Xcode 27 redraw sweep
+
+Jonah: "An AI DJ feature in its own place where deck bridge and usb manager live … mixes tracks on its own, either
+deciding its own tracks from my library, out of a playlist, or selected tracks. Ensure loudness matching/auto trimming,
+and for now, bass EQ handoffs with 32 bar transitions (further transition implementations in the future). Avoid vocal
+clashing, ensure beat matching, not just always picking 2 tracks of same bpm." Then: "Just 2 channels." and "do a ui
+bug check, since Xcode has been breaking things."
+
+- **AI DJ** = `AppMode.aiDJ` (launch arg `-aidj`), `App/AIDJ/AIDJ.swift` (controller, runs from AppModel.tick) and
+  `AIDJView.swift`. Decisions in Kit `AutoMix.swift` (tests: `AutoMixTests`):
+  - picks: key 0.35, tempo 0.15 (flat within ±4 %, gate ±10 %, ½×/2× allowed), energy 0.2 (Apple LUFS + drum share,
+    untuned), sound 0.1 (Apple shares), mix 0.2 (planned vocal overlap). Top 12 get a full plan (Apple vocals read
+    from disk only for those).
+  - plan: transition starts on an 8-bar phrase line of A, B comes in on one of its first 8 phrases; cost = vocal
+    overlap seconds × 4 + 0.05 per bar of A left unplayed + 0.6 per B phrase skipped. Falls back to 16/8/4 bars.
+  - bass swap (32 bars): B fader up over bars 0-8 with LOW cut, basses swap over one beat at bar 16, A fader down
+    over bars 24-32. Tempo: A (master) glides eased from its rate to B's own tempo; B follows by SYNC; at the end B is
+    unsynced at pitch 0 on WIDE (= its own tempo). MIX NOW = plan on the next bar instead of the next phrase.
+  - loudness: BS.1770 integrated on the deck's 11 025 Hz mono analysis audio (+3.01 dB to read as stereo), target
+    -9 LUFS, boost ≤ +6 dB and only to a +1 dBFS peak. Checked against a Python port: 997 Hz full-scale sine reads
+    -2.97 LUFS at 11 025 Hz, -3.01 at 44.1 kHz (spec -3.01).
+  - Apple Intelligence: the "vibe" sentence goes through SmartSearch (on-device model, iOS 26+) to a SmartFilter
+    on the pool. Music Understanding (iOS 27) gives the vocals; without it AI DJ mixes without vocal checks.
+- **Redraw sweep** (Xcode 27: state read only inside a GeometryReader closure doesn't redraw): crossfaders (new
+  `XFaderBar`), TempoFader, JogView, WaveformView (`loaded`), iPad layout (`PadFrame`), Deck Bridge (`BridgeFrame`,
+  `BridgeDeckBody`, `BridgeMixerBody`, BridgeTempo, BridgeJog), Cratebox USB phone tabs (`USBPanes`). Found by reading
+  every GeometryReader; the controller or AI DJ moving the crossfader / tempo / deck count is what would show it.
+  New `-redraw` demo arg + ios.yml `_redraw` screenshot.
+- Not tested on real tracks or a device yet: the device bridge was offline this session, and the plan/vocal logic
+  needs Apple's analysis, which only runs on an iOS 27 device.
+- **Auto trim** (Jonah: "Add auto trimming feature to performance mode, in sound settings"): Settings → Sound → Auto
+  trim (`cb.autoTrim`, off by default) + level (`cb.autoTrim.target`, -14…-8 LUFS, default -9). `App/AIDJ/AutoTrim.swift`;
+  `AppModel.autoTrim(_:)` measures each loaded track once (per-id cache, background), sets TRIM, glides it over 2 s if
+  the deck is audible. AI DJ uses the same call. Not tied to AI mode (it's plain BS.1770, no Apple model).
+- CI: ios.yml run 43177690971 (xcode-27, dec0bc3): 128 tests passed (13 AutoMix), app BUILD SUCCEEDED, `_redraw` shot
+  shows 4 decks after the code-driven switch, `_aidj` shot renders. 07df3b6 (auto trim) re-run triggered 08:27Z.
+- TestFlight: NOT uploaded from here. Jonah (08:22Z) wants AI DJ + album art + Settings tabs in ONE build, uploaded
+  from the top of that stack (Settings-tabs PR #23 on #22 on #21) through cratebox-iOS-suite's testflight.yml
+  (runner xcode-27). Suite branch with this PR's ios/ tree: `claude/project-thread-5yci11` (87f49ec, off 8083a76).
+- personal/heat: not ported (it lacks the Xcode 27 fixes; port those first).
+- Next: try AI DJ on an iOS 27 device with Jonah's tracks (vocal plans, energy weights untuned); more transition kinds
+  go in `AutoMix.Transition`.
+
+## 2026-11-12 20:15Z: redesign phase 0 + USB copy (UI-0, USB-2, PR #24)
+- Shipped in TestFlight 55.1 (suite 5b736b9 = Cratebox 2001708). ios.yml 43288201356 green, 129 tests. Memo: .handoffs/20261112-2015Z_claude_UI-0_coder.md.
+- No Intel runner fallback any more (Jonah). Next: phase plan doc awaiting Jonah's OK; one CI + one TestFlight per phase.
+
+## 2026-11-12 22:20Z: phases 1+2 (P1-2, PR #24)
+- TestFlight 56.1 (suite ab6b6c4 = Cratebox a5e0f64). ios.yml 43308247504: 139 tests pass, build OK; red only on the screenshot timeout. Memo: .handoffs/20261112-2220Z_claude_P1-2_coder.md.
+- xcode-27 runner lacks 16 Pro Max / SE simulators; old shots were a stand-in 2622×1206 iPhone. Next: Jonah's device check, then phase 3 (SYNC-3 drift first).
+
+- 2026-11-13 00:25Z (claude, P1-2): TestFlight 61.1/63.1 uploaded, 64.1 building. Apple analysis is on request only (AppleMusic.wanted), optional while playing. Copies lost rekordbox grids because a folder rescan raced UsbCopy (addCopied kept the scanned gridless record); fixed + Settings/long-press "Re-sync grids from <stick>". Failure reasons: TrackRecord.fail, AppleMusic.reason. Next: Jonah runs Re-sync grids on 64.1 and reports the AI DJ track count.

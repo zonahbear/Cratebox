@@ -84,6 +84,11 @@ final class Devices: ObservableObject {
         app?.library.setDeviceTracks(id, tracks)
         list.append(dev)
         app?.status("\(dev.name): \(db.tracks.count) tracks, \(db.playlists.filter { !$0.folder }.count) playlists")
+        // Apple's analysis: take what the stick's backup has that this device lacks (a reinstall, a new phone), and
+        // give it what's new here; neither side loses anything
+        if AppleMusic.stickBackup {
+            AppleMusic.shared.restore(from: dev) { msg in if !msg.hasPrefix("No backup") { AppleMusic.shared.backup(to: dev) } }
+        }
     }
     /// a name for the stick in Cratebox only (the drive's own label is left alone)
     func nickname(_ d: Device, _ n: String) {
@@ -96,6 +101,7 @@ final class Devices: ObservableObject {
     /// go of the drive. iOS has no eject of its own for USB drives; after this, unplugging is safe. The stick
     /// stays known (not its access): plugged in again, DriveWatch opens it again. `done` says whether it's out.
     func eject(_ d: Device, quiet: Bool = false, done: ((Bool) -> Void)? = nil) {
+        if UsbCopy.shared.busy == d.id { app?.status("Copying from \(d.name) to this device: wait for it or press Stop first", 7); done?(false); return }
         if app?.core.decks.contains(where: { $0.track.map { t in d.byRbId.values.contains { $0.info === t } } ?? false }) == true {
             app?.status("A deck is playing from \(d.name): load something else (or stop and unload) first", 7); done?(false); return
         }
@@ -130,6 +136,7 @@ final class Devices: ObservableObject {
         if case .devicePlaylist(let v, _) = app?.view, v == d.id { app?.view = .collection }
     }
     func close(_ d: Device) {
+        if UsbCopy.shared.busy == d.id { app?.status("Copying from \(d.name): wait for it or press Stop first"); return }
         if app?.core.decks.contains(where: { $0.track.map { t in d.byRbId.values.contains { $0.info === t } } ?? false }) == true { app?.status("Load something else on the decks first"); return }
         if d.saving || d.unsaved { app?.status(d.saving ? "Saving to \(d.name), one moment" : "\(d.name) has playlist changes that aren't saved", 7); return }
         list.removeAll { $0 === d }

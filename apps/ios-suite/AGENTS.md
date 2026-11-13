@@ -13,8 +13,19 @@ Read this first. Keep it short.
 - HEAT never goes into the shipping app (`com.zonahbear.cratebox.suite`). It lives only on `personal/heat`
   (`com.zonahbear.cratebox.heat`), which never merges back.
 - Installs only via TestFlight (testflight.yml) and the App Store. macOS CI is manual-only. ios.yml defaults to the `xcode-27` runner
-  (Apple Silicon, iOS 27 SDK, needed for AI mode's Music Understanding); `macos-15-intel` is the fallback (input `runner`).
+  (Apple Silicon, iOS 27 SDK, needed for AI mode's Music Understanding). No Intel fallback (Jonah, 2026-11-12): if a run stalls, retry on xcode-27.
 - AI features stay behind Settings → AI mode (`cb.ai`, off by default) and on-device only. See breadcrumbs 2026-11-11.
+- Xcode 27: observed state read only inside a `GeometryReader` closure doesn't redraw. Let the reader measure and hand
+  the size to a child view that reads the state in its own body (PhoneFrame, PadFrame, BridgeFrame, USBPanes), or
+  read the values in `body` before the reader. ios.yml's `_redraw` screenshot checks it (`-demo -redraw`).
+- AI DJ (`App/AIDJ/`, decisions in CrateboxKit `AutoMix.swift`): a fourth suite mode behind AI mode, decks 1 and 2
+  (deck 3 only with Settings → AI → Third deck, for preloading; never three heard). Kinds in `AutoMix.Transition`
+  (levels + lengths); each move has a toggle (`AIDJMoves`, keys `cb.aidj.*`). One bass line at a time is tested.
+- Grid order (Jonah, 2026-11-12): a grid set in Cratebox (`gridManual`) > Apple's (AI mode) > rekordbox's > Cratebox's
+  analysis; `AppleGridMode` (`cb.grid.order`). A CUE you set is AI DJ's mix-in point, ahead of Apple's.
+- Haptics only from touch handlers (`Haptics` in Theme.swift), never from model/MIDI changes.
+- Real-track tests: `RealTrackTests` read `CRATEBOX_REAL` (private repo zonahbear/cratebox-test-tracks via the
+  TEST_TRACKS_TOKEN secret). No synthetic test tracks in CI (Jonah).
 
 ## Breadcrumbs
 

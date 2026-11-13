@@ -17,6 +17,10 @@ struct TrackRecord: Codable {
     var ver: Int
     /// the stored grid is Apple's (AI mode's grid setting), not Cratebox's own: nil in older libraries
     var appleGrid: Bool? = nil
+    /// why Cratebox's own analysis of this file failed last time (nil: it didn't), shown in Settings → Library & USB
+    var fail: String? = nil
+    /// the grid came from rekordbox's analysis on the stick (USB copies): a BPM range change leaves it alone
+    var rbGrid: Bool? = nil
 }
 
 final class LibTrack: Identifiable {
@@ -31,6 +35,7 @@ final class LibTrack: Identifiable {
         info = TrackInfo(id: r.id, title: r.title, artist: r.artist, bpm: r.bpm, firstBeat: r.firstBeat, key: r.key, duration: r.duration, phrases: r.phrases)
         info.gridManual = r.gridManual; info.autoBpm = r.autoBpm; info.autoFirst = r.autoFirst
         info.appleGrid = r.appleGrid ?? false
+        info.rbGrid = r.rbGrid ?? false
     }
     func sync() {
         rec.bpm = info.bpm; rec.firstBeat = info.firstBeat; rec.key = info.key; rec.duration = info.duration; rec.phrases = info.phrases
@@ -75,6 +80,13 @@ final class Library: ObservableObject {
 
     // ---- folders ----
     func url(of folder: MusicFolder) -> URL? {
+        // the copies from USB sticks live in the app's own Documents, whose path can change with an app update; it's
+        // never "unplugged" (deleting it in Files used to mark it so, and then none of its tracks would load)
+        if folder.id == UsbCopy.folderId {
+            let u = UsbCopy.root
+            try? FileManager.default.createDirectory(at: u, withIntermediateDirectories: true)
+            offline[folder.id] = nil; open[folder.id] = u; return u
+        }
         if offline[folder.id] != nil { return nil }
         if let u = open[folder.id] { return u }
         var stale = false
@@ -110,7 +122,7 @@ final class Library: ObservableObject {
     /// dropped and the security-scoped access ends, so nothing in Cratebox holds the drive open
     func release(_ f: MusicFolder, unplugged: Bool) {
         open[f.id]?.stopAccessingSecurityScopedResource(); open[f.id] = nil
-        offline[f.id] = unplugged
+        if f.id != UsbCopy.folderId { offline[f.id] = unplugged }
         queue.removeAll { $0.rec.folder == f.id }
     }
     func seenGone(_ f: MusicFolder) { if offline[f.id] == false { offline[f.id] = true } }
@@ -186,13 +198,96 @@ final class Library: ObservableObject {
         guard let f = folders.first(where: { $0.id == t.rec.folder }), let root = url(of: f) else { return nil }
         return root.appendingPathComponent(t.rec.rel)
     }
+    /// every track on this device (not on a stick) by "file name|size": a stick track with the same name and size is
+    /// already here, so a USB copy skips it (and a copied playlist uses the one that's here)
+    func twins() -> [String: LibTrack] {
+        Dictionary(tracks.filter { $0.device == nil }.map { (Library.twinKey(($0.rec.rel as NSString).lastPathComponent, $0.rec.size), $0) }, uniquingKeysWith: { a, _ in a })
+    }
+    static func twinKey(_ name: String, _ size: Int64) -> String { "\(name.lowercased())|\(size)" }
+    /// one entry per song: a stick track whose copy is on this device (same file name and size, or same artist,
+    /// title and length to within 2 s) becomes that copy, which plays without the stick; then duplicates go
+    /// (Jonah, 2026-11-13: a synced library with the stick in counted every track twice)
+    func preferLocal(_ list: [LibTrack]) -> [LibTrack] {
+        guard list.contains(where: { $0.device != nil }) else { return list }
+        let own = tracks.filter { $0.device == nil }
+        var byFile = [String: LibTrack](), byMeta = [String: [LibTrack]]()
+        for t in own {
+            byFile[AppleMusic.twinKey(t)] = byFile[AppleMusic.twinKey(t)] ?? t
+            if let m = AppleMusic.metaKey(t) { byMeta[m, default: []].append(t) }
+        }
+        var seen = Set<String>()
+        return list.compactMap { t -> LibTrack? in
+            var u = t
+            if t.device != nil {
+                if let c = byFile[AppleMusic.twinKey(t)] { u = c }
+                else if let m = AppleMusic.metaKey(t), let cs = byMeta[m] {
+                    let len = AppleMusic.length(t)
+                    if let c = cs.first(where: { c in let l = AppleMusic.length(c); return len == nil || l == nil || abs(len! - l!) <= 2 }) { u = c }
+                }
+            }
+            return seen.insert(u.id).inserted ? u : nil
+        }
+    }
+    /// tracks UsbCopy just copied into one of the library's folders: they join straight away with rekordbox's title,
+    /// artist, grid and key (no rescan, no second analysis); ones without rekordbox's grid go to the analysis queue
+    func addCopied(_ recs: [TrackRecord]) -> [LibTrack] {
+        var out = [LibTrack]()
+        for r in recs {
+            // already listed (a rescan of the folder found the file while the copy was still running, so it came in
+            // without rekordbox's grid): give it rekordbox's grid now, unless you fixed the grid yourself
+            if let t = byId[r.id] {
+                if r.rbGrid == true { Library.applyRekordbox(r, to: t) }
+                out.append(t); continue
+            }
+            let t = LibTrack(r)
+            tracks.append(t); byId[r.id] = t; out.append(t)
+            if !t.analysed { queue.append(t) }
+        }
+        save(); runQueue()
+        return out
+    }
     /// tracks on a rekordbox stick join the library while it's open
     func setDeviceTracks(_ dev: String, _ list: [LibTrack]) {
         tracks = tracks.filter { $0.device != dev } + list
         byId = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
     }
 
-    func changed(_ t: LibTrack) { t.sync(); save() }
+    /// rekordbox's grid, phrases and key (from a stick's analysis) onto a track on this device; a grid you set wins
+    static func applyRekordbox(_ r: TrackRecord, to t: LibTrack) {
+        guard !t.rec.gridManual, let bpm = r.bpm, bpm > 0 else { return }
+        t.info.bpm = bpm; t.info.firstBeat = r.firstBeat; t.info.autoBpm = bpm; t.info.autoFirst = r.firstBeat
+        if !r.phrases.isEmpty { t.info.phrases = r.phrases }
+        if r.key >= 0 { t.info.key = r.key }
+        if t.info.duration <= 0 { t.info.duration = r.duration }
+        t.info.appleGrid = false; t.info.rbGrid = true
+        t.rec.rbGrid = true; t.rec.ver = Library.ANALYSIS_VER; t.rec.fail = nil
+        t.sync()
+    }
+    func changed(_ t: LibTrack) { let f = t.rec.fail; t.sync(); t.rec.fail = f; save() }
+    /// tracks Cratebox's own analysis couldn't do, with why (Settings → Library & USB)
+    var failed: [LibTrack] { tracks.filter { $0.device == nil && $0.rec.fail != nil } }
+    /// try the failed ones again (after plugging the drive back in, adding the folder again, …)
+    func retryFailed() {
+        for t in failed {
+            t.rec.fail = nil
+            if (t.info.bpm ?? 0) > 0 { continue }          // it has a grid (rekordbox's): nothing to redo
+            t.rec.ver = 0; t.info.bpm = nil
+            if !queue.contains(where: { $0 === t }) { queue.append(t) }
+        }
+        objectWillChange.send(); save(); runQueue()
+    }
+    /// a decoding error in words
+    static func reason(_ e: Error, _ url: URL) -> String {
+        if !FileManager.default.fileExists(atPath: url.path) { return "The file isn't there any more (moved, renamed or deleted)" }
+        let ext = url.pathExtension.lowercased()
+        if ext == "m4p" { return "Protected (DRM) file: iOS won't let apps read it" }
+        if e is AudioDecoder.Failure { return "The file opened but no audio came out (empty or damaged)" }
+        let ns = e as NSError
+        if ns.domain == NSOSStatusErrorDomain || ns.domain == "com.apple.coreaudio.avfaudio" {
+            return ["ogg", "opus", "wma", "ape", "dsf", "dff"].contains(ext) ? "iOS can't play .\(ext) files" : "iOS can't read this file (unsupported format or damaged; code \(ns.code))"
+        }
+        return ns.localizedDescription
+    }
     func save() {
         saveWork?.cancel()
         let w = DispatchWorkItem { [weak self] in
@@ -212,7 +307,9 @@ final class Library: ObservableObject {
         let was = UserDefaults.standard.string(forKey: k)
         UserDefaults.standard.set(now, forKey: k)
         guard let was, was != now else { return }          // first run: the library was analysed with this range
-        let again = tracks.filter { $0.device == nil && !$0.rec.gridManual && $0.analysed }
+        // rekordbox's grids on USB copies stay (copies from before rbGrid existed count as rekordbox's too)
+        let again = tracks.filter { $0.device == nil && !$0.rec.gridManual && $0.analysed
+            && !($0.rec.rbGrid ?? ($0.rec.folder == UsbCopy.folderId)) }
         for t in again { t.rec.ver = 0; if !queue.contains(where: { $0 === t }) { queue.append(t) } }
         if !again.isEmpty { status("BPM range changed: analysing \(again.count) track\(again.count == 1 ? "" : "s") again") }
         save(); runQueue()
@@ -238,22 +335,35 @@ final class Library: ObservableObject {
         let url = fileURL(t), grid = t.rec.gridManual ? (t.rec.bpm ?? 0, t.rec.firstBeat ?? 0) : nil
         let range = Settings.bpmRange           // Settings → Decks → BPM range, as for a track analysed at load
         DispatchQueue.global(qos: .utility).async {
-            var res: (AnalysisResult, Double)?
+            var res: (AnalysisResult, Double)?, why: String?
             // only the 11 kHz mono is kept while decoding (~20 MB for 8 minutes, not the ~180 MB stereo track)
-            if let url, let m = try? AudioDecoder.analysisMono(url) {
-                let r = Analysis.analyze(m.x, fs: m.fs, range: range, noWave: true, grid: grid.map { (bpm: $0.0, firstBeat: $0.1) })
-                res = (r, m.duration)
-            }
+            if let url {
+                let open = url.startAccessingSecurityScopedResource()
+                defer { if open { url.stopAccessingSecurityScopedResource() } }
+                do {
+                    let m = try AudioDecoder.analysisMono(url)
+                    let r = Analysis.analyze(m.x, fs: m.fs, range: range, noWave: true, grid: grid.map { (bpm: $0.0, firstBeat: $0.1) })
+                    res = (r, m.duration)
+                    if r.bpm <= 0 { why = "No steady beat found (beatless, very short, or mostly silence)" }
+                } catch { why = Library.reason(error, url) }
+            } else { why = "Its folder isn't reachable: the drive is unplugged, or Cratebox lost permission (add the folder again in the library)" }
             DispatchQueue.main.async {
                 self.analysing = false; self.current = nil
-                if let (r, dur) = res {
+                t.rec.fail = why
+                if let why { self.status("Couldn't analyse \(t.rec.title): \(why)") }
+                if case let (r, dur)? = res, r.bpm > 0 {
                     t.info.bpm = r.bpm; t.info.firstBeat = r.firstBeat; t.info.phrases = r.phrases; t.info.duration = dur
                     t.info.appleGrid = false
                     if !t.info.keyFromRekordbox { t.info.key = r.key }
                     t.rec.ver = Library.ANALYSIS_VER
                     if !t.info.gridManual { t.info.autoBpm = r.bpm; t.info.autoFirst = r.firstBeat }
                     self.changed(t)
-                } else { t.rec.ver = Library.ANALYSIS_VER; t.info.bpm = 0; self.changed(t) }
+                } else {
+                    // failed: a grid it already has (rekordbox's, from a USB copy) stays; only a track with none gets "no BPM"
+                    t.rec.ver = Library.ANALYSIS_VER
+                    if (t.info.bpm ?? 0) <= 0 { t.info.bpm = 0 }
+                    self.changed(t)
+                }
                 self.objectWillChange.send()
                 self.runQueue()
             }
