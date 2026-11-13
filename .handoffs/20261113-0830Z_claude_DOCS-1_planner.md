@@ -1,4 +1,4 @@
-Task DOCS-1 (handoff docs + TODO.md) · branch docs/handoff-todo · base main 0822745 · head = the commit carrying this memo · PR: see GLOBAL_PLAN DOCS-1 / open PR titled "DOCS-1: …" · tree clean after push
+Task DOCS-1 (handoff docs + TODO.md) · branch docs/handoff-todo · base main 0822745 · head = the commit carrying this memo · PR https://github.com/zonahbear/Cratebox/pull/26 · tree clean after push
 
 ## 📍 Where We Stopped
 - **Active Task:** DOCS-1 is done and waiting for Jonah's merge. It puts the current state on `main`, so a fresh clone (Codex,

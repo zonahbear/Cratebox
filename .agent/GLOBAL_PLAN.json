@@ -651,7 +651,7 @@
    "status": "review",
    "owner": "claude",
    "branch": "docs/handoff-todo",
-   "pr": null,
+   "pr": 26,
    "depends_on": [],
    "needs_go": false,
    "notes": "Jonah 2026-11-13 08:18Z: make the handoff docs ready for Codex / Antigravity and write every open item into a TODO.md (phase 3/4 included, parked truecurve etc. left out). Brings PR #24's GLOBAL_PLAN and memos to main so a fresh clone of main sees the current state."
