@@ -1,4 +1,4 @@
-Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base main 24d8b21 · head 5b88848 (+ this memo) · PR https://github.com/zonahbear/Cratebox/pull/24 · tree clean after push
+Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base main 24d8b21 · head d8812b2 (+ this memo) · PR https://github.com/zonahbear/Cratebox/pull/24 · tree clean after push
 
 ## 📍 Where We Stopped
 - **Active Task:** P1-2 = redesign phases 1+2 in one build: grid order (your edit > Apple > rekordbox > Cratebox), 6-tab Settings with a toggle per AI DJ move, real-track CI (skips without TEST_TRACKS_TOKEN), squircle restyle + touch-only haptics, AI DJ v2 (bass swap / EQ handoff / COLOR sweep / cut, 4-32 bars, mix-in at CUE or Apple point, beat-matched 4-beat lead-in, MIX NOW within 2 bars, 3rd deck preload, loop bridge), plus USB ↔ local twins sharing Apple's analysis. Done and on TestFlight 56.1; waiting on Jonah's device check.
@@ -22,10 +22,10 @@ Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base mai
 - 61.1 (suite 44df793): analysis failure reasons + Try again; "Analyse everything again" asks first; BPM range change skips rekordbox-gridded copies.
 - 62.1 FAILED to compile (SettingsView missing `playlists` EnvironmentObject); fixed in c7b97fd.
 - 63.1 (suite f5ec011, verified "UPLOAD SUCCEEDED"): Apple analysis only on request (Settings → AI whole library / playlist / selected track; long-press Analyse), toggle "Analyse while tracks play" (cb.apple.whilePlaying).
-- 64.1 (suite 4476341 = monorepo 5b88848, building at 00:21Z): root cause of "re-analysis + 15 gridded tracks": AppModel rescans folders at launch / addFolder scans, listing copied files with no grid before UsbCopy.addCopied runs; addCopied kept those. Now addCopied applies rekordbox's grid (Library.applyRekordbox) and UsbCopy.regrid = "Re-sync grids from <stick>" (Settings → Library & USB, stick long-press).
+- 64.1 cancelled; 65.1 (suite 57905ba = monorepo d8812b2, verified "UPLOAD SUCCEEDED" 00:29Z, also: Sync recopies files deleted from From USB, folder restarted if deleted): root cause of "re-analysis + 15 gridded tracks": AppModel rescans folders at launch / addFolder scans, listing copied files with no grid before UsbCopy.addCopied runs; addCopied kept those. Now addCopied applies rekordbox's grid (Library.applyRekordbox) and UsbCopy.regrid = "Re-sync grids from <stick>" (Settings → Library & USB, stick long-press).
 
 ## ⏭️ Precise Next Steps for Incoming Model
-0. [ ] Confirm 64.1 uploaded (ci-logs-testflight testflight.txt); Jonah: install, plug stick, Re-sync grids, report AI DJ track count.
+0. [ ] Jonah: install 65.1 (or restore From USB from Files → Recently Deleted), plug stick, Re-sync grids, report AI DJ track count.
 1. [ ] Jonah checks 58.1 on his phone (MIX NOW, transitions, Settings tabs, haptics, copied-track analysis). If 56.1 never appears, re-run suite testflight.yml (runner xcode-27).
 2. [ ] Next ios.yml run: confirm SIM lines show a real 16 Pro Max / SE (or SIM MISSING), check SE Settings rail shots.
 3. [ ] Phase 3 on Jonah's go, starting with SYNC-3: a synced real-track test through a tempo glide that logs drift (SAVEME, master tempo on), then fix.
