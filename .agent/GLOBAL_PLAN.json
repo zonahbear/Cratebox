@@ -1,283 +1,660 @@
 {
-  "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
-  "updated": "2026-11-11T21:40:00Z",
-  "tasks": [
-    {
-      "id": "MONO-1",
-      "title": "Rebuild the monorepo (apps/, root workflows, agent handoff layer)",
-      "app": "repo",
-      "status": "done",
-      "owner": "claude",
-      "branch": "claude/project-thread-b7gf7r",
-      "pr": 16,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Merged as #16 (db99c7f). personal/heat pushed (0b5b95c)."
-    },
-    {
-      "id": "MONO-2",
-      "title": "Decide truecurve: make this repo private, or keep truecurve as its own repo",
-      "app": "truecurve",
-      "status": "blocked",
-      "owner": "jonah",
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": true,
-      "notes": "truecurve is private, this repo is public. Its ios-latest release name clashes with web's."
-    },
-    {
-      "id": "MONO-3",
-      "title": "Merge truecurve into apps/truecurve with history",
-      "app": "truecurve",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-1",
-        "MONO-2"
-      ],
-      "needs_go": true,
-      "notes": ""
-    },
-    {
-      "id": "MONO-4",
-      "title": "Re-add GitHub secrets here: TestFlight six, IOS_PROFILE_HEAT_*, LEGACY_RELEASE_TOKEN",
-      "app": "repo",
-      "status": "todo",
-      "owner": "jonah",
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-1"
-      ],
-      "needs_go": false,
-      "notes": "Agents can't set secrets."
-    },
-    {
-      "id": "MONO-5",
-      "title": "Check the first Cloudflare Workers Build on main after the merge",
-      "app": "web",
-      "status": "done",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-1"
-      ],
-      "needs_go": false,
-      "notes": "Verified 2026-11-11 (GitHub check runs): production 'Workers Builds: cratebox' FAILED on db99c7f, 8992a27 and d9acf81, then PASSED on main 4181a99 (08:28Z). Live-site behaviour not re-tested. PR/branch preview builds still fail instantly (known dashboard setting since before the monorepo, see apps/web/AGENTS.md); ignore them on PRs."
-    },
-    {
-      "id": "MONO-6",
-      "title": "Port iOS PR #31 (Music Understanding, old repo, into preview/truecurve-usb) onto a branch here",
-      "app": "ios-suite",
-      "status": "review",
-      "owner": "claude",
-      "branch": "claude/project-thread-b7gf7r",
-      "pr": 19,
-      "depends_on": [
-        "MONO-1"
-      ],
-      "needs_go": false,
-      "notes": "#31 merged as #18 (4181a99, suite 28ec954). PR #19 ports the follow-ups a4bc095 (half/double-time Apple comparison) and 988438f..99d4b73 (MATCH sort, MIX IN/OUT, Beat grids); suite ios.yml green at both (reported by the Music Understanding thread). Done when #19 merges."
-    },
-    {
-      "id": "MONO-7",
-      "title": "Publish the Linux/Windows releases (app-latest, windows-latest, kiosk-latest) from this repo",
-      "app": "linux",
-      "status": "in_progress",
-      "owner": "claude",
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-1",
-        "MONO-4"
-      ],
-      "needs_go": true,
-      "notes": "Verified: app-latest and windows-latest published here 2026-11-11 from db99c7f (runs 42986160083, 42986164510). kiosk-latest not rebuilt here yet (Jonah's rule: no new ISO for app changes). Legacy updater migration split out as MONO-11."
-    },
-    {
-      "id": "MONO-11",
-      "title": "Move old Cratebox OS machines off the Cratebox-Linux releases",
-      "app": "linux",
-      "status": "todo",
-      "owner": "jonah",
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-4"
-      ],
-      "needs_go": true,
-      "notes": "cratebox-update now reads this repo first, then Cratebox-Linux, but machines on an older updater only read Cratebox-Linux until they update once. Needs LEGACY_RELEASE_TOKEN (mirror step in cratebox-app.yml) or one last release there. Unknown: how many machines still run the old updater (Jonah's MacBook at least)."
-    },
-    {
-      "id": "MONO-12",
-      "title": "Act on the Codex handoff review: rules, claims, memo names, app maps, TestFlight NOT BUILT summary, stick-write rule removed, sideloading text removed",
-      "app": "repo",
-      "status": "review",
-      "owner": "claude",
-      "branch": "claude/project-thread-b7gf7r",
-      "pr": 19,
-      "depends_on": [
-        "MONO-1"
-      ],
-      "needs_go": false,
-      "notes": "Jonah 2026-11-11: remove the no-stick-writes hard rule (keep the protections documented) and every SideStore/sideloading mention. Follow-ups: ALL-2..ALL-5, HEAT-2."
-    },
-    {
-      "id": "MONO-8",
-      "title": "Archive (never delete) the old repos",
-      "app": "repo",
-      "status": "todo",
-      "owner": "jonah",
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-3",
-        "MONO-6",
-        "MONO-7",
-        "MONO-11"
-      ],
-      "needs_go": true,
-      "notes": ""
-    },
-    {
-      "id": "IOS-1",
-      "title": "Apple Watch mic app that connects to PC rekordbox",
-      "app": "ios-suite",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": true,
-      "notes": "Raised 2026-10-23; wait for Jonah's go."
-    },
-    {
-      "id": "ALL-1",
-      "title": "Key sync and key shift, mapped to pads and the proper buttons on available controllers",
-      "app": "all",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": true,
-      "notes": "Jonah 2026-11-11 00:13Z: not started, wait for his go."
-    },
-    {
-      "id": "ANA-1",
-      "title": "Bar 1 half a beat off rekordbox on ~7% of real tracks; tempo wrong at 4/3 and 2/3 on ~2%",
-      "app": "web,linux",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Measure on Jonah's real stick tracks; his ears decide who is right."
-    },
-    {
-      "id": "HEAT-1",
-      "title": "Bring the two newest HEAT safety checks (3 s no reading, no slot 4 backup) to linux heat.rs and personal/heat",
-      "app": "linux,ios-suite",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Also: a dropped link mid-run loses the slot 4 backup (truecurve)."
-    },
-    {
-      "id": "MONO-9",
-      "title": "Delete branches already merged into main (15 old web/claude branches) and close obsolete PR #3",
-      "app": "repo",
-      "status": "todo",
-      "owner": "jonah",
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Agents can't delete remote branches here. Merged: analysis-speed-and-fixes, ios, load-stutter-fix, perf/low-end-drawing, claude/project-thread-{0pjrfq,7i29va,a7yqwi,dqs1br,e218io,jp214s,o1jybq,r8s5wf,t5561g,wtndnj,zh9scy}. Keep: mac-air (9 unmerged commits), ci-logs, personal/heat."
-    },
-    {
-      "id": "MONO-10",
-      "title": "Move iOS work fully into the monorepo: stop pushing to cratebox-iOS-suite once the TestFlight secrets are here",
-      "app": "ios-suite",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [
-        "MONO-4"
-      ],
-      "needs_go": false,
-      "notes": "Until then the Music Understanding thread pushes to the suite branch claude/project-thread-oq8tnx and its commits get ported here."
-    },
-    {
-      "id": "ALL-2",
-      "title": "Mirror check: web files copied into apps/ios-suite (cratebox.html, sw.js, tools/*.js, tests/)",
-      "app": "web,ios-suite",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Codex review 2026-11-11: at 4181a99 cratebox.html and tests/test_cratebox.py differ between apps/web and apps/ios-suite; sw.js and tools/*.js match. Define the mirrored set and allowed differences, add a sync command and a cheap Ubuntu check. Also tools/*.js are hand-kept copies of cratebox.html sections."
-    },
-    {
-      "id": "ALL-3",
-      "title": "One verification entry point per app that checks prerequisites and runs the right tests",
-      "app": "all",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Codex review 2026-11-11: unpinned playwright/numpy, browser path discovery, fixtures. Record tool versions with results. Keep real-track/hardware checks separate."
-    },
-    {
-      "id": "ALL-4",
-      "title": "Fresh-session smoke check of every agent's entry files (Codex, Claude Code, Gemini CLI, Antigravity, Copilot)",
-      "app": "repo",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Jonah 2026-11-11: 'antimatter' = Google Antigravity. Adapter added: .agents/rules/cratebox.md (reported by third-party guides + search summary of antigravity.google/docs/rules: Antigravity reads AGENTS.md, GEMINI.md and .agents/rules/*.md; official page not reachable from the cloud session, so unverified). Still to do, on Jonah's machine: from the root and from an app folder, ask each tool for the active task, hard rules, app map and verification command."
-    },
-    {
-      "id": "ALL-5",
-      "title": "Cheap Ubuntu check for agent metadata: GLOBAL_PLAN ids/deps/statuses, LATEST == newest memo, no conflict markers or retired paths in docs",
-      "app": "repo",
-      "status": "todo",
-      "owner": null,
-      "branch": null,
-      "pr": null,
-      "depends_on": [],
-      "needs_go": false,
-      "notes": "Codex review 2026-11-11. Path-filtered or workflow_dispatch only (hard rule 6)."
-    },
-    {
-      "id": "HEAT-2",
-      "title": "Merge main into personal/heat so its docs and workflows get the 2026-11-11 rule changes",
-      "app": "ios-suite",
-      "status": "todo",
-      "owner": null,
-      "branch": "personal/heat",
-      "pr": null,
-      "depends_on": [
-        "MONO-6"
-      ],
-      "needs_go": true,
-      "notes": "personal/heat still has the old SideStore/sideloading wording and the old stick-write rule. Merge main into it, never the reverse (hard rule 1)."
-    }
-  ]
+ "schema": "Task list shared by every agent. status: todo | in_progress | blocked | review | done. owner: agent name, 'jonah', or null. needs_go: true = wait for Jonah's explicit go. Update your task when you start and when you hand off (see .agent/SYSTEM_PROMPT.md). Claims: an open PR titled '<TASK-ID>: ...' is the claim (SYSTEM_PROMPT 'Starting a session'). Notes say 'verified' (seen by the writer, with SHA/URL) or 'reported' (told by someone else).",
+ "updated": "2026-11-13",
+ "tasks": [
+  {
+   "id": "MONO-1",
+   "title": "Rebuild the monorepo (apps/, root workflows, agent handoff layer)",
+   "app": "repo",
+   "status": "done",
+   "owner": "claude",
+   "branch": "claude/project-thread-b7gf7r",
+   "pr": 16,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Merged as #16 (db99c7f). personal/heat pushed (0b5b95c)."
+  },
+  {
+   "id": "MONO-2",
+   "title": "Decide truecurve: make this repo private, or keep truecurve as its own repo",
+   "app": "truecurve",
+   "status": "blocked",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "truecurve is private, this repo is public. Its ios-latest release name clashes with web's."
+  },
+  {
+   "id": "MONO-3",
+   "title": "Merge truecurve into apps/truecurve with history",
+   "app": "truecurve",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-1",
+    "MONO-2"
+   ],
+   "needs_go": true,
+   "notes": ""
+  },
+  {
+   "id": "MONO-4",
+   "title": "Re-add GitHub secrets here: TestFlight six, IOS_PROFILE_HEAT_*, LEGACY_RELEASE_TOKEN",
+   "app": "repo",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-1"
+   ],
+   "needs_go": false,
+   "notes": "Agents can't set secrets."
+  },
+  {
+   "id": "MONO-5",
+   "title": "Check the first Cloudflare Workers Build on main after the merge",
+   "app": "web",
+   "status": "blocked",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-1"
+   ],
+   "needs_go": false,
+   "notes": "Verified (GitHub check runs): production 'Workers Builds: cratebox' FAILED on main db99c7f, 8992a27, PASSED on main 4181a99 (08:28Z), FAILED again on main 24d8b21 (2026-11-11 ~21:35Z, merge of #19, which changed no site files). `bash apps/web/site/build.sh` and `npx wrangler@4 deploy --dry-run` pass locally at 24d8b21. So the failure is on Cloudflare's side or intermittent; needs the build log (Cloudflare sign-in). PR preview builds fail every time (old dashboard setting)."
+  },
+  {
+   "id": "MONO-6",
+   "title": "Port iOS PR #31 (Music Understanding, old repo, into preview/truecurve-usb) onto a branch here",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/project-thread-b7gf7r",
+   "pr": 20,
+   "depends_on": [
+    "MONO-1"
+   ],
+   "needs_go": false,
+   "notes": "#31 merged as #18 (4181a99); follow-ups through 99d4b73 merged as #19 (24d8b21). PR #20 ports 263608d (Touch mode fix, background analysis waits for idle/cool/not Low Power, MATCH keys computed once); suite ios.yml run 62 green, TestFlight 53.1 (reported). Further suite heads get ported until MONO-10."
+  },
+  {
+   "id": "MONO-7",
+   "title": "Publish the Linux/Windows releases (app-latest, windows-latest, kiosk-latest) from this repo",
+   "app": "linux",
+   "status": "in_progress",
+   "owner": "claude",
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-1",
+    "MONO-4"
+   ],
+   "needs_go": true,
+   "notes": "Verified: app-latest and windows-latest published here 2026-11-11 from db99c7f (runs 42986160083, 42986164510). kiosk-latest not rebuilt here yet (Jonah's rule: no new ISO for app changes). Legacy updater migration split out as MONO-11."
+  },
+  {
+   "id": "MONO-11",
+   "title": "Move old Cratebox OS machines off the Cratebox-Linux releases",
+   "app": "linux",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-4"
+   ],
+   "needs_go": true,
+   "notes": "cratebox-update now reads this repo first, then Cratebox-Linux, but machines on an older updater only read Cratebox-Linux until they update once. Needs LEGACY_RELEASE_TOKEN (mirror step in cratebox-app.yml) or one last release there. Unknown: how many machines still run the old updater (Jonah's MacBook at least)."
+  },
+  {
+   "id": "MONO-12",
+   "title": "Act on the Codex handoff review: rules, claims, memo names, app maps, TestFlight NOT BUILT summary, stick-write rule removed, sideloading text removed",
+   "app": "repo",
+   "status": "done",
+   "owner": "claude",
+   "branch": "claude/project-thread-b7gf7r",
+   "pr": 19,
+   "depends_on": [
+    "MONO-1"
+   ],
+   "needs_go": false,
+   "notes": "Merged as #19 (24d8b21). Verified: TestFlight run 43103643432 on 24d8b21 is green with every build step skipped and the warning 'NOT BUILT / NOT UPLOADED: secrets not set: all six'."
+  },
+  {
+   "id": "MONO-8",
+   "title": "Archive (never delete) the old repos",
+   "app": "repo",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-3",
+    "MONO-5",
+    "MONO-6",
+    "MONO-7",
+    "MONO-11"
+   ],
+   "needs_go": true,
+   "notes": ""
+  },
+  {
+   "id": "IOS-1",
+   "title": "Apple Watch mic app that connects to PC rekordbox",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Raised 2026-10-23; wait for Jonah's go."
+  },
+  {
+   "id": "ALL-1",
+   "title": "Key sync and key shift, mapped to pads and the proper buttons on available controllers",
+   "app": "all",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Jonah 2026-11-11 00:13Z: not started, wait for his go."
+  },
+  {
+   "id": "ANA-1",
+   "title": "Bar 1 half a beat off rekordbox on ~7% of real tracks; tempo wrong at 4/3 and 2/3 on ~2%",
+   "app": "web,linux",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Measure on Jonah's real stick tracks; his ears decide who is right."
+  },
+  {
+   "id": "HEAT-1",
+   "title": "Bring the two newest HEAT safety checks (3 s no reading, no slot 4 backup) to linux heat.rs and personal/heat",
+   "app": "linux,ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Also: a dropped link mid-run loses the slot 4 backup (truecurve)."
+  },
+  {
+   "id": "MONO-9",
+   "title": "Delete branches already merged into main (15 old web/claude branches) and close obsolete PR #3",
+   "app": "repo",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Agents can't delete remote branches here. Merged: analysis-speed-and-fixes, ios, load-stutter-fix, perf/low-end-drawing, claude/project-thread-{0pjrfq,7i29va,a7yqwi,dqs1br,e218io,jp214s,o1jybq,r8s5wf,t5561g,wtndnj,zh9scy}. Keep: mac-air (9 unmerged commits), ci-logs, personal/heat."
+  },
+  {
+   "id": "MONO-10",
+   "title": "Move iOS work fully into the monorepo: stop pushing to cratebox-iOS-suite once the TestFlight secrets are here",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "MONO-4"
+   ],
+   "needs_go": false,
+   "notes": "Until then the Music Understanding thread pushes to the suite branch claude/project-thread-oq8tnx and its commits get ported here."
+  },
+  {
+   "id": "ALL-2",
+   "title": "Mirror check: web files copied into apps/ios-suite (cratebox.html, sw.js, tools/*.js, tests/)",
+   "app": "web,ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Codex review 2026-11-11: at 4181a99 cratebox.html and tests/test_cratebox.py differ between apps/web and apps/ios-suite; sw.js and tools/*.js match. Define the mirrored set and allowed differences, add a sync command and a cheap Ubuntu check. Also tools/*.js are hand-kept copies of cratebox.html sections."
+  },
+  {
+   "id": "ALL-3",
+   "title": "One verification entry point per app that checks prerequisites and runs the right tests",
+   "app": "all",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Codex review 2026-11-11: unpinned playwright/numpy, browser path discovery, fixtures. Record tool versions with results. Keep real-track/hardware checks separate."
+  },
+  {
+   "id": "ALL-4",
+   "title": "Fresh-session smoke check of every agent's entry files (Codex, Claude Code, Gemini CLI, Antigravity, Copilot)",
+   "app": "repo",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-11: 'antimatter' = Google Antigravity. Adapter added: .agents/rules/cratebox.md (reported by third-party guides + search summary of antigravity.google/docs/rules: Antigravity reads AGENTS.md, GEMINI.md and .agents/rules/*.md; official page not reachable from the cloud session, so unverified). Still to do, on Jonah's machine: from the root and from an app folder, ask each tool for the active task, hard rules, app map and verification command."
+  },
+  {
+   "id": "ALL-5",
+   "title": "Cheap Ubuntu check for agent metadata: GLOBAL_PLAN ids/deps/statuses, LATEST == newest memo, no conflict markers or retired paths in docs",
+   "app": "repo",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Codex review 2026-11-11. Path-filtered or workflow_dispatch only (hard rule 6)."
+  },
+  {
+   "id": "HEAT-2",
+   "title": "Merge main into personal/heat so its docs and workflows get the 2026-11-11 rule changes",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": "personal/heat",
+   "pr": null,
+   "depends_on": [
+    "MONO-6"
+   ],
+   "needs_go": true,
+   "notes": "personal/heat still has the old SideStore/sideloading wording and the old stick-write rule. Merge main into it, never the reverse (hard rule 1)."
+  },
+  {
+   "id": "AIDJ-1",
+   "title": "AI DJ: a fourth suite mode that mixes on its own on 2 decks (picks from library / playlist / selected tracks, LUFS auto trim, 32-bar bass swap, vocal clash avoidance, beat-matched tempo glide)",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah asked 2026-11-12 07:31Z. Built on PR #20. Behind AI mode. Also Xcode 27 redraw fixes and Settings → Sound → Auto trim. ios.yml green at dec0bc3 (128 tests, app builds). Untested on device/real tracks. TestFlight goes out with the Settings-tabs stack (#23), per Jonah 08:22Z. personal/heat not ported."
+  },
+  {
+   "id": "ART-1",
+   "title": "iOS album art: rekordbox's small artwork in library rows, the big one (shrunk) left of each deck's waveform; embedded file art for other tracks",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah asked 2026-11-12 08:12Z (may take width from the waveforms). Stacked on AIDJ-1's branch (PR #21) because both touch DeckView. Web and Linux have no album art yet: separate task if wanted. 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge."
+  },
+  {
+   "id": "SET-1",
+   "title": "iOS Settings in tabs with icons (Sound, Decks, Controller, Look, Recording, USB, AI mode) instead of one long page",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-12. Jonah 08:52Z: one descriptively named branch, not one per small feature, so AIDJ-1, ART-1 and SET-1 share branch claude/ios-ai-dj-album-art-settings and one PR, and go out in ONE TestFlight build (via cratebox-iOS-suite, same branch name, until MONO-4). 2026-11-13: shipped in TestFlight 55.1+ and in PR #24 (draft), awaiting Jonah's merge."
+  },
+  {
+   "id": "UI-0",
+   "title": "iOS phase 0 of the Apple-native UI review: squashed MASTER box and cut CUE/MST/MASTER labels, overprinted remaining time, album art gap, Settings tabs as a full-height left rail",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-12 (thread 'Review Apple-native UI redesign proposal'): phase 0 only; phases 1-3 (Theme/controls + touch-only haptics, browser/library, waveform/jog after profiling) wait for his go. Art stays left of the lanes, sized to lane height (his pick). ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
+  },
+  {
+   "id": "USB-2",
+   "title": "iOS: copy rekordbox USB tracks to the device (all, a playlist, the listed/one track) + Sync (copy what's new); no duplicates by file name + size; keeps rekordbox title/artist/grid/key",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-12 18:10Z: in phase 0, one CI + one TestFlight. App/UsbCopy.swift; copies to Documents/From USB/<stick>/; never deletes; hot cues not carried over yet. Linux equivalent: apps/linux/src/usbcopy.rs. ios.yml 43288201356 green at 2001708 (129 tests, BUILD SUCCEEDED); TestFlight 55.1 uploaded from suite 5b736b9 (2026-11-12 20:01Z). Untested on a device."
+  },
+  {
+   "id": "P1-2",
+   "title": "iOS phases 1+2: grid order, 6-tab Settings with AI DJ move toggles, real-track CI, restyle + touch-only haptics, AI DJ v2 (4 transition kinds, variable length, mix-in at CUE/Apple point, beat-matched lead-in, MIX NOW fix, 3rd deck preload, loop bridge), USB/local twins share Apple analysis",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "claude/ios-ai-dj-album-art-settings",
+   "pr": 24,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-12 20:35Z: phases 1+2 together, one CI + one TestFlight. ios.yml 43308247504 at a5e0f64: 139 tests 0 failures (4 skips = real-track tests, no TEST_TRACKS_TOKEN), BUILD SUCCEEDED; run red only because screenshots hit 45 min (fixed in 519eec8: 60 min + no stand-in simulators). TestFlight 56.1 (run 43316996585, Apple 500s, never appeared) re-uploaded as 57.1 (run 43323997842, clean UPLOAD SUCCEEDED) from suite ab6b6c4. Untested on a device. 23:21Z TestFlight 58.1 (run 43327772421, suite f3ff54d = Cratebox 372ed67): twin analysis also matches while the stick is unplugged (Jonah saw local files re-analysed in 57.1). 23:36Z TestFlight 59.1 (run 43329503708, suite f04a8cb = 0490d19): tracks Apple analysed (own or USB twin) take Apple's grid/key/length without Cratebox's analysis (AppleMusic.adoptGrids); AI DJ count says 'with a beat grid'. OPEN: Jonah (USB-copied 590 tracks, 58.1) still sees Apple analysis start and only 15 tracks with a grid; waiting on his Settings Apple count + stick size. Suspect: Library.bpmRangeChanged re-queues copied tracks with rekordbox grids (filter lacks a rekordbox check). | 2026-11-13: 61.1 = analysis failure reasons in Settings (Library & USB: Analysis problems; AI: Why N failed) + Try again, BPM-range change skips rekordbox-gridded copies, 'Analyse everything again' confirm. 63.1 = Apple analysis only on request (Settings → AI: whole library / playlist / selected; long-press Analyse; AppleMusic.wanted) + 'Analyse while tracks play' toggle (cb.apple.whilePlaying). 64.1 = ROOT CAUSE of re-analysis/15 gridded: library rescan of 'From USB' listed copied files without grids before addCopied ran, and addCopied kept them; fix: addCopied applies rekordbox grid to existing records + 'Re-sync grids from <stick>' (UsbCopy.regrid). Awaiting Jonah's device check. 2026-11-13 08:00Z: latest TestFlight 76.1 (suite 0c6f8f0 = monorepo ddc6678, verified UPLOAD SUCCEEDED). Remainder split out: CI-1, MEM-1, BUG-1..5."
+  },
+  {
+   "id": "SYNC-3",
+   "title": "iOS: beat drift in AI mode / sync during tempo changes (Jonah 2026-11-12, track SAVEME, master tempo on)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": "claude",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Phase 3, first item. Measure first: synced real-track test through a tempo glide logging drift. Suspects (code read, unverified): constant-BPM Apple grid fit vs wandering track, lockPhase 0.6%/2% cap while AI DJ glides every frame, keylock playhead at rate!=1, AIDJ.finish snapping B to its own tempo."
+  },
+  {
+   "id": "LIB-4",
+   "title": "iOS library long-press menu: remove from device, hide, edit metadata, add to playlist, load to deck 1-4, queue for AI DJ",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": "claude",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-12, phase 4. Never deletes from a stick or the user's folders."
+  },
+  {
+   "id": "AIDJ-3",
+   "title": "AI DJ: two modes (Auto: AI does all the mixing; Hybrid: user never locked out of controls during transitions) + DJ-technique-based handoffs",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Jonah 2026-11-13 07:23Z, phase 3/4, open ended. Tempo rule: NO tempo changes while the incoming track fades in; tempo moves only during down-energy sections or as the outgoing track fades out. Research basic DJ technique (phrase matching, EQ/bass swaps, energy management, tempo riding on breakdowns/outros) before implementing. 70.1 already has a first hybrid step (a control you move is yours until the mix ends, Core.onUserMixer); AIDJ glides A's pitch every frame today, which breaks the new rule."
+  },
+  {
+   "id": "BUG-1",
+   "title": "iOS: crash when touching a fader during an AI DJ transition",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Reported by Jonah 2026-11-13. Cause unknown, no stack yet. Get it from CI-2 (crash fetch) or Files → Cratebox → Crash reports (MetricKit, App/CrashLog.swift). Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "BUG-2",
+   "title": "iOS: copied (From USB) tracks do not play",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Reported by Jonah 2026-11-13 02:16Z on ~65.1; imported tracks play. Not reproduced, unconfirmed on later builds. Need the deck error text and whether the file plays in Files. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "BUG-3",
+   "title": "iOS: \"can't get back to the library\" from some screen",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Reported 2026-11-13. Exact screen unknown; 70.1 added Library to the mode menu as a stopgap. Ask Jonah where. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "BUG-4",
+   "title": "iOS: some tracks show no tags (e.g. \"1. AFTERGLOW\": file-name title, no artist, no art)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Seen in the screenshot of issue #25. Unknown whether copied or imported. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "BUG-5",
+   "title": "iOS: launch log noise \"File Provider Storage doesn't look like a rekordbox USB\"",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Issue #25 log: an old saved non-stick folder is re-opened every launch. Harmless; stop re-asking. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "CI-1",
+   "title": "iOS: real-track CI set (22 tough tracks + ANLZ) in private repo zonahbear/cratebox-test-tracks",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah must create the private repo and a read-only TEST_TRACKS_TOKEN secret (agents can't). Then an agent copies the picks (Claude project file test-tracks/picks.md; source = desktop USB backup) and writes manifest.json. RealTrackTests skip until then. Never commit music to this public repo. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "CI-2",
+   "title": "iOS: crash-fetch workflow (crashes.yml + .github/scripts/testflight_crashes.py) onto cratebox-iOS-suite main",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Suite commit 3a9200c on branch claude/ios-ai-dj-album-art-settings. GitHub only dispatches workflows on the default branch. Output: ci-logs-crashes:crashes/_run.txt. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "MEM-1",
+   "title": "iOS: analysis decodes the whole track at full quality (~320 MB peak)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Phase 1 open question: OK to analyse at a lower sample rate / stream? Measure the saving and check grids are unchanged on real tracks before shipping. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "AIDJ-4",
+   "title": "iOS: continuous handoff AI DJ ↔ performance mode without the music stopping",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "SYNC-3"
+   ],
+   "needs_go": false,
+   "notes": "Phase 3. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "AIDJ-5",
+   "title": "iOS: better AI DJ card/player (now playing, next, time to next mix, queue)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Phase 3. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "IOS-2",
+   "title": "iOS: lock screen / Control Center / Now Playing controls",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Phase 3. No MPRemoteCommandCenter code yet. Top deck shown; play/pause = all playback; back = restart song; next = skip with no transition; custom = mix in next at the next good point. Needs a check on Jonah's phone. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "AIDJ-6",
+   "title": "iOS: 👍/👎 after each AI DJ transition with on-device learning",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Phase 3 (plan doc; was phase 1 in Jonah's 2026-11-12 list). Optional why tags (off-beat/clash/too long/bad timing), skip right after = soft 👎, on-device feature log, slow bandit weights, reset button. No cloud. No rating code exists yet. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "SUG-1",
+   "title": "iOS: next-track suggestions (\"play next\" panel on top of MATCH sort)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Phase 4. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "TOUCH-1",
+   "title": "iOS: Touch mode redesign (big tap-cut EQ)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Phase 4 only if Jonah says so; show screenshots first (last touch-EQ restyle was reverted). Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "UI-5",
+   "title": "iOS: phase 5 waveform and jog visuals (after profiling)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Old redesign phase 3. Glows/shadows on the 60 Hz Canvas and JogView cost frame time. Liquid Glass needs #available(iOS 26). SE 568x320 check on every width change. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "REL-1",
+   "title": "iOS: paywall (7-day trial, then $7.77/month or $120 lifetime)",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "$7.77 may not be a valid App Store price point (unverified); check in App Store Connect. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "REL-2",
+   "title": "iOS: beta preload tracks",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": "jonah",
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "CC0 shortlist exists; waiting on Jonah's picks. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "REL-3",
+   "title": "iOS: App Store submission",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [
+    "REL-1"
+   ],
+   "needs_go": true,
+   "notes": "Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "CI-3",
+   "title": "Self-hosted arm64 Xcode 27 runner on Jonah's 14\" MacBook Pro (M4 Pro)",
+   "app": "repo",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Offered 2026-11-13; when Jonah is ready. Keeps macOS CI off hosted minutes. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "LNX-1",
+   "title": "Linux: port the web rekordbox playlist writer",
+   "app": "linux",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Same protections as web/iOS: opt-in, export.pdb.cratebox-backup first, read back after each write, refuse after a rekordbox re-export. Check the web CHANGELOG for other 1.1.x gaps. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "IDEA-1",
+   "title": "AI DJ trainer \"Learn\" mode: hands controls over step by step",
+   "app": "ios-suite",
+   "status": "todo",
+   "owner": null,
+   "branch": null,
+   "pr": null,
+   "depends_on": [],
+   "needs_go": true,
+   "notes": "Idea backlog. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+  },
+  {
+   "id": "DOCS-1",
+   "title": "Handoff docs current on main for any model: TODO.md, rules, entry files, LATEST memo",
+   "app": "repo",
+   "status": "review",
+   "owner": "claude",
+   "branch": "docs/handoff-todo",
+   "pr": 26,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-13 08:18Z: make the handoff docs ready for Codex / Antigravity and write every open item into a TODO.md (phase 3/4 included, parked truecurve etc. left out). Brings PR #24's GLOBAL_PLAN and memos to main so a fresh clone of main sees the current state."
+  }
+ ]
 }

@@ -12,6 +12,7 @@ Read the first four in order, then only the map of the app you touch.
 - [.agent/SYSTEM_PROMPT.md](.agent/SYSTEM_PROMPT.md): hard rules and rules of engagement (start, handoff, bugs, features).
 - [.agent/CONTEXT_MAP.md](.agent/CONTEXT_MAP.md): architecture map, branches, verification commands, workflows.
 - [.agent/GLOBAL_PLAN.json](.agent/GLOBAL_PLAN.json): machine-readable task list (status, owner, branch, depends_on).
+- [TODO.md](TODO.md): every open item in priority order; what waits on Jonah; where the iOS code lives right now.
 
 ## Apps
 
