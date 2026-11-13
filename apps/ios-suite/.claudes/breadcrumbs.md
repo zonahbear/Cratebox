@@ -350,3 +350,5 @@ bug check, since Xcode has been breaking things."
 ## 2026-11-12 22:20Z: phases 1+2 (P1-2, PR #24)
 - TestFlight 56.1 (suite ab6b6c4 = Cratebox a5e0f64). ios.yml 43308247504: 139 tests pass, build OK; red only on the screenshot timeout. Memo: .handoffs/20261112-2220Z_claude_P1-2_coder.md.
 - xcode-27 runner lacks 16 Pro Max / SE simulators; old shots were a stand-in 2622×1206 iPhone. Next: Jonah's device check, then phase 3 (SYNC-3 drift first).
+
+- 2026-11-13 00:25Z (claude, P1-2): TestFlight 61.1/63.1 uploaded, 64.1 building. Apple analysis is on request only (AppleMusic.wanted), optional while playing. Copies lost rekordbox grids because a folder rescan raced UsbCopy (addCopied kept the scanned gridless record); fixed + Settings/long-press "Re-sync grids from <stick>". Failure reasons: TrackRecord.fail, AppleMusic.reason. Next: Jonah runs Re-sync grids on 64.1 and reports the AI DJ track count.
