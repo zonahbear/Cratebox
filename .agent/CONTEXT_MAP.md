@@ -33,11 +33,10 @@ relative to it, "this repo" = the app folder.
 - `personal/heat`: main + Jonah's "Cratebox HEAT" iOS build in `apps/ios-suite/`. Never merges into main.
 - Work branches `<area>/<short-feature>` (older ones are `claude/...`). Old per-repo branches, PRs and releases still
   live in the old repos.
-- **iOS right now (2026-11-13):** the current iOS app is on `claude/ios-ai-dj-album-art-settings` (draft PR #24, 50+
-  commits ahead of main: AI DJ v2, album art, 6-tab Settings, redesign phases 0-2, USB copy, Apple-analysis backup).
-  TestFlight is still built from the old repo **zonahbear/cratebox-iOS-suite**, same branch name, by copying
-  `apps/ios-suite/ios/` there and running its `testflight.yml` (runner xcode-27), because this repo lacks the signing
-  secrets (MONO-4). Latest: TestFlight 76.1 = suite 0c6f8f0 = monorepo ddc6678. Suite `main` is stale; never build from it.
+- **iOS TestFlight (2026-11-13):** the iOS code is on `main` (PR #24 merged, d249ca3), but TestFlight is still built from
+  the old repo **zonahbear/cratebox-iOS-suite**: copy `apps/ios-suite/ios/` to a suite branch with the same name as the
+  monorepo work branch and run its `testflight.yml` (runner xcode-27), because this repo lacks the signing secrets
+  (MONO-4). Latest: TestFlight 76.1 = suite 0c6f8f0 = monorepo ddc6678. Suite `main` is stale; never build from it.
 
 ## Deterministic verification (run before pushing; say in the PR which ran)
 

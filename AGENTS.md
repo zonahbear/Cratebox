@@ -10,8 +10,7 @@ tool-specific. Read, in order:
    [TODO.md](TODO.md) is the same list in priority order, with what waits on Jonah.
 5. The map of the one app you touch: `apps/<app>/AGENTS.md`.
 
-iOS: the current code is on branch `claude/ios-ai-dj-album-art-settings` (PR #24), not `main`, until Jonah merges it.
-Check out that branch before reading or changing `apps/ios-suite/`.
+iOS: the code is on `main`; TestFlight is still built from zonahbear/cratebox-iOS-suite (see TODO.md, "Where the code is").
 
 Reviews: [.agent/REVIEW.md](.agent/REVIEW.md). Index (also good to paste into a chat that can't read the repo): [LLMS.txt](LLMS.txt).
 
