@@ -1,42 +1,33 @@
-Task DOCS-1 (handoff docs + TODO.md) · branch docs/handoff-todo · base main 0822745 · head = the commit carrying this memo · PR https://github.com/zonahbear/Cratebox/pull/26 · tree clean after push
+Task CI-3 (self-hosted M4 runner) · branch ci/self-hosted-runner · base main df8daab · head = the commit carrying this memo · PR https://github.com/zonahbear/Cratebox/pull/30 (+ suite https://github.com/zonahbear/cratebox-iOS-suite/pull/32 into claude/ios-ai-dj-album-art-settings) · tree clean after push
 
 ## 📍 Where We Stopped
-- **Active Task:** DOCS-1 is done and waiting for Jonah's merge. It puts the current state on `main`, so a fresh clone (Codex,
-  Antigravity, Gemini, Copilot, Claude) sees it without knowing about PR #24. **The real work in flight is iOS P1-2 and
-  phase 3**; read [TODO.md](../TODO.md) for every open item in order and what waits on Jonah.
-- **Current State (iOS, verified from git 2026-11-13 08:20Z):** the current iOS app is on branch
-  `claude/ios-ai-dj-album-art-settings`, draft PR #24 (head 7224999, 53 commits ahead of main). Latest TestFlight is **76.1** =
-  cratebox-iOS-suite `0c6f8f0` (same branch name) = monorepo `ddc6678`. TestFlight still builds from the suite repo because this
-  repo has no signing secrets (MONO-4). The full build-by-build log is the previous memo,
-  [20261113-0806Z_claude_P1-2_coder.md](20261113-0806Z_claude_P1-2_coder.md).
-- **Blockers/Bugs:** open iOS bugs BUG-1..5 (fader-touch crash in an AI DJ transition, copied tracks not playing, stuck
-  outside the library, missing tags, launch log noise). Real-track CI waits on Jonah's private repo + TEST_TRACKS_TOKEN
-  (CI-1). Crash fetch waits on Jonah's OK (CI-2). Nothing here was tested on a device by me.
+- **Active Task:** CI-3. Workflows are done in both repos, as draft PRs. Waiting on Jonah to set up the Mac
+  (apps/ios-suite/docs/self-hosted-runner.md) and merge.
+- **Current State:** ios.yml and testflight.yml default to runner `m4` = `[self-hosted, macOS, ARM64, cratebox-m4]`.
+  `xcode-27` (hosted) is the backup and Intel is removed. Xcode is chosen through DEVELOPER_DIR (no sudo), with an Xcode 27 + arm64 guard.
+  TestFlight cleanup removes the profile and the keychain search-list entry. PR #24 merged into main (d249ca3) before this; TestFlight still
+  uploads from the suite repo (MONO-4).
+- **Blockers/Bugs:** the runner isn't registered yet. Untested: whether simulators boot while the `ci` user is fast-user-switched into the
+  background. Security: the suite repo should go private (Jonah's call), and both repos should require approval for fork-PR workflows.
 
 ## 🛠️ Environmental Verification
-- PASSED (verified, this branch): `python3 -m json.tool .agent/GLOBAL_PLAN.json` from the repo root.
-- Docs-only change: no app code touched, no CI run. Last iOS CI/TestFlight evidence is in the 0806Z memo (reported here,
-  verified by that session): TestFlight 76.1 "UPLOAD SUCCEEDED" 08:00Z, suite run on runner xcode-27.
+- PASSED (verified, ci/self-hosted-runner in both repos): `actionlint` 1.7.7 with config labels [cratebox-m4, xcode-27],
+  `-shellcheck=`, on .github/workflows/ios.yml + testflight.yml.
+- PASSED (verified): `python3 -m json.tool .agent/GLOBAL_PLAN.json`.
+- No CI run: no runner exists yet. A skipped run is not a pass.
 
 ## 📦 Changes Introduced in This Session
-- TODO.md (new): every open item by phase/area, [go]/[Jonah] markers, where the code lives, the rules that bite.
-- .agent/GLOBAL_PLAN.json: PR #24's version brought to main, plus new tasks BUG-1..5, CI-1..3, MEM-1, AIDJ-4..6, IOS-2,
-  SUG-1, TOUCH-1, UI-5, REL-1..3, LNX-1, IDEA-1, DOCS-1; ART-1/SET-1 → review; PR #24 linked on its tasks.
-- .handoffs/: PR #24's memos (20261111-2150Z … 20261113-0806Z) copied unchanged, this memo, LATEST.md = this memo.
-- .agent/SYSTEM_PROMPT.md: "Standing rules from Jonah" (branch names `<area>/<short-feature>`, no HEAT/sideloading, Xcode 27
-  arm64 only, one CI + one TestFlight per phase, real tracks only, no cloud, grid priority); iOS branch exception in step 4.
-- .agent/CONTEXT_MAP.md: TODO.md in the layout; "iOS right now" (PR #24 branch, suite repo builds TestFlight).
-- AGENTS.md, GEMINI.md, CLAUDE.md, LLMS.txt, .github/copilot-instructions.md, .agents/rules/cratebox.md: point at TODO.md and
-  the iOS branch; Antigravity no longer told to use an `antigravity/` branch prefix.
-- .claudes/breadcrumbs.md: PR #24's lines + one for this session.
+- .github/workflows/ios.yml, testflight.yml: runner m4 default, no Intel, no sudo, Xcode 27/arm64 guard, self-hosted cleanup.
+- apps/ios-suite/docs/self-hosted-runner.md (new): Mac setup (GitHub security settings, `ci` user, two runners, labels, disk).
+- apps/ios-suite/AGENTS.md, .agent/SYSTEM_PROMPT.md, .agent/CONTEXT_MAP.md, TODO.md: runner m4 / xcode-27 wording.
+- .agent/GLOBAL_PLAN.json: CI-3 in_progress.
+- Suite repo (same branch name): the same workflow edits, docs/self-hosted-runner.md, CLAUDE.md, .claudes/breadcrumbs.md.
 
 ## ⏭️ Precise Next Steps for Incoming Model
-1. [ ] Jonah: merge this PR, then PR #24 (on #24's merge, LATEST.md and GLOBAL_PLAN.json may conflict: keep the newer memo
-       and this branch's GLOBAL_PLAN, then re-apply any task changes #24 made after 08:20Z).
-2. [ ] Jonah: install TestFlight 76.1 and report on it (TODO.md §1); answer the waiting questions there (CI-1 repo + token,
-       CI-2 OK, hand-fixed grids, MEM-1, TOUCH-1).
-3. [ ] Agent (iOS, on branch `claude/ios-ai-dj-album-art-settings` until #24 merges): BUG-1..5 as Jonah gives details; then
-       phase 3 starting with SYNC-3 (measure drift on a real-track test first).
-4. [ ] Agent: AIDJ-3 only after Jonah's go, research write-up first.
-5. [ ] ALL-4 (Jonah, on his PC): open the repo in Codex and in Antigravity, ask "what are the hard rules, the active task and
-       where is the iOS code?" from the root and from apps/ios-suite. Expected: TODO.md, PR #24 branch, the standing rules.
+1. [ ] Jonah: follow docs/self-hosted-runner.md: suite repo private, fork-PR approval on both repos, `ci` user, runners
+       m4-suite and m4-mono with label cratebox-m4.
+2. [ ] Jonah: merge suite PR #32 into claude/ios-ai-dj-album-art-settings, and Cratebox PR #30 into main.
+3. [ ] Agent: run ios.yml once on `m4` (monorepo, main). Check that the log says `RUNNER m4-mono (self-hosted)` + Xcode 27, the tests run, and the screenshots land on
+       ci-logs. If the simulators fail under `ci`, move the runner to Jonah's account and update the doc.
+4. [ ] Agent: the next phase's TestFlight goes out on `m4` from the suite repo. Set CI-3 done after the first good upload.
+5. [ ] Optional (ask Jonah): CI-1 real tracks could be read straight from the Mac's 1 TB drive instead of a private repo + token.

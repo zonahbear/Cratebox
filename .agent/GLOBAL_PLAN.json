@@ -615,7 +615,7 @@
    "status": "in_progress",
    "owner": "claude",
    "branch": "ci/self-hosted-runner",
-   "pr": null,
+   "pr": "https://github.com/zonahbear/Cratebox/pull/30",
    "depends_on": [],
    "needs_go": false,
    "notes": "Offered 2026-11-13; when Jonah is ready. Keeps macOS CI off hosted minutes. Listed 2026-11-13 in TODO.md (docs/handoff-todo). 2026-11-13 19:40Z Jonah: go (Mac on macOS 27, Xcode 27 installing). Workflows default to runner m4 = [self-hosted, macOS, ARM64, cratebox-m4], xcode-27 hosted as backup, Intel removed; no sudo (DEVELOPER_DIR), Xcode 27/arm64 guard, TestFlight cleans keychain list + profile. Same change in cratebox-iOS-suite (branch ci/self-hosted-runner → claude/ios-ai-dj-album-art-settings). Waiting on Jonah's Mac setup + first run."
