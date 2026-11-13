@@ -30,6 +30,9 @@ Task P1-2 (phases 1+2) · branch claude/ios-ai-dj-album-art-settings · base mai
 - Suite .github/workflows/crashes.yml + .github/scripts/testflight_crashes.py (3a9200c, branch only): can't be dispatched until on suite main (GitHub rule); waiting on Jonah's OK.
 - OPEN: fader-touch crash during AI DJ transition (no stack yet); "can't get back to library" (exact spot unknown, Library menu entry added); copied tracks not playing (need deck error text).
 
+- 73.1 (suite af35146 = monorepo e7376b0, verified "UPLOAD SUCCEEDED" 07:28Z; 71/72 cancelled): phone messages in StatusBubble (Theme.swift) over the waveforms/library, not the top bar; UsbCopy.result shown under Sync in Settings; copy() copies what fits when space is short (Jonah's Sync said "Not enough space": deleted copies sit in Files → Recently Deleted); Settings 🐞 → ReportView (App/Report.swift): AppLog session log (Documents/Logs), description + screenshot → GitHub issue on zonahbear/Cratebox, key asked once and kept in Keychain (GitHubKey), log + screenshot pushed to branch `reports` (reports/ios/<time>/), fallback = prefilled new-issue URL.
+- AIDJ-3 added to GLOBAL_PLAN + plan doc (Auto vs Hybrid modes, no tempo moves while fading in; needs go).
+
 ## ⏭️ Precise Next Steps for Incoming Model
 0. [ ] On Jonah's OK push crashes.yml + script to suite main, run it, read ci-logs-crashes:crashes/_run.txt. Get a crash stack for the fader crash. Diagnose copied tracks not playing (deck error text, Files playback). Then Jonah: install 68.1 (or restore From USB from Files → Recently Deleted), plug stick, Re-sync grids, report AI DJ track count.
 1. [ ] Jonah checks 58.1 on his phone (MIX NOW, transitions, Settings tabs, haptics, copied-track analysis). If 56.1 never appears, re-run suite testflight.yml (runner xcode-27).

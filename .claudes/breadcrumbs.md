@@ -15,3 +15,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-11 · claude · .handoffs/20261111-2310Z_claude_MONO-6_coder.md · suite 263608d (Touch mode, analysis waits for idle/cool) ported into PR #20.
 - 2026-11-12 · claude · .handoffs/20261112-0830Z_claude_AIDJ-1_coder.md · AI DJ (AIDJ-1, PR #21) + Auto trim + Xcode 27 redraw fixes; CI green at dec0bc3; TestFlight goes out with the Settings-tabs stack.
 - 2026-11-13 07:10Z: TestFlight 70.1 (hybrid AI DJ, USB analysis, playlist mirror, crash logs, shared Apple analysis by metadata, no duplicates). See .handoffs/LATEST.md.
+- 2026-11-13 07:35Z: TestFlight 73.1 (status bubble, copy-what-fits, Report a problem → GitHub with Keychain key). AIDJ-3 planned.
