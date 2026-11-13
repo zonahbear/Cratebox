@@ -1,7 +1,7 @@
 Task USB-3 + BUG-2 (USB copies keep rekordbox data; copies broken after restart) · branch ios-suite/usb-copy-rekordbox · base main df8daab · head = the commit carrying this memo · PR none yet (Jonah merges) · tree clean after push
 
 ## 📍 Where We Stopped
-- **Active Task:** USB-3 / BUG-2 done in code, TestFlight 77.1 building (suite repo, same branch name, run 77, runner xcode-27).
+- **Active Task:** USB-3 / BUG-2 done in code, TestFlight 79.1 uploaded 09:43Z (suite c4dac0c, run 43403058043, "UPLOAD SUCCEEDED", verified); 77 and 78 failed at upload on Apple agreements, not code.
 - **Current State:** Jonah's reports #28/#29 (76.1): after Sync, eject and restart, no copy loaded ("file isn't there",
   avfaudio 2003334207) and the analysis count ran to 13000+. Cause, read from the logs + code (not reproduced on a device):
   `Library.scan` built `rel` with `u.path.replacingOccurrences(of: root.path + "/", …)`; the enumerator returned

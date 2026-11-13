@@ -63,11 +63,11 @@ decisions). Everything else an agent can start.
 - [x] BUG-2 Copied ("From USB") tracks don't play. Cause found 2026-11-13 (reports #28/#29): the folder scan built each
       copy's path from `/private/var/…` against a root of `/var/…`, so after a restart every copy got a new entry pointing at
       no file, lost rekordbox's data, and the rescan loop re-queued 574 tracks every 4 s (the "13000 and counting" tally).
-      Fixed on `ios-suite/usb-copy-rekordbox` (TestFlight 77.1). Jonah to confirm on device.
+      Fixed on `ios-suite/usb-copy-rekordbox` (TestFlight 79.1). Jonah to confirm on device.
 - [ ] USB-3 Sync copies the stick's whole PIONEER folder to From USB/<stick>/ and copies read title, artist, key, grid,
       phrases and cues from it with the stick unplugged (77.1). Jonah: plug the stick in and Sync once to fill old copies.
       Sync now copies the ENTIRE stick (every file, PIONEER included; Jonah 09:25Z) and copies show rekordbox's album art.
-      Upload blocked: App Store Connect "Unable to find Apple ID for Bundle ID com.zonahbear.cratebox.suite" (Jonah to check).
+      Shipped in TestFlight 79.1 (suite c4dac0c, 09:43Z) after Jonah signed Apple's new agreement.
 - [ ] BUG-3 "Can't get back to the library" from some screen. Exact spot unknown; a Library entry was added to the mode
       menu in 70.1 as a stopgap. Ask Jonah where.
 - [ ] BUG-4 Some tracks show no tags (e.g. "1. AFTERGLOW": file-name title, no artist, no art). Find out whether it's a

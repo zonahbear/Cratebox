@@ -21,3 +21,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-13 09:25Z · claude · .handoffs/20261113-0925Z_claude_USB-3_coder.md · copies broken after restart (/private path) + runaway tally fixed; Sync copies PIONEER; TestFlight 77.1.
 - 2026-11-13 09:30Z · claude · Sync copies the entire stick + artwork for copies (78a612e). TestFlight 77 compiled but upload refused by App Store Connect (bundle id lookup) twice; waiting on Jonah.
 - 2026-11-13 09:38Z · claude · TestFlight run 78 (suite c4dac0c) compiled+exported; upload refused: Apple 403 'required agreement missing or expired'. Waiting on Jonah to sign/activate, then re-run testflight.yml on ios-suite/usb-copy-rekordbox.
+- 2026-11-13 09:44Z · claude · TestFlight 79.1 UPLOAD SUCCEEDED (suite c4dac0c): restart fix, tally fix, whole-stick Sync, artwork for copies.
