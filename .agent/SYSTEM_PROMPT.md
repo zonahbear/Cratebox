@@ -18,6 +18,22 @@ Applies to Claude, ChatGPT/Codex, Gemini, Grok, Copilot and humans alike. Read i
 8. Analysis changes are checked on real tracks (Jonah's rekordbox USB), not only synthetic ones.
 9. Don't merge to `main`, publish releases, or delete branches/repos/files you didn't create without Jonah's OK.
 
+## Standing rules from Jonah (as binding as the hard rules)
+
+- Branch names describe the area and feature: `<area>/<short-feature>` (`ios/ai-dj`, `web/match-column`,
+  `linux/usb-copy`, `docs/handoff-todo`). Never random or generated names like `claude/project-thread-xxxx`; rename
+  before pushing. Small follow-ups go on the open branch for that area, not a new branch. Never rename `personal/heat`.
+  Say which agent you are in the PR and the commit trailer, not the branch name.
+- No HEAT in the shipping iOS app, ever (it lives on `personal/heat` only). No sideloading, in code or docs.
+- iOS CI: Xcode 27 on Apple Silicon (runner `xcode-27`) only, never an Intel fallback; a stalled run is cancelled and
+  retried on xcode-27. One CI run and one TestFlight build per phase.
+- Real tracks only: Jonah's rekordbox USB (D:), or `C:\Users\zonah\Desktop\usb backup` when D: is missing. No synthetic
+  tracks in iOS CI. A grid Jonah fixed by hand in rekordbox is ground truth. Never commit music.
+- On-device only, no cloud services. Use headless Chrome for browser tests.
+- Grid priority: grid set in Cratebox > Apple's (AI on, supported device) > rekordbox's > Cratebox's analysis. A CUE you
+  set beats Apple's mix-in point.
+- Open work, in order, for humans: [TODO.md](../TODO.md). Keep it and GLOBAL_PLAN.json in step.
+
 Writing to a rekordbox USB stick is allowed (Jonah, 2026-11-11), but only the way web and iOS already do it: opt-in
 setting, playlist tables only, `export.pdb.cratebox-backup` before the first write, read back after each write, and
 refuse if rekordbox exported to the stick after it was opened. Linux doesn't write yet (writer not ported).
@@ -36,7 +52,9 @@ change the repo.
    `depends_on` are `done`. If its `owner` is another agent, leave it.
 3. **Open pull requests are the claim board** (a claim on an unpushed branch is invisible to everyone else). Before
    claiming, look for an open PR whose title starts with the task id; if there is one, the task is taken.
-4. Branch `<agent>/<topic>` (`claude/`, `codex/`, `gemini/`, `antigravity/`, `grok/`, `copilot/`) from `origin/main`. In
+4. Branch `<area>/<short-feature>` (see the standing rules) from `origin/main`, or continue the open branch for that
+   area. **iOS exception until PR #24 merges:** iOS work continues on `claude/ios-ai-dj-album-art-settings` (PR #24),
+   because `main` doesn't have phases 0-2 yet; see "Where the code is" in TODO.md. In
    GLOBAL_PLAN.json set the task's `status: "in_progress"`, `owner`, `branch`; commit, push, and open a draft PR
    titled `<TASK-ID>: <what>` right away. That draft PR is the claim. Two drafts for one id: the older one keeps it.
 

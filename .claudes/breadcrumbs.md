@@ -17,3 +17,4 @@ Short dated index. The full story of each session is its memo in `.handoffs/`; p
 - 2026-11-13 07:10Z: TestFlight 70.1 (hybrid AI DJ, USB analysis, playlist mirror, crash logs, shared Apple analysis by metadata, no duplicates). See .handoffs/LATEST.md.
 - 2026-11-13 07:35Z: TestFlight 73.1 (status bubble, copy-what-fits, Report a problem → GitHub with Keychain key). AIDJ-3 planned.
 - 2026-11-13 08:06Z: TestFlight 76.1 (analysis queue dedupe, Apple analysis backup/restore on the stick).
+- 2026-11-13 08:30Z · claude · .handoffs/20261113-0830Z_claude_DOCS-1_planner.md · TODO.md + handoff docs on main (DOCS-1); iOS code still on PR #24's branch.
