@@ -36,7 +36,7 @@ relative to it, "this repo" = the app folder.
 - **iOS right now (2026-11-13):** the current iOS app is on `claude/ios-ai-dj-album-art-settings` (draft PR #24, 50+
   commits ahead of main: AI DJ v2, album art, 6-tab Settings, redesign phases 0-2, USB copy, Apple-analysis backup).
   TestFlight is still built from the old repo **zonahbear/cratebox-iOS-suite**, same branch name, by copying
-  `apps/ios-suite/ios/` there and running its `testflight.yml` (runner xcode-27), because this repo lacks the signing
+  `apps/ios-suite/ios/` there and running its `testflight.yml` (runner `m4`, the self-hosted M4; `xcode-27` as backup), because this repo lacks the signing
   secrets (MONO-4). Latest: TestFlight 76.1 = suite 0c6f8f0 = monorepo ddc6678. Suite `main` is stale; never build from it.
 
 ## Deterministic verification (run before pushing; say in the PR which ran)
@@ -52,7 +52,7 @@ relative to it, "this repo" = the app folder.
 
 | File | App | Output |
 |---|---|---|
-| ios.yml | ios-suite | tests + simulator screenshots → ci-logs / ci-logs-preview branches |
+| ios.yml | ios-suite | tests + simulator screenshots → ci-logs / ci-logs-preview branches. iOS workflows run on the self-hosted M4 (`m4`, apps/ios-suite/docs/self-hosted-runner.md) or `xcode-27` |
 | testflight.yml | ios-suite | push to main (apps/ios-suite/ios/**) → TestFlight; needs the 6 secrets in the file. Without them the run is green but says NOT BUILT / NOT UPLOADED: green ≠ shipped |
 | cratebox-app.yml | linux | release `app-latest` (+ mirror to Cratebox-Linux when `LEGACY_RELEASE_TOKEN` is set) |
 | cratebox-windows.yml | linux | release `windows-latest` |

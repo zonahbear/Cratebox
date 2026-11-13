@@ -12,8 +12,9 @@ Read this first. Keep it short.
   size. If a device is missing, measure it (ios.yml, `measure: true`) and add it there first.
 - HEAT never goes into the shipping app (`com.zonahbear.cratebox.suite`). It lives only on `personal/heat`
   (`com.zonahbear.cratebox.heat`), which never merges back.
-- Installs only via TestFlight (testflight.yml) and the App Store. macOS CI is manual-only. ios.yml defaults to the `xcode-27` runner
-  (Apple Silicon, iOS 27 SDK, needed for AI mode's Music Understanding). No Intel fallback (Jonah, 2026-11-12): if a run stalls, retry on xcode-27.
+- Installs only via TestFlight (testflight.yml) and the App Store. macOS CI is manual-only. ios.yml and testflight.yml default to runner `m4`
+  = Jonah's self-hosted MacBook Pro M4 Pro (labels self-hosted/macOS/ARM64/cratebox-m4; setup in docs/self-hosted-runner.md);
+  `xcode-27` (GitHub's hosted Apple Silicon) is the backup. Xcode 27 on arm64 only, no Intel (Jonah, 2026-11-12; both workflows check).
 - AI features stay behind Settings → AI mode (`cb.ai`, off by default) and on-device only. See breadcrumbs 2026-11-11.
 - Xcode 27: observed state read only inside a `GeometryReader` closure doesn't redraw. Let the reader measure and hand
   the size to a child view that reads the state in its own body (PhoneFrame, PadFrame, BridgeFrame, USBPanes), or
