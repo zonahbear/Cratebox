@@ -25,8 +25,8 @@ Applies to Claude, ChatGPT/Codex, Gemini, Grok, Copilot and humans alike. Read i
   before pushing. Small follow-ups go on the open branch for that area, not a new branch. Never rename `personal/heat`.
   Say which agent you are in the PR and the commit trailer, not the branch name.
 - No HEAT in the shipping iOS app, ever (it lives on `personal/heat` only). No sideloading, in code or docs.
-- iOS CI: Xcode 27 on Apple Silicon (runner `xcode-27`) only, never an Intel fallback; a stalled run is cancelled and
-  retried on xcode-27. One CI run and one TestFlight build per phase.
+- iOS CI: Xcode 27 on Apple Silicon only, never an Intel fallback: runner `m4` (Jonah's self-hosted MacBook Pro, the
+  default) or `xcode-27` (GitHub's hosted Mac, backup); a stalled run is cancelled and retried on one of those. One CI run and one TestFlight build per phase.
 - Real tracks only: Jonah's rekordbox USB (D:), or `C:\Users\zonah\Desktop\usb backup` when D: is missing. No synthetic
   tracks in iOS CI. A grid Jonah fixed by hand in rekordbox is ground truth. Never commit music.
 - On-device only, no cloud services. Use headless Chrome for browser tests.

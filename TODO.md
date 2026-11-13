@@ -17,7 +17,7 @@ decisions). Everything else an agent can start.
 - **TestFlight is still built from the old repo** `zonahbear/cratebox-iOS-suite`, same branch name
   `claude/ios-ai-dj-album-art-settings`, because the monorepo lacks the signing secrets (MONO-4). Every iOS change is
   committed in the monorepo, then the `apps/ios-suite/ios/` tree is copied to the suite branch and its `testflight.yml`
-  is run (runner `xcode-27`). Latest: **TestFlight 76.1** = suite `0c6f8f0` = monorepo `ddc6678` (verified "UPLOAD
+  is run (runner `m4` once the self-hosted Mac is up, else `xcode-27`). Latest: **TestFlight 76.1** = suite `0c6f8f0` = monorepo `ddc6678` (verified "UPLOAD
   SUCCEEDED", 2026-11-13 08:00Z). Suite `main` is old (a99518c); don't build from it.
 - Claiming an iOS task while PR #24 is open: set its `owner`/`branch` in GLOBAL_PLAN.json on that branch and add the
   task id to PR #24's title (that PR is the claim), instead of opening a new branch.
@@ -30,7 +30,7 @@ decisions). Everything else an agent can start.
   `claude/project-thread-xxxx`. Small follow-ups go on the open branch for that area, not a new branch.
   Never touch `personal/heat` naming; it never merges into `main`.
 - No HEAT in the shipping iOS app. iOS ships only through signed TestFlight / App Store; no sideloading, ever.
-- CI: Xcode 27 on Apple Silicon (`xcode-27`) only, no Intel fallback; if a run stalls, cancel and retry on xcode-27.
+- CI: Xcode 27 on Apple Silicon only (`m4` self-hosted, or `xcode-27` hosted), no Intel fallback; a stalled run is cancelled and retried.
   One CI run and one TestFlight build per phase. Workflows stay `workflow_dispatch`.
 - Real tracks only for analysis/AI DJ checks: Jonah's rekordbox USB (D:), or `C:\Users\zonah\Desktop\usb backup` if D:
   is missing. No synthetic tracks in iOS CI. Never commit music (this repo is public).
@@ -138,7 +138,9 @@ Apple analysis.
 - [ ] ALL-4 [Jonah] Fresh-session smoke check of each tool's entry file (Codex, Claude Code, Gemini CLI, Antigravity,
       Copilot): ask "what are the hard rules and the active task?" from the root and from an app folder.
 - [ ] ALL-5 Cheap Ubuntu metadata check (GLOBAL_PLAN ids/deps, LATEST == newest memo, no conflict markers).
-- [ ] CI-3 [go] Self-hosted arm64 Xcode 27 runner on Jonah's new 14" MacBook Pro (M4 Pro), when he's ready.
+- [ ] CI-3 Self-hosted arm64 Xcode 27 runner on Jonah's 14" MacBook Pro (M4 Pro). Workflows: PR `ci/self-hosted-runner`
+      (here + suite repo). [Jonah] Mac steps in apps/ios-suite/docs/self-hosted-runner.md (suite repo private, fork-PR
+      approval, `ci` user, two runners labelled `cratebox-m4`), then one ios.yml run on `m4`.
 
 ## 10. Web and Linux
 
