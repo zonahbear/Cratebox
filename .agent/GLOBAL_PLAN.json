@@ -404,13 +404,13 @@
    "id": "BUG-2",
    "title": "iOS: copied (From USB) tracks do not play",
    "app": "ios-suite",
-   "status": "todo",
-   "owner": null,
-   "branch": null,
+   "status": "review",
+   "owner": "claude",
+   "branch": "ios-suite/usb-copy-rekordbox",
    "pr": null,
    "depends_on": [],
    "needs_go": false,
-   "notes": "Reported by Jonah 2026-11-13 02:16Z on ~65.1; imported tracks play. Not reproduced, unconfirmed on later builds. Need the deck error text and whether the file plays in Files. Listed 2026-11-13 in TODO.md (docs/handoff-todo)."
+   "notes": "Cause: Library.scan computed rel from /private/var vs /var, so copies got new ids with absolute rel after a restart (no file, no rekordbox data) and AppleMusic rescans every 4 s re-queued them (runaway tally, reports #28/#29). Fixed with Library.plainPath, queue dedupe, rescan at most once a minute. TestFlight 77.1 (suite b3e7ce6, monorepo 05432d4). Needs Jonah on device."
   },
   {
    "id": "BUG-3",
@@ -655,6 +655,18 @@
    "depends_on": [],
    "needs_go": false,
    "notes": "Jonah 2026-11-13 08:18Z: make the handoff docs ready for Codex / Antigravity and write every open item into a TODO.md (phase 3/4 included, parked truecurve etc. left out). Brings PR #24's GLOBAL_PLAN and memos to main so a fresh clone of main sees the current state."
+  },
+  {
+   "id": "USB-3",
+   "title": "iOS: Sync copies the stick's PIONEER folder; copies read rekordbox data from it without the stick",
+   "app": "ios-suite",
+   "status": "review",
+   "owner": "claude",
+   "branch": "ios-suite/usb-copy-rekordbox",
+   "pr": null,
+   "depends_on": [],
+   "needs_go": false,
+   "notes": "Jonah 2026-11-13: copies had only audio files. UsbCopy.copyPioneer + rehydrate (export.pdb title/artist/key, ANLZ grid/phrases/cues), TrackRecord.anlz/rbTags. Branch is ios-suite/ because a remote branch named \"ios\" blocks ios/*. Next: artwork for copies."
   }
  ]
 }
